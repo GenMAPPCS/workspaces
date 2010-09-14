@@ -1,78 +1,83 @@
 <?xml version="1.0"?>
 <!-- build.xml - Build file for Sample Cytoscape Plugin -->
 <project name="Workspaces" default="jar" basedir=".">
-	
+
 	<!-- Name of Plug In -->
 	<!-- Change this to the name of your Plug In -->
 	<!-- The name is used to create the plugin JAR file -->
-	<property name="plugin.name" value="Workspaces"/>
+	<property name="plugin.name" value="Workspaces" />
 
- 	<!-- The directory containing source code -->
-  	<property name="src.dir" value="src"/>
+	<!-- The directory containing source code -->
+	<property name="src.dir" value="src" />
 
-	<!--  The directory containing library jar files -->	
-	<property name="cytoroot.dir" value=".."/>	
-	<property name="release.dir" value="../cytoscape2.7"/>
-	<property name="lib.dir" value = "../cytoscape2.7/lib"/>
-	
-  	<!-- Temporary build directories -->
- 	<property name="build.dir" value="build"/>
-  	<property name="build.classes" value="${build.dir}/classes"/>
+	<!--  The directory containing library jar files -->
+	<property name="cytoroot.dir" value=".." />
+	<property name="release.dir" value="../cytoscape2.7" />
+	<property name="lib.dir" value="../cytoscape2.7/lib" />
+
+	<!-- Temporary build directories -->
+	<property name="build.dir" value="build" />
+	<property name="build.classes" value="${build.dir}/classes" />
 
 	<!-- Global "magic" property for <javac> -->
-	<property name="build.compiler" value="modern"/>
-	
+	<property name="build.compiler" value="modern" />
+
 	<!-- Classpath with all lib JAR Files and all Cytoscape Core classes -->
 	<path id="classpath">
-				
+
 		<fileset dir="${lib.dir}">
-			<include name="*.jar"/>
+			<include name="*.jar" />
 		</fileset>
-		
+
 		<!-- include cytoscape.jar, which is it release directory top level -->
 		<fileset dir="${release.dir}">
-			<include name="*.jar"/>
+			<include name="*.jar" />
 		</fileset>
-	
+
 
 	</path>
 
-  	<!-- Target to create the build directories prior to compilation -->
-  	<target name="prepare">
-    		<mkdir dir="${build.dir}"/>
-    		<mkdir dir="${build.classes}"/>
-  	</target>
+	<!-- Target to create the build directories prior to compilation -->
+	<target name="prepare">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+
+		<!-- copy over images -->
+		<copy todir="${build.classes}/org/genmapp/workspaces/images">
+			<fileset dir="${basedir}/images" />
+		</copy>
+
+	</target>
 
 	<!--  Target to clean out all directories -->
-  	<target name="clean" description="Removes all generated files.">
-    		<delete dir="${build.dir}"/>
-		<delete dir="${dist.dir}"/>
-  	</target>
-	
+	<target name="clean" description="Removes all generated files.">
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
 	<!-- Target to create Cytoscape Jar File  -->
 	<target name="build_cytoscape">
-		<ant antfile="${cytoroot.dir}/cytoscape/build.xml" inheritAll="false" target="jar"/>
+		<ant antfile="${cytoroot.dir}/cytoscape/build.xml" inheritAll="false" target="jar" />
 	</target>
-        
+
 	<!--  Target to compile all Plug In Code -->
-  	<target name="compile" depends="prepare" 
-		description="Compiles all PlugIn source code.">
-                <javac debug="Yes" srcdir="${src.dir}" destdir="${build.classes}">
-			<classpath refid="classpath"/>
+	<target name="compile" depends="prepare" description="Compiles all PlugIn source code.">
+		<javac debug="Yes" srcdir="${src.dir}" destdir="${build.classes}">
+			<classpath refid="classpath" />
 		</javac>
 	</target>
-  	
-	<!--  Create PlugIn Jar File (Unobfuscated) -->
-   	<target name="jar" depends="compile" description="Creates PlugIn Jar File.">
- 
-   		<jar destfile="${build.dir}/${plugin.name}.jar">
-			<fileset dir="${build.classes}"/>
-		</jar>
-		<echo message="${plugin.name}.jar is now complete.  It is located in build/ directory"/>
 
-   		<copy file="${build.dir}/${plugin.name}.jar" todir="../cytoscape2.7/plugins/core"/>
-  		<copy file="${build.dir}/${plugin.name}.jar" todir="/Applications/Cytoscape_v2.7.0/plugins"/>
-   		
+	<!--  Create PlugIn Jar File (Unobfuscated) -->
+	<target name="jar" depends="compile" description="Creates PlugIn Jar File.">
+
+		<jar destfile="${build.dir}/${plugin.name}.jar">
+			<fileset dir="${build.classes}" />
+		</jar>
+		<echo message="${plugin.name}.jar is now complete.  It is located in build/ directory" />
+
+		<copy file="${build.dir}/${plugin.name}.jar" todir="../cytoscape2.7/plugins/core" />
+		<copy file="${build.dir}/${plugin.name}.jar" todir="/Applications/Cytoscape_v2.7.0/plugins" />
+
 	</target>
 
 </project>

@@ -15,11 +15,33 @@
  ******************************************************************************/
 package org.genmapp.workspaces;
 
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
+
+import org.genmapp.workspaces.tree.WorkspacesPanel;
+import org.genmapp.workspaces.tree.WorkspacesTab;
+
+import cytoscape.Cytoscape;
 import cytoscape.plugin.CytoscapePlugin;
+import cytoscape.view.cytopanels.CytoPanel;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 	public GenMAPPWorkspaces() {
 
+		//create workspaces panel
+		CytoPanel cytoPanel = Cytoscape.getDesktop().getCytoPanel(
+				SwingConstants.WEST);
+		
+		JPanel wsPanel = new WorkspacesPanel();
+		
+		cytoPanel.remove(0);
+		cytoPanel.add("GenMAPP-CS", new ImageIcon(getClass().getResource("images/genmappcs.png")), wsPanel, "Workspaces Panel");	
+		int count = cytoPanel.getCytoPanelComponentCount();
+		int wspCount = cytoPanel.indexOfComponent(wsPanel);
+		System.out.println(count+":"+wspCount);
+		//cytoPanel.setSelectedIndex(wspCount);	
 	}
 
 }
