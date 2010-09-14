@@ -5,9 +5,13 @@ import javax.swing.Icon;
 import cytoscape.util.swing.TreeTableModel;
 
 public enum ColumnTypes {
-	NETWORK("Network", TreeTableModel.class), NETWORK_ICONS("Overview",
-			Icon.class), NODES("Nodes", String.class), EDGES("Edges",
-			String.class);
+	NETWORK("Network", TreeTableModel.class), 
+	NETWORK_ICONS("Overview", Icon.class), 
+	NODES("Nodes", String.class), 
+	EDGES("Edges", String.class),
+	DATASET("Dataset", TreeTableModel.class), 
+	DATASET_ICONS("Overview", Icon.class), 
+	ROWS("Rows", String.class);
 
 	private final String displayName;
 	private final Class<?> type;

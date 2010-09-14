@@ -9,6 +9,8 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.genmapp.workspaces.objects.CyDataset;
+
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.util.swing.AbstractTreeTableModel;
@@ -16,19 +18,18 @@ import cytoscape.util.swing.AbstractTreeTableModel;
 /**
  * Inner class that extends the AbstractTreeTableModel
  */
-public final class NetworkTreeTableModel extends AbstractTreeTableModel {
+public final class DatasetTreeTableModel extends AbstractTreeTableModel {
 
 	private List<ColumnTypes> columnNames;
-	private final Map<String, Icon> networkIcons;
+	private final Map<String, Icon> datasetIcons;
 
-	public NetworkTreeTableModel(Object root) {
+	public DatasetTreeTableModel(Object root) {
 		super(root);
 		columnNames = new ArrayList<ColumnTypes>();
-		columnNames.add(ColumnTypes.NETWORK);
-		columnNames.add(ColumnTypes.NODES);
-		columnNames.add(ColumnTypes.EDGES);
+		columnNames.add(ColumnTypes.DATASET);
+		columnNames.add(ColumnTypes.ROWS);
 
-		networkIcons = new HashMap<String, Icon>();
+		datasetIcons = new HashMap<String, Icon>();
 	}
 
 	public void addColumn(final ColumnTypes model, final int idx) {
@@ -84,30 +85,23 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 	}
 
 	public Object getValueAt(Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.NETWORK))
+		if (columnNames.get(column).equals(ColumnTypes.DATASET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
-		else if (columnNames.get(column).equals(ColumnTypes.NODES)) {
-			CyNetwork cyNetwork = Cytoscape.getNetwork(((GenericTreeNode) node)
-					.getID());
-			return "" + cyNetwork.getNodeCount() + "("
-					+ cyNetwork.getSelectedNodes().size() + ")";
-		} else if (columnNames.get(column).equals(ColumnTypes.EDGES)) {
-			CyNetwork cyNetwork = Cytoscape.getNetwork(((GenericTreeNode) node)
-					.getID());
-			return "" + cyNetwork.getEdgeCount() + "("
-					+ cyNetwork.getSelectedEdges().size() + ")";
-		} else if (columnNames.get(column).equals(ColumnTypes.NETWORK_ICONS)) {
-			return networkIcons.get(((GenericTreeNode) node).getID());
+		else if (columnNames.get(column).equals(ColumnTypes.ROWS)) {
+			int rows = CyDataset.datasetRowsMap.get((((GenericTreeNode) node).getID()));
+			return "" + rows;
+		} else if (columnNames.get(column).equals(ColumnTypes.DATASET_ICONS)) {
+			return datasetIcons.get(((GenericTreeNode) node).getID());
 		}
 		return "";
 	}
 
 	public void setValueAt(Object aValue, Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.NETWORK)) {
+		if (columnNames.get(column).equals(ColumnTypes.DATASET)) {
 			((DefaultMutableTreeNode) node).setUserObject(aValue);
-		} else if (columnNames.get(column).equals(ColumnTypes.NETWORK_ICONS)
+		} else if (columnNames.get(column).equals(ColumnTypes.DATASET_ICONS)
 				&& aValue instanceof Icon) {
-			networkIcons.put(((GenericTreeNode) node).getID(),
+			datasetIcons.put(((GenericTreeNode) node).getID(),
 					(Icon) aValue);
 		}
 	}
