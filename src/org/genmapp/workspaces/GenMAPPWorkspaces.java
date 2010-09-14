@@ -38,7 +38,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		
 		wsPanel = new WorkspacesPanel();
 
-		cytoPanel.add("GenMAPP-CS", new ImageIcon(getClass().getResource("images/genmappcs.png")), wsPanel, "Workspaces Panel");	
+		cytoPanel.add(wsPanel, 0);
+		cytoPanel.add("GenMAPP-CS", new ImageIcon(getClass().getResource("images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);	
 		cytoPanel.setSelectedIndex(0);	
 		
 		//cycommands
