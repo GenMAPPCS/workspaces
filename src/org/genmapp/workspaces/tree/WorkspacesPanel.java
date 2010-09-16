@@ -97,19 +97,21 @@ public class WorkspacesPanel extends JPanel
 	private final SwingPropertyChangeSupport pcs;
 
 	private final JTreeTable nTreeTable;
-	private final JTreeTable dTreeTable;
+//	private final JTreeTable dTreeTable;
 	private final GenericTreeNode nroot;
-	private final GenericTreeNode droot;
+//	private final GenericTreeNode droot;
 
 	private JPanel navigatorPanel;
 
 	private JPanel networkTreePanel;
-	private JPanel datasetTreePanel;
+	private DatasetPanel datasetTreePanel;
+	private JPanel criteriaTreePanel;
+	private JPanel analysisTreePanel;
 
 	private JPopupMenu nPopup;
-	private JPopupMenu dPopup;
+//	private JPopupMenu dPopup;
 	private PopupActionListener nPopupActionListener;
-	private PopupActionListener dPopupActionListener;
+//	private PopupActionListener dPopupActionListener;
 
 	private JMenuItem createViewItem;
 	private JMenuItem destroyViewItem;
@@ -117,15 +119,15 @@ public class WorkspacesPanel extends JPanel
 	private JMenuItem editNetworkTitle;
 	private JMenuItem applyVisualStyleMenu;
 
-	private JMenuItem destroyDatasetItem;
-	private JMenuItem editDatasetTitle;
-	private JMenuItem reloadDataset;
-	private JMenuItem createNetwork;
+//	private JMenuItem destroyDatasetItem;
+//	private JMenuItem editDatasetTitle;
+//	private JMenuItem reloadDataset;
+//	private JMenuItem createNetwork;
 
 	private BiModalJSplitPane split;
 
 	private final NetworkTreeTableModel networkTreeTableModel;
-	private final DatasetTreeTableModel datasetTreeTableModel;
+//	private final DatasetTreeTableModel datasetTreeTableModel;
 	private final CytoscapeDesktop cytoscapeDesktop;
 
 	/**
@@ -138,16 +140,16 @@ public class WorkspacesPanel extends JPanel
 		this.cytoscapeDesktop = Cytoscape.getDesktop();
 
 		nroot = new GenericTreeNode("Network Root", "nroot");
-		droot = new GenericTreeNode("Dataset Root", "droot");
+//		droot = new GenericTreeNode("Dataset Root", "droot");
 		networkTreeTableModel = new NetworkTreeTableModel(nroot);
-		datasetTreeTableModel = new DatasetTreeTableModel(droot);
+//		datasetTreeTableModel = new DatasetTreeTableModel(droot);
 
 		nTreeTable = new JTreeTable(networkTreeTableModel);
 		nTreeTable
 				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		dTreeTable = new JTreeTable(datasetTreeTableModel);
-		dTreeTable
-				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+//		dTreeTable = new JTreeTable(datasetTreeTableModel);
+//		dTreeTable
+//				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		initialize();
 
@@ -162,14 +164,14 @@ public class WorkspacesPanel extends JPanel
 				nTreeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
 			}
 		}
-		for (KeyStroke listener : dTreeTable.getRegisteredKeyStrokes()) {
-			if (listener.toString().equals("ctrl pressed A")) {
-				final InputMap map = dTreeTable.getInputMap();
-				map.remove(listener);
-				dTreeTable.setInputMap(WHEN_FOCUSED, map);
-				dTreeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
-			}
-		}
+//		for (KeyStroke listener : dTreeTable.getRegisteredKeyStrokes()) {
+//			if (listener.toString().equals("ctrl pressed A")) {
+//				final InputMap map = dTreeTable.getInputMap();
+//				map.remove(listener);
+//				dTreeTable.setInputMap(WHEN_FOCUSED, map);
+//				dTreeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
+//			}
+//		}
 
 		pcs = new SwingPropertyChangeSupport(this);
 
@@ -195,15 +197,18 @@ public class WorkspacesPanel extends JPanel
 		ToolTipManager.sharedInstance().registerComponent(nTreeTable);
 		nTreeTable.getTree().setCellRenderer(new TreeCellRenderer());
 
-		datasetTreePanel = new JPanel();
-		datasetTreePanel.setLayout(new BoxLayout(datasetTreePanel,
-				BoxLayout.Y_AXIS));
+//		datasetTreePanel = new JPanel();
+//		datasetTreePanel.setLayout(new BoxLayout(datasetTreePanel,
+//				BoxLayout.Y_AXIS));
+//
+//		dTreeTable.getTree().addTreeSelectionListener(this);
+//		dTreeTable.getTree().setRootVisible(false);
+//		ToolTipManager.sharedInstance().registerComponent(dTreeTable);
+//		dTreeTable.getTree().setCellRenderer(new TreeCellRenderer());
 
-		dTreeTable.getTree().addTreeSelectionListener(this);
-		dTreeTable.getTree().setRootVisible(false);
-		ToolTipManager.sharedInstance().registerComponent(dTreeTable);
-		dTreeTable.getTree().setCellRenderer(new TreeCellRenderer());
-
+		datasetTreePanel = new DatasetPanel();
+		criteriaTreePanel = new CriteriaPanel();
+		
 		resetTable();
 
 		navigatorPanel = new JPanel();
@@ -214,13 +219,14 @@ public class WorkspacesPanel extends JPanel
 		JScrollPane scroll = new JScrollPane(nTreeTable);
 		networkTreePanel.add(scroll);
 
-		scroll = new JScrollPane(dTreeTable);
-		datasetTreePanel.add(scroll);
+//		scroll = new JScrollPane(dTreeTable);
+//		datasetTreePanel.add(scroll);
 
 		JPanel wsPanel = new JPanel();
-		wsPanel.setLayout(new GridLayout(2, 1, 10, 10));
+		wsPanel.setLayout(new GridLayout(3, 1, 0, 0));
 		wsPanel.add(networkTreePanel);
 		wsPanel.add(datasetTreePanel);
+		wsPanel.add(criteriaTreePanel);
 
 		split = new BiModalJSplitPane(cytoscapeDesktop,
 				JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
@@ -233,7 +239,7 @@ public class WorkspacesPanel extends JPanel
 		// the pop-up
 		// window when that occurrs
 		nTreeTable.addMouseListener(new PopupListener());
-		dTreeTable.addMouseListener(new PopupListener());
+//		dTreeTable.addMouseListener(new PopupListener());
 
 		// NETWORKS: create and populate the popup window
 		nPopup = new JPopupMenu();
@@ -257,22 +263,22 @@ public class WorkspacesPanel extends JPanel
 		nPopup.add(applyVisualStyleMenu);
 
 		// DATASETS: create and populate the popup window
-		dPopup = new JPopupMenu();
-		destroyDatasetItem = new JMenuItem(PopupActionListener.DESTROY_DATASET);
-		editDatasetTitle = new JMenuItem(PopupActionListener.EDIT_DATASET_TITLE);
-		reloadDataset = new JMenuItem(PopupActionListener.RELOAD_DATA);
-		createNetwork = new JMenuItem(PopupActionListener.CREATE_NETWORK);
-		// action listener which performs the tasks associated with the popup
-		dPopupActionListener = new PopupActionListener();
-		destroyDatasetItem.addActionListener(dPopupActionListener);
-		editDatasetTitle.addActionListener(dPopupActionListener);
-		reloadDataset.addActionListener(dPopupActionListener);
-		createNetwork.addActionListener(dPopupActionListener);
-		dPopup.add(destroyDatasetItem);
-		dPopup.add(editDatasetTitle);
-		dPopup.add(reloadDataset);
-		dPopup.addSeparator();
-		dPopup.add(createNetwork);
+//		dPopup = new JPopupMenu();
+//		destroyDatasetItem = new JMenuItem(PopupActionListener.DESTROY_DATASET);
+//		editDatasetTitle = new JMenuItem(PopupActionListener.EDIT_DATASET_TITLE);
+//		reloadDataset = new JMenuItem(PopupActionListener.RELOAD_DATA);
+//		createNetwork = new JMenuItem(PopupActionListener.CREATE_NETWORK);
+//		// action listener which performs the tasks associated with the popup
+//		dPopupActionListener = new PopupActionListener();
+//		destroyDatasetItem.addActionListener(dPopupActionListener);
+//		editDatasetTitle.addActionListener(dPopupActionListener);
+//		reloadDataset.addActionListener(dPopupActionListener);
+//		createNetwork.addActionListener(dPopupActionListener);
+//		dPopup.add(destroyDatasetItem);
+//		dPopup.add(editDatasetTitle);
+//		dPopup.add(reloadDataset);
+//		dPopup.addSeparator();
+//		dPopup.add(createNetwork);
 	}
 
 	private void resetTable() {
@@ -285,11 +291,13 @@ public class WorkspacesPanel extends JPanel
 				.setPreferredWidth(45);
 		nTreeTable.setRowHeight(DEF_ROW_HEIGHT);
 		// DATASETS
-		dTreeTable.getColumn(ColumnTypes.DATASET.getDisplayName())
-				.setPreferredWidth(215);
-		dTreeTable.getColumn(ColumnTypes.ROWS.getDisplayName())
-				.setPreferredWidth(45);
-		dTreeTable.setRowHeight(DEF_ROW_HEIGHT);
+//		dTreeTable.getColumn(ColumnTypes.DATASET.getDisplayName())
+//				.setPreferredWidth(215);
+//		dTreeTable.getColumn(ColumnTypes.ROWS.getDisplayName())
+//				.setPreferredWidth(45);
+//		dTreeTable.setRowHeight(DEF_ROW_HEIGHT);
+		
+//		((CriteriaPanel) criteriaTreePanel).resetTable();
 	}
 
 	/**
@@ -365,30 +373,30 @@ public class WorkspacesPanel extends JPanel
 	 * 
 	 * @param dataset_id
 	 */
-	public void removeDataset(final String dataset_id) {
-		final GenericTreeNode node = getDatasetTreeNode(dataset_id);
-		if (node == null)
-			return;
-
-		final Enumeration<GenericTreeNode> children = node.children();
-		GenericTreeNode child = null;
-		final List removed_children = new ArrayList();
-
-		while (children.hasMoreElements()) {
-			removed_children.add(children.nextElement());
-		}
-
-		for (Iterator i = removed_children.iterator(); i.hasNext();) {
-			child = (GenericTreeNode) i.next();
-			child.removeFromParent();
-			droot.add(child);
-		}
-
-		// Cytoscape.getNetwork(dataset_id).removeSelectEventListener(this);
-		node.removeFromParent();
-		dTreeTable.getTree().updateUI();
-		dTreeTable.doLayout();
-	}
+//	public void removeDataset(final String dataset_id) {
+//		final GenericTreeNode node = getDatasetTreeNode(dataset_id);
+//		if (node == null)
+//			return;
+//
+//		final Enumeration<GenericTreeNode> children = node.children();
+//		GenericTreeNode child = null;
+//		final List removed_children = new ArrayList();
+//
+//		while (children.hasMoreElements()) {
+//			removed_children.add(children.nextElement());
+//		}
+//
+//		for (Iterator i = removed_children.iterator(); i.hasNext();) {
+//			child = (GenericTreeNode) i.next();
+//			child.removeFromParent();
+//			droot.add(child);
+//		}
+//
+//		// Cytoscape.getNetwork(dataset_id).removeSelectEventListener(this);
+//		node.removeFromParent();
+//		dTreeTable.getTree().updateUI();
+//		dTreeTable.doLayout();
+//	}
 
 	/**
 	 * update a network title
@@ -422,6 +430,13 @@ public class WorkspacesPanel extends JPanel
 	// // TODO is this the right method to call?
 	// nTreeTable.getTree().updateUI();
 	// }
+
+	/**
+	 * @return the datasetTreePanel
+	 */
+	public DatasetPanel getDatasetTreePanel() {
+		return datasetTreePanel;
+	}
 
 	/**
 	 * DOCUMENT ME!
@@ -468,31 +483,31 @@ public class WorkspacesPanel extends JPanel
 	 * @param parent_id
 	 *            DOCUMENT ME!
 	 */
-	public void addDataset(String dataset_id, String parent_id) {
-		// first see if it exists
-		if (getDatasetTreeNode(dataset_id) == null) {
-			GenericTreeNode dmtn = new GenericTreeNode(dataset_id, dataset_id);
-
-			if (parent_id != null && getDatasetTreeNode(parent_id) != null) {
-				getDatasetTreeNode(parent_id).add(dmtn);
-			} else {
-				droot.add(dmtn);
-			}
-
-			// apparently this doesn't fire valueChanged
-			dTreeTable.getTree().collapsePath(
-					new TreePath(new TreeNode[]{droot}));
-
-			dTreeTable.getTree().updateUI();
-			TreePath path = new TreePath(dmtn.getPath());
-			dTreeTable.getTree().expandPath(path);
-			dTreeTable.getTree().scrollPathToVisible(path);
-			dTreeTable.doLayout();
-
-			// this is necessary because valueChanged is not fired above
-			focusDatasetNode(dataset_id);
-		}
-	}
+//	public void addDataset(String dataset_id, String parent_id) {
+//		// first see if it exists
+//		if (getDatasetTreeNode(dataset_id) == null) {
+//			GenericTreeNode dmtn = new GenericTreeNode(dataset_id, dataset_id);
+//
+//			if (parent_id != null && getDatasetTreeNode(parent_id) != null) {
+//				getDatasetTreeNode(parent_id).add(dmtn);
+//			} else {
+//				droot.add(dmtn);
+//			}
+//
+//			// apparently this doesn't fire valueChanged
+//			dTreeTable.getTree().collapsePath(
+//					new TreePath(new TreeNode[]{droot}));
+//
+//			dTreeTable.getTree().updateUI();
+//			TreePath path = new TreePath(dmtn.getPath());
+//			dTreeTable.getTree().expandPath(path);
+//			dTreeTable.getTree().scrollPathToVisible(path);
+//			dTreeTable.doLayout();
+//
+//			// this is necessary because valueChanged is not fired above
+//			focusDatasetNode(dataset_id);
+//		}
+//	}
 
 	/**
 	 * DOCUMENT ME!
@@ -519,18 +534,18 @@ public class WorkspacesPanel extends JPanel
 	 * @param dataset_id
 	 *            DOCUMENT ME!
 	 */
-	public void focusDatasetNode(String dataset_id) {
-		// logger.info("NetworkPanel: focus network node");
-		DefaultMutableTreeNode node = getDatasetTreeNode(dataset_id);
-
-		if (node != null) {
-			// fires valueChanged if the network isn't already selected
-			dTreeTable.getTree().getSelectionModel().setSelectionPath(
-					new TreePath(node.getPath()));
-			dTreeTable.getTree().scrollPathToVisible(
-					new TreePath(node.getPath()));
-		}
-	}
+//	public void focusDatasetNode(String dataset_id) {
+//		// logger.info("NetworkPanel: focus network node");
+//		DefaultMutableTreeNode node = getDatasetTreeNode(dataset_id);
+//
+//		if (node != null) {
+//			// fires valueChanged if the network isn't already selected
+//			dTreeTable.getTree().getSelectionModel().setSelectionPath(
+//					new TreePath(node.getPath()));
+//			dTreeTable.getTree().scrollPathToVisible(
+//					new TreePath(node.getPath()));
+//		}
+//	}
 
 	/**
 	 * DOCUMENT ME!
@@ -563,20 +578,20 @@ public class WorkspacesPanel extends JPanel
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public GenericTreeNode getDatasetTreeNode(String dataset_id) {
-		Enumeration tree_node_enum = droot.breadthFirstEnumeration();
-
-		while (tree_node_enum.hasMoreElements()) {
-			GenericTreeNode node = (GenericTreeNode) tree_node_enum
-					.nextElement();
-
-			if ((String) node.getID() == dataset_id) {
-				return node;
-			}
-		}
-
-		return null;
-	}
+//	public GenericTreeNode getDatasetTreeNode(String dataset_id) {
+//		Enumeration tree_node_enum = droot.breadthFirstEnumeration();
+//
+//		while (tree_node_enum.hasMoreElements()) {
+//			GenericTreeNode node = (GenericTreeNode) tree_node_enum
+//					.nextElement();
+//
+//			if ((String) node.getID() == dataset_id) {
+//				return node;
+//			}
+//		}
+//
+//		return null;
+//	}
 
 	/**
 	 * This method highlights a network or dataset in the Workspace Panel.
@@ -628,34 +643,34 @@ public class WorkspacesPanel extends JPanel
 		}
 
 		// Then, in parallel, handle DATASETS
-		mtree = dTreeTable.getTree();
-
-		// sets the "current" dataset based on last node in the tree selected
-		node = (GenericTreeNode) mtree.getLastSelectedPathComponent();
-		if (node == null || node.getUserObject() == null)
-			return;
-
-		// creates a list of all selected datasets
-		final List<String> datasetList = new LinkedList<String>();
-		try {
-			for (int i = mtree.getMinSelectionRow(); i <= mtree
-					.getMaxSelectionRow(); i++) {
-				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
-						.getLastPathComponent();
-				if (n != null && n.getUserObject() != null
-						&& mtree.isRowSelected(i))
-					datasetList.add(n.getID());
-			}
-		} catch (Exception ex) {
-			CyLogger.getLogger().warn(
-					"Exception handling dataset panel change: "
-							+ ex.getMessage());
-			ex.printStackTrace();
-		}
-
-		if (datasetList.size() > 0) {
-			CyDataset.setSelectedDataset(datasetList);
-		}
+//		mtree = dTreeTable.getTree();
+//
+//		// sets the "current" dataset based on last node in the tree selected
+//		node = (GenericTreeNode) mtree.getLastSelectedPathComponent();
+//		if (node == null || node.getUserObject() == null)
+//			return;
+//
+//		// creates a list of all selected datasets
+//		final List<String> datasetList = new LinkedList<String>();
+//		try {
+//			for (int i = mtree.getMinSelectionRow(); i <= mtree
+//					.getMaxSelectionRow(); i++) {
+//				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
+//						.getLastPathComponent();
+//				if (n != null && n.getUserObject() != null
+//						&& mtree.isRowSelected(i))
+//					datasetList.add(n.getID());
+//			}
+//		} catch (Exception ex) {
+//			CyLogger.getLogger().warn(
+//					"Exception handling dataset panel change: "
+//							+ ex.getMessage());
+//			ex.printStackTrace();
+//		}
+//
+//		if (datasetList.size() > 0) {
+//			CyDataset.setSelectedDataset(datasetList);
+//		}
 	}
 
 	/**
@@ -719,29 +734,29 @@ public class WorkspacesPanel extends JPanel
 			if (e.isPopupTrigger()) {
 				// get the row where the mouse-click originated
 				final int[] nselected = nTreeTable.getSelectedRows();
-				final int[] dselected = nTreeTable.getSelectedRows();
+//				final int[] dselected = dTreeTable.getSelectedRows();
 				
-				if (e.isShiftDown()){ // TODO:fake for DATASETS
-				//if (dselected.length > nselected.length) {
-					if (dselected != null && dselected.length != 0) {
-						final int selectedItemCount = dselected.length;
-
-						// Edit title command will be enabled only when ONE
-						// network
-						// is selected.
-						if (selectedItemCount == 1) {
-							editDatasetTitle.setEnabled(true);
-						} else
-							editDatasetTitle.setEnabled(false);
-
-						// At least one selected network has a view.
-						destroyDatasetItem.setEnabled(true);
-						reloadDataset.setEnabled(true);
-						createNetwork.setEnabled(true);
-
-						dPopup.show(e.getComponent(), e.getX(), e.getY());
-					}
-				} else {
+//				if (e.isShiftDown()){ // TODO:fake for DATASETS
+//				//if (dselected.length > nselected.length) {
+//					if (dselected != null && dselected.length != 0) {
+//						final int selectedItemCount = dselected.length;
+//
+//						// Edit title command will be enabled only when ONE
+//						// network
+//						// is selected.
+//						if (selectedItemCount == 1) {
+//							editDatasetTitle.setEnabled(true);
+//						} else
+//							editDatasetTitle.setEnabled(false);
+//
+//						// At least one selected network has a view.
+//						destroyDatasetItem.setEnabled(true);
+//						reloadDataset.setEnabled(true);
+//						createNetwork.setEnabled(true);
+//
+//						dPopup.show(e.getComponent(), e.getX(), e.getY());
+//					}
+//				} else {
 
 					if (nselected != null && nselected.length != 0) {
 						boolean enableViewRelatedMenu = false;
@@ -785,7 +800,7 @@ public class WorkspacesPanel extends JPanel
 						nPopup.show(e.getComponent(), e.getX(), e.getY());
 					}
 				}
-			}
+//			}
 		}
 	}
 

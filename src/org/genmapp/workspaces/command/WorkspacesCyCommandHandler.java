@@ -87,7 +87,7 @@ public class WorkspacesCyCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Dataset already listed in Workspaces.");
 			} else {
 				CyDataset d = new CyDataset(displayName, url, rows);
-				GenMAPPWorkspaces.wsPanel.addDataset(displayName, "droot");
+				GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(displayName, "droot");
 				result.addMessage("Dataset added to Workspaces.");
 			}
 			
