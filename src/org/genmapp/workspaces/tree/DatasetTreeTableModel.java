@@ -20,19 +20,19 @@ import cytoscape.util.swing.AbstractTreeTableModel;
  */
 public final class DatasetTreeTableModel extends AbstractTreeTableModel {
 
-	private List<ColumnTypes> columnNames;
+	private List<GenericColumnTypes> columnNames;
 	private final Map<String, Icon> datasetIcons;
 
 	public DatasetTreeTableModel(Object root) {
 		super(root);
-		columnNames = new ArrayList<ColumnTypes>();
-		columnNames.add(ColumnTypes.DATASET);
-		columnNames.add(ColumnTypes.ROWS);
+		columnNames = new ArrayList<GenericColumnTypes>();
+		columnNames.add(GenericColumnTypes.DATASET);
+		columnNames.add(GenericColumnTypes.ROWS);
 
 		datasetIcons = new HashMap<String, Icon>();
 	}
 
-	public void addColumn(final ColumnTypes model, final int idx) {
+	public void addColumn(final GenericColumnTypes model, final int idx) {
 		columnNames.add(idx, model);
 	}
 
@@ -85,21 +85,21 @@ public final class DatasetTreeTableModel extends AbstractTreeTableModel {
 	}
 
 	public Object getValueAt(Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.DATASET))
+		if (columnNames.get(column).equals(GenericColumnTypes.DATASET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
-		else if (columnNames.get(column).equals(ColumnTypes.ROWS)) {
+		else if (columnNames.get(column).equals(GenericColumnTypes.ROWS)) {
 			int rows = CyDataset.datasetRowsMap.get((((GenericTreeNode) node).getID()));
 			return "" + rows;
-		} else if (columnNames.get(column).equals(ColumnTypes.DATASET_ICONS)) {
+		} else if (columnNames.get(column).equals(GenericColumnTypes.DATASET_ICONS)) {
 			return datasetIcons.get(((GenericTreeNode) node).getID());
 		}
 		return "";
 	}
 
 	public void setValueAt(Object aValue, Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.DATASET)) {
+		if (columnNames.get(column).equals(GenericColumnTypes.DATASET)) {
 			((DefaultMutableTreeNode) node).setUserObject(aValue);
-		} else if (columnNames.get(column).equals(ColumnTypes.DATASET_ICONS)
+		} else if (columnNames.get(column).equals(GenericColumnTypes.DATASET_ICONS)
 				&& aValue instanceof Icon) {
 			datasetIcons.put(((GenericTreeNode) node).getID(),
 					(Icon) aValue);

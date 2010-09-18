@@ -18,20 +18,20 @@ import cytoscape.util.swing.AbstractTreeTableModel;
  */
 public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 
-	private List<ColumnTypes> columnNames;
+	private List<GenericColumnTypes> columnNames;
 	private final Map<String, Icon> networkIcons;
 
 	public NetworkTreeTableModel(Object root) {
 		super(root);
-		columnNames = new ArrayList<ColumnTypes>();
-		columnNames.add(ColumnTypes.NETWORK);
-		columnNames.add(ColumnTypes.NODES);
-		columnNames.add(ColumnTypes.EDGES);
+		columnNames = new ArrayList<GenericColumnTypes>();
+		columnNames.add(GenericColumnTypes.NETWORK);
+		columnNames.add(GenericColumnTypes.NODES);
+		columnNames.add(GenericColumnTypes.EDGES);
 
 		networkIcons = new HashMap<String, Icon>();
 	}
 
-	public void addColumn(final ColumnTypes model, final int idx) {
+	public void addColumn(final GenericColumnTypes model, final int idx) {
 		columnNames.add(idx, model);
 	}
 
@@ -84,28 +84,28 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 	}
 
 	public Object getValueAt(Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.NETWORK))
+		if (columnNames.get(column).equals(GenericColumnTypes.NETWORK))
 			return ((DefaultMutableTreeNode) node).getUserObject();
-		else if (columnNames.get(column).equals(ColumnTypes.NODES)) {
+		else if (columnNames.get(column).equals(GenericColumnTypes.NODES)) {
 			CyNetwork cyNetwork = Cytoscape.getNetwork(((GenericTreeNode) node)
 					.getID());
 			return "" + cyNetwork.getNodeCount() + "("
 					+ cyNetwork.getSelectedNodes().size() + ")";
-		} else if (columnNames.get(column).equals(ColumnTypes.EDGES)) {
+		} else if (columnNames.get(column).equals(GenericColumnTypes.EDGES)) {
 			CyNetwork cyNetwork = Cytoscape.getNetwork(((GenericTreeNode) node)
 					.getID());
 			return "" + cyNetwork.getEdgeCount() + "("
 					+ cyNetwork.getSelectedEdges().size() + ")";
-		} else if (columnNames.get(column).equals(ColumnTypes.NETWORK_ICONS)) {
+		} else if (columnNames.get(column).equals(GenericColumnTypes.NETWORK_ICONS)) {
 			return networkIcons.get(((GenericTreeNode) node).getID());
 		}
 		return "";
 	}
 
 	public void setValueAt(Object aValue, Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.NETWORK)) {
+		if (columnNames.get(column).equals(GenericColumnTypes.NETWORK)) {
 			((DefaultMutableTreeNode) node).setUserObject(aValue);
-		} else if (columnNames.get(column).equals(ColumnTypes.NETWORK_ICONS)
+		} else if (columnNames.get(column).equals(GenericColumnTypes.NETWORK_ICONS)
 				&& aValue instanceof Icon) {
 			networkIcons.put(((GenericTreeNode) node).getID(),
 					(Icon) aValue);

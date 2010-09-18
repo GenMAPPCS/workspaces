@@ -19,20 +19,20 @@ import cytoscape.util.swing.AbstractTreeTableModel;
  */
 public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 
-	private List<ColumnTypes> columnNames;
+	private List<GenericColumnTypes> columnNames;
 	private final Map<String, Icon> icons;
 
 	public CriteriaTreeTableModel(Object root) {
 		super(root);
-		columnNames = new ArrayList<ColumnTypes>();
-		columnNames.add(ColumnTypes.CRITERIA_SET);
-		columnNames.add(ColumnTypes.CRITERIA);
-		columnNames.add(ColumnTypes.NODES);
+		columnNames = new ArrayList<GenericColumnTypes>();
+		columnNames.add(GenericColumnTypes.CRITERIA_SET);
+		columnNames.add(GenericColumnTypes.CRITERIA);
+		columnNames.add(GenericColumnTypes.NODES);
 
 		icons = new HashMap<String, Icon>();
 	}
 
-	public void addColumn(final ColumnTypes model, final int idx) {
+	public void addColumn(final GenericColumnTypes model, final int idx) {
 		columnNames.add(idx, model);
 	}
 
@@ -85,23 +85,23 @@ public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 	}
 
 	public Object getValueAt(Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET))
+		if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA_SET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
-		else if (columnNames.get(column).equals(ColumnTypes.CRITERIA)) {
+		else if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA)) {
 			return CyCriteria.criteriaRowsMap.get(((GenericTreeNode) node).getID());
-		} else if (columnNames.get(column).equals(ColumnTypes.NODES)){
+		} else if (columnNames.get(column).equals(GenericColumnTypes.NODES)){
 			Map<String, Integer> networkNodes = CyCriteria.criteriaNetworkNodesMap.get(((GenericTreeNode) node).getID());
 			return networkNodes.get(Cytoscape.getCurrentNetwork().getIdentifier());
-		} else if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET_ICONS)) {
+		} else if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA_SET_ICONS)) {
 			return icons.get(((GenericTreeNode) node).getID());
 		}
 		return "";
 	}
 
 	public void setValueAt(Object aValue, Object node, int column) {
-		if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET)) {
+		if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA_SET)) {
 			((DefaultMutableTreeNode) node).setUserObject(aValue);
-		} else if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET_ICONS)
+		} else if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA_SET_ICONS)
 				&& aValue instanceof Icon) {
 			icons.put(((GenericTreeNode) node).getID(),
 					(Icon) aValue);

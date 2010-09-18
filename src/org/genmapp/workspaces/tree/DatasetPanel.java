@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +46,7 @@ import javax.swing.event.SwingPropertyChangeSupport;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
@@ -75,18 +75,16 @@ public class DatasetPanel extends JPanel
 
 	private static final long serialVersionUID = -7102083850894612840L;
 
-	private static final int PANEL_PREFFERED_WIDTH = 250;
-
 	private static final int DEF_ROW_HEIGHT = 20;
 
 	// Make this panel as a source of events.
 	private final SwingPropertyChangeSupport pcs;
 
-	private final JTreeTable TreeTable;
+	private final JTreeTable treeTable;
 	private final GenericTreeNode root;
 
-	private JPopupMenu Popup;
-	private PopupActionListener datasetPopupActionListener;
+	private JPopupMenu popup;
+	private PopupActionListener popupActionListener;
 
 	private JMenuItem destroyDatasetItem;
 	private JMenuItem editDatasetTitle;
@@ -108,8 +106,8 @@ public class DatasetPanel extends JPanel
 		root = new GenericTreeNode("Dataset Root", "droot");
 		datasetTreeTableModel = new DatasetTreeTableModel(root);
 
-		TreeTable = new JTreeTable(datasetTreeTableModel);
-		TreeTable
+		treeTable = new JTreeTable(datasetTreeTableModel);
+		treeTable
 				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		initialize();
@@ -117,12 +115,12 @@ public class DatasetPanel extends JPanel
 		/*
 		 * Remove CTR-A for enabling select all function in the main window.
 		 */
-		for (KeyStroke listener : TreeTable.getRegisteredKeyStrokes()) {
+		for (KeyStroke listener : treeTable.getRegisteredKeyStrokes()) {
 			if (listener.toString().equals("ctrl pressed A")) {
-				final InputMap map = TreeTable.getInputMap();
+				final InputMap map = treeTable.getInputMap();
 				map.remove(listener);
-				TreeTable.setInputMap(WHEN_FOCUSED, map);
-				TreeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
+				treeTable.setInputMap(WHEN_FOCUSED, map);
+				treeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
 			}
 		}
 
@@ -142,63 +140,47 @@ public class DatasetPanel extends JPanel
 
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-		TreeTable.getTree().addTreeSelectionListener(this);
-		TreeTable.getTree().setRootVisible(false);
-		ToolTipManager.sharedInstance().registerComponent(TreeTable);
-		TreeTable.getTree().setCellRenderer(new TreeCellRenderer());
+		treeTable.getTree().addTreeSelectionListener(this);
+		treeTable.getTree().setRootVisible(false);
+		ToolTipManager.sharedInstance().registerComponent(treeTable);
+		treeTable.getTree().setCellRenderer(new TreeCellRenderer());
 
 		resetTable();
 
-		// navigatorPanel = new JPanel();
-		// navigatorPanel.setMinimumSize(new Dimension(180, 180));
-		// navigatorPanel.setMaximumSize(new Dimension(180, 180));
-		// navigatorPanel.setPreferredSize(new Dimension(180, 180));
-
-		JScrollPane scroll = new JScrollPane(TreeTable);
+		JScrollPane scroll = new JScrollPane(treeTable);
 		this.add(scroll);
-
-		// JPanel wsPanel = new JPanel();
-		// wsPanel.setLayout(new GridLayout(2, 1, 10, 10));
-		// wsPanel.add(criteriaTreePanel);
-		//
-		// split = new BiModalJSplitPane(cytoscapeDesktop,
-		// JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
-		// wsPanel, navigatorPanel);
-		// split.setResizeWeight(1);
-		// split.setDividerLocation(DEF_DEVIDER_LOCATION);
-		// add(split);
 
 		// this mouse listener listens for the right-click event and will show
 		// the pop-up
 		// window when that occurrs
-		TreeTable.addMouseListener(new PopupListener());
+		treeTable.addMouseListener(new PopupListener());
 
 		// create and populate the popup window
-		Popup = new JPopupMenu();
+		popup = new JPopupMenu();
 		destroyDatasetItem = new JMenuItem(
-				datasetPopupActionListener.DESTROY_DATASET);
+				PopupActionListener.DESTROY_DATASET);
 		editDatasetTitle = new JMenuItem(
-				datasetPopupActionListener.EDIT_DATASET_TITLE);
-		reloadDataset = new JMenuItem(datasetPopupActionListener.RELOAD_DATA);
-		createNetwork = new JMenuItem(datasetPopupActionListener.CREATE_NETWORK);
+				PopupActionListener.EDIT_DATASET_TITLE);
+		reloadDataset = new JMenuItem(PopupActionListener.RELOAD_DATA);
+		createNetwork = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		// action listener which performs the tasks associated with the popup
-		datasetPopupActionListener = new PopupActionListener();
-		destroyDatasetItem.addActionListener(datasetPopupActionListener);
-		editDatasetTitle.addActionListener(datasetPopupActionListener);
-		reloadDataset.addActionListener(datasetPopupActionListener);
-		createNetwork.addActionListener(datasetPopupActionListener);
-		Popup.add(destroyDatasetItem);
-		Popup.add(editDatasetTitle);
-		Popup.add(reloadDataset);
-		Popup.add(createNetwork);
+		popupActionListener = new PopupActionListener();
+		destroyDatasetItem.addActionListener(popupActionListener);
+		editDatasetTitle.addActionListener(popupActionListener);
+		reloadDataset.addActionListener(popupActionListener);
+		createNetwork.addActionListener(popupActionListener);
+		popup.add(destroyDatasetItem);
+		popup.add(editDatasetTitle);
+		popup.add(reloadDataset);
+		popup.add(createNetwork);
 	}
 
 	public void resetTable() {
-		TreeTable.getColumn(ColumnTypes.DATASET.getDisplayName())
+		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName())
 				.setPreferredWidth(215);
-		TreeTable.getColumn(ColumnTypes.ROWS.getDisplayName())
+		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
 				.setPreferredWidth(45);
-		TreeTable.setRowHeight(DEF_ROW_HEIGHT);
+		treeTable.setRowHeight(DEF_ROW_HEIGHT);
 
 	}
 
@@ -212,33 +194,6 @@ public class DatasetPanel extends JPanel
 		split.setRightComponent(comp);
 		split.validate();
 	}
-
-	// /**
-	// * This is used by Session writer.
-	// *
-	// * @return
-	// */
-	// public JTreeTable getTreeTable() {
-	// return nTreeTable;
-	// }
-	//
-	// /**
-	// * DOCUMENT ME!
-	// *
-	// * @return DOCUMENT ME!
-	// */
-	// public JPanel getNavigatorPanel() {
-	// return navigatorPanel;
-	// }
-	//
-	// /**
-	// * DOCUMENT ME!
-	// *
-	// * @return DOCUMENT ME!
-	// */
-	// public SwingPropertyChangeSupport getSwingPropertyChangeSupport() {
-	// return pcs;
-	// }
 
 	/**
 	 * Remove a item from the panel.
@@ -264,22 +219,10 @@ public class DatasetPanel extends JPanel
 			root.add(child);
 		}
 
-		// Cytoscape.getNetwork(dataset_id).removeSelectEventListener(this);
 		node.removeFromParent();
-		TreeTable.getTree().updateUI();
-		TreeTable.doLayout();
+		treeTable.getTree().updateUI();
+		treeTable.doLayout();
 	}
-
-	// /**
-	// * DOCUMENT ME!
-	// *
-	// * @param event
-	// * DOCUMENT ME!
-	// */
-	// public void onSelectEvent(SelectEvent event) {
-	// // TODO is this the right method to call?
-	// nTreeTable.getTree().updateUI();
-	// }
 
 	/**
 	 * DOCUMENT ME!
@@ -301,14 +244,14 @@ public class DatasetPanel extends JPanel
 			}
 
 			// apparently this doesn't fire valueChanged
-			TreeTable.getTree()
+			treeTable.getTree()
 					.collapsePath(new TreePath(new TreeNode[]{root}));
 
-			TreeTable.getTree().updateUI();
+			treeTable.getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
-			TreeTable.getTree().expandPath(path);
-			TreeTable.getTree().scrollPathToVisible(path);
-			TreeTable.doLayout();
+			treeTable.getTree().expandPath(path);
+			treeTable.getTree().scrollPathToVisible(path);
+			treeTable.doLayout();
 
 			// this is necessary because valueChanged is not fired above
 			focusNode(id);
@@ -327,9 +270,9 @@ public class DatasetPanel extends JPanel
 
 		if (node != null) {
 			// fires valueChanged if the network isn't already selected
-			TreeTable.getTree().getSelectionModel().setSelectionPath(
+			treeTable.getTree().getSelectionModel().setSelectionPath(
 					new TreePath(node.getPath()));
-			TreeTable.getTree().scrollPathToVisible(
+			treeTable.getTree().scrollPathToVisible(
 					new TreePath(node.getPath()));
 		}
 	}
@@ -366,41 +309,41 @@ public class DatasetPanel extends JPanel
 	public void valueChanged(TreeSelectionEvent e) {
 		// TODO: Every time user select a network name, this method will be
 		// called 3 times!
-		
-		//do nothing. no selection model for datasets
 
-//		/*
-//		 * Support concurrent selections across panels
-//		 */
-//		JTree mtree = TreeTable.getTree();
-//
-//		// sets the "current" dataset based on last node in the tree selected
-//		GenericTreeNode node = (GenericTreeNode) mtree
-//				.getLastSelectedPathComponent();
-//		if (node == null || node.getUserObject() == null)
-//			return;
-//
-//		// creates a list of all selected datasets
-//		final List<String> datasetList = new LinkedList<String>();
-//		try {
-//			for (int i = mtree.getMinSelectionRow(); i <= mtree
-//					.getMaxSelectionRow(); i++) {
-//				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
-//						.getLastPathComponent();
-//				if (n != null && n.getUserObject() != null
-//						&& mtree.isRowSelected(i))
-//					datasetList.add(n.getID());
-//			}
-//		} catch (Exception ex) {
-//			CyLogger.getLogger().warn(
-//					"Exception handling dataset panel change: "
-//							+ ex.getMessage());
-//			ex.printStackTrace();
-//		}
-//
-//		if (datasetList.size() > 0) {
-//			CyDataset.setSelectedDataset(datasetList);
-//		}
+		// do nothing. no selection model for datasets
+
+		// /*
+		// * Support concurrent selections across panels
+		// */
+		// JTree mtree = TreeTable.getTree();
+		//
+		// // sets the "current" dataset based on last node in the tree selected
+		// GenericTreeNode node = (GenericTreeNode) mtree
+		// .getLastSelectedPathComponent();
+		// if (node == null || node.getUserObject() == null)
+		// return;
+		//
+		// // creates a list of all selected datasets
+		// final List<String> datasetList = new LinkedList<String>();
+		// try {
+		// for (int i = mtree.getMinSelectionRow(); i <= mtree
+		// .getMaxSelectionRow(); i++) {
+		// GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
+		// .getLastPathComponent();
+		// if (n != null && n.getUserObject() != null
+		// && mtree.isRowSelected(i))
+		// datasetList.add(n.getID());
+		// }
+		// } catch (Exception ex) {
+		// CyLogger.getLogger().warn(
+		// "Exception handling dataset panel change: "
+		// + ex.getMessage());
+		// ex.printStackTrace();
+		// }
+		//
+		// if (datasetList.size() > 0) {
+		// CyDataset.setSelectedDataset(datasetList);
+		// }
 	}
 
 	/**
@@ -446,7 +389,7 @@ public class DatasetPanel extends JPanel
 			// check for the popup type
 			if (e.isPopupTrigger()) {
 				// get the row where the mouse-click originated
-				final int[] selected = TreeTable.getSelectedRows();
+				final int[] selected = treeTable.getSelectedRows();
 
 				// if (e.isShiftDown()){ // TODO:fake for DATASETS
 				// if (dselected.length > nselected.length) {
@@ -466,7 +409,7 @@ public class DatasetPanel extends JPanel
 					reloadDataset.setEnabled(true);
 					createNetwork.setEnabled(true);
 
-					Popup.show(e.getComponent(), e.getX(), e.getY());
+					popup.show(e.getComponent(), e.getX(), e.getY());
 					// }
 				}
 			}
@@ -477,63 +420,102 @@ public class DatasetPanel extends JPanel
 		// TODO ?
 	}
 
-	public void onSelectEvent(SelectEvent arg0) {
-		// TODO Auto-generated method stub
+	/**
+	 * DOCUMENT ME!
+	 * 
+	 * @param event
+	 *            DOCUMENT ME!
+	 */
+	public void onSelectEvent(SelectEvent event) {
+		// TODO is this the right method to call?
+		treeTable.getTree().updateUI();
+	}
+
+	/**
+	 * This class listens for actions from the popup menu, it is responsible for
+	 * performing actions related to destroying and creating views, and
+	 * destroying the network.
+	 */
+	class PopupActionListener implements ActionListener {
+
+		public static final String DESTROY_DATASET = "Destroy Dataset";
+		public static final String EDIT_DATASET_TITLE = "Edit Dataset Title";
+		public static final String RELOAD_DATA = "Reload Dataset";
+		public static final String CREATE_NETWORK = "Create Network from Dataset";
+
+		/**
+		 * This is the network which originated the mouse-click event (more
+		 * appropriately, the network associated with the ID associated with the
+		 * row associated with the JTable that originated the popup event
+		 */
+		protected CyNetwork cyNetwork;
+
+		/**
+		 * Based on the action event, destroy or create a view, or destroy a
+		 * network
+		 */
+		public void actionPerformed(ActionEvent ae) {
+			final String label = ((JMenuItem) ae.getSource()).getText();
+
+			if (DESTROY_DATASET.equals(label)) {
+				// TODO
+			} else if (EDIT_DATASET_TITLE.equals(label)) {
+				// TODO
+			} else if (CREATE_NETWORK.equals(label)) {
+				// TODO
+			} else if (RELOAD_DATA.equals(label)) {
+				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
+				for (String dataset : selectedDatasets) {
+					URL url = CyDataset.datasetUrlMap.get(dataset);
+					Map<String, Object> args = new HashMap<String, Object>();
+					args.put("source", url);
+					try {
+						CyCommandResult result = CyCommandManager.execute(
+								"genmappimporter", "reimport", args);
+					} catch (CyCommandException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (RuntimeException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			} else {
+				CyLogger.getLogger().warn("Unexpected panel popup option");
+			}
+		}
 
 	}
-}
-
-/**
- * This class listens for actions from the popup menu, it is responsible for
- * performing actions related to destroying and creating views, and destroying
- * the network.
- */
-class DatasetPopupActionListener implements ActionListener {
-
-	public static final String DESTROY_DATASET = "Destroy Dataset";
-	public static final String EDIT_DATASET_TITLE = "Edit Dataset Title";
-	public static final String RELOAD_DATA = "Reload Dataset";
-	public static final String CREATE_NETWORK = "Create Network from Dataset";
 
 	/**
-	 * This is the network which originated the mouse-click event (more
-	 * appropriately, the network associated with the ID associated with the row
-	 * associated with the JTable that originated the popup event
+	 * This class handles the rendering of tree nodes in this panel.
 	 */
-	protected CyNetwork cyNetwork;
+	class TreeCellRenderer extends DefaultTreeCellRenderer {
 
-	/**
-	 * Based on the action event, destroy or create a view, or destroy a network
-	 */
-	public void actionPerformed(ActionEvent ae) {
-		final String label = ((JMenuItem) ae.getSource()).getText();
+		private static final long serialVersionUID = -678559990857492912L;
 
-		if (DESTROY_DATASET.equals(label)) {
-			// TODO
-		} else if (EDIT_DATASET_TITLE.equals(label)) {
-			// TODO
-		} else if (CREATE_NETWORK.equals(label)) {
-			// TODO
-		} else if (RELOAD_DATA.equals(label)) {
-			List<String> selectedDatasets = CyDataset.getSelectedDatasets();
-			for (String dataset : selectedDatasets) {
-				URL url = CyDataset.datasetUrlMap.get(dataset);
-				Map<String, Object> args = new HashMap<String, Object>();
-				args.put("source", url);
-				try {
-					CyCommandResult result = CyCommandManager.execute(
-							"genmappimporter", "reimport", args);
-				} catch (CyCommandException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (RuntimeException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		public Component getTreeCellRendererComponent(JTree tree, Object value,
+				boolean sel, boolean expanded, boolean leaf, int row,
+				boolean hasFocus) {
+			super.getTreeCellRendererComponent(tree, value, sel, expanded,
+					leaf, row, hasFocus);
+
+			if (isDataset(value)) {
+				setBackgroundNonSelectionColor(java.awt.Color.green.brighter());
+				setBackgroundSelectionColor(java.awt.Color.green.darker());
+			} else {
+				setBackgroundNonSelectionColor(java.awt.Color.red.brighter());
+				setBackgroundSelectionColor(java.awt.Color.red.darker());
 			}
-		} else {
-			CyLogger.getLogger().warn("Unexpected panel popup option");
+
+			return this;
+		}
+
+		private boolean isDataset(Object value) {
+			GenericTreeNode node = (GenericTreeNode) value;
+			setToolTipText(node.getID());
+
+			return CyDataset.datasetUrlMap.containsKey(node.getID());
 		}
 	}
-
 }

@@ -4,7 +4,7 @@ import javax.swing.Icon;
 
 import cytoscape.util.swing.TreeTableModel;
 
-public enum ColumnTypes {
+public enum GenericColumnTypes {
 	NETWORK("Network", TreeTableModel.class), 
 	NETWORK_ICONS("Overview", Icon.class), 
 	NODES("Nodes", String.class), 
@@ -19,7 +19,7 @@ public enum ColumnTypes {
 	private final String displayName;
 	private final Class<?> type;
 
-	private ColumnTypes(final String displayName, final Class<?> type) {
+	private GenericColumnTypes(final String displayName, final Class<?> type) {
 		this.displayName = displayName;
 		this.type = type;
 	}
