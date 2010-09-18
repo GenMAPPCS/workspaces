@@ -9,9 +9,8 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.objects.CyCriteria;
 
-import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.util.swing.AbstractTreeTableModel;
 
@@ -28,7 +27,7 @@ public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 		columnNames = new ArrayList<ColumnTypes>();
 		columnNames.add(ColumnTypes.CRITERIA_SET);
 		columnNames.add(ColumnTypes.CRITERIA);
-		columnNames.add(ColumnTypes.CRITERIA_SET_VIEW);
+		columnNames.add(ColumnTypes.NODES);
 
 		icons = new HashMap<String, Icon>();
 	}
@@ -89,11 +88,10 @@ public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 		if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
 		else if (columnNames.get(column).equals(ColumnTypes.CRITERIA)) {
-			//TODO
-			return "1";
-		} else if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET_VIEW)){
-			//TODO
-			return "*";
+			return CyCriteria.criteriaRowsMap.get(((GenericTreeNode) node).getID());
+		} else if (columnNames.get(column).equals(ColumnTypes.NODES)){
+			Map<String, Integer> networkNodes = CyCriteria.criteriaNetworkNodesMap.get(((GenericTreeNode) node).getID());
+			return networkNodes.get(Cytoscape.getCurrentNetwork().getIdentifier());
 		} else if (columnNames.get(column).equals(ColumnTypes.CRITERIA_SET_ICONS)) {
 			return icons.get(((GenericTreeNode) node).getID());
 		}

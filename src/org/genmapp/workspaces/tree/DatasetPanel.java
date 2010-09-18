@@ -366,39 +366,41 @@ public class DatasetPanel extends JPanel
 	public void valueChanged(TreeSelectionEvent e) {
 		// TODO: Every time user select a network name, this method will be
 		// called 3 times!
+		
+		//do nothing. no selection model for datasets
 
-		/*
-		 * Support concurrent selections across panels
-		 */
-		JTree mtree = TreeTable.getTree();
-
-		// sets the "current" dataset based on last node in the tree selected
-		GenericTreeNode node = (GenericTreeNode) mtree
-				.getLastSelectedPathComponent();
-		if (node == null || node.getUserObject() == null)
-			return;
-
-		// creates a list of all selected datasets
-		final List<String> datasetList = new LinkedList<String>();
-		try {
-			for (int i = mtree.getMinSelectionRow(); i <= mtree
-					.getMaxSelectionRow(); i++) {
-				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
-						.getLastPathComponent();
-				if (n != null && n.getUserObject() != null
-						&& mtree.isRowSelected(i))
-					datasetList.add(n.getID());
-			}
-		} catch (Exception ex) {
-			CyLogger.getLogger().warn(
-					"Exception handling dataset panel change: "
-							+ ex.getMessage());
-			ex.printStackTrace();
-		}
-
-		if (datasetList.size() > 0) {
-			CyDataset.setSelectedDataset(datasetList);
-		}
+//		/*
+//		 * Support concurrent selections across panels
+//		 */
+//		JTree mtree = TreeTable.getTree();
+//
+//		// sets the "current" dataset based on last node in the tree selected
+//		GenericTreeNode node = (GenericTreeNode) mtree
+//				.getLastSelectedPathComponent();
+//		if (node == null || node.getUserObject() == null)
+//			return;
+//
+//		// creates a list of all selected datasets
+//		final List<String> datasetList = new LinkedList<String>();
+//		try {
+//			for (int i = mtree.getMinSelectionRow(); i <= mtree
+//					.getMaxSelectionRow(); i++) {
+//				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
+//						.getLastPathComponent();
+//				if (n != null && n.getUserObject() != null
+//						&& mtree.isRowSelected(i))
+//					datasetList.add(n.getID());
+//			}
+//		} catch (Exception ex) {
+//			CyLogger.getLogger().warn(
+//					"Exception handling dataset panel change: "
+//							+ ex.getMessage());
+//			ex.printStackTrace();
+//		}
+//
+//		if (datasetList.size() > 0) {
+//			CyDataset.setSelectedDataset(datasetList);
+//		}
 	}
 
 	/**

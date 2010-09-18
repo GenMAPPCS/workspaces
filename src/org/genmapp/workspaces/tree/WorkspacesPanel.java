@@ -105,7 +105,7 @@ public class WorkspacesPanel extends JPanel
 
 	private JPanel networkTreePanel;
 	private DatasetPanel datasetTreePanel;
-	private JPanel criteriaTreePanel;
+	private CriteriaPanel criteriaTreePanel;
 	private JPanel analysisTreePanel;
 
 	private JPopupMenu nPopup;
@@ -436,6 +436,13 @@ public class WorkspacesPanel extends JPanel
 	 */
 	public DatasetPanel getDatasetTreePanel() {
 		return datasetTreePanel;
+	}
+
+	/**
+	 * @return the criteriaTreePanel
+	 */
+	public CriteriaPanel getCriteriaTreePanel() {
+		return criteriaTreePanel;
 	}
 
 	/**

@@ -14,8 +14,7 @@ public enum ColumnTypes {
 	ROWS("Rows", String.class),
 	CRITERIA_SET_ICONS("Overview", Icon.class), 
 	CRITERIA_SET("Criteria Sets", TreeTableModel.class), 
-	CRITERIA("Criteria", String.class),
-	CRITERIA_SET_VIEW("View", String.class);
+	CRITERIA("Criteria", String.class);
 
 	private final String displayName;
 	private final Class<?> type;
