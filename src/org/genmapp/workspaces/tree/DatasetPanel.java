@@ -48,7 +48,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.genmapp.workspaces.command.WorkspacesCyCommandHandler;
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -461,7 +461,7 @@ public class DatasetPanel extends JPanel
 					String com = CyDataset.datasetNameMap.get(dataset)
 							.getCommandString();
 					com = "genmappimporter import " + com;
-					WorkspacesCyCommandHandler.handleCommand(com);
+					WorkspacesCommandHandler.handleCommand(com);
 				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");

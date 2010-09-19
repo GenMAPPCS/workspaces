@@ -18,7 +18,7 @@ package org.genmapp.workspaces;
 import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 
-import org.genmapp.workspaces.command.WorkspacesCyCommandHandler;
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
 
 import cytoscape.Cytoscape;
@@ -42,7 +42,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		cytoPanel.setSelectedIndex(0);	
 		
 		//cycommands
-		new WorkspacesCyCommandHandler();
+		new WorkspacesCommandHandler();
 	}
 
 }

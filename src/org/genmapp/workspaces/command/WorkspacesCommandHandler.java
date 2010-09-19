@@ -25,26 +25,32 @@ import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
 import cytoscape.layout.Tunable;
 
-public class WorkspacesCyCommandHandler extends AbstractCommandHandler {
-	public final static String NAMESPACE = "workspaces";
+public class WorkspacesCommandHandler extends AbstractCommandHandler {
+	private final static String NAMESPACE = "workspaces";
 
 	// public final static String ADD_DATASET = "add dataset";
 	// public final static String ARG_DATASET_URL = "url";
 	// public final static String ARG_DATASET_NAME = "displayname";
 	// public final static String ARG_DATASET_ROWS = "rows";
 
-	public final static String UPDATE_CRITERIASETS = "update criteriasets";
-	public final static String ARG_CRITERIASET_NAME = "name";
+	private final static String UPDATE_CRITERIASETS = "update criteriasets";
+	private final static String ARG_CRITERIASET_NAME = "name";
 
-	public final static String UPDATE_DATASETS = "update datasets";
-	public final static String ARG_DATASET_NAME = "name";
-	public final static String ARG_DATASET_COM = "command";
+	private final static String UPDATE_DATASETS = "update datasets";
+	private final static String ARG_DATASET_NAME = "name";
+	private final static String ARG_DATASET_COM = "command";
 
-	public final static String ADD_GOELITE_JOB = "add job";
-	public final static String ARG_GOELITE_JOB = "jobid";
-	public final static String ARG_GOELITE_TABLABEL = "tablabel";
+	private final static String ADD_GOELITE_JOB = "add job";
+	private final static String ARG_GOELITE_JOB = "jobid";
+	private final static String ARG_GOELITE_TABLABEL = "tablabel";
+	
+	//VERSIONING
+	private final static String NET_ATTR_SETS = "org.genmapp.criteriasets_1.0";
+	private final static String NET_ATTR_SET_PREFIX = "org.genmapp.criteriaset.";
+	private final static String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
+	private final static String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 
-	public WorkspacesCyCommandHandler() {
+	public WorkspacesCommandHandler() {
 		super(CyCommandManager.reserveNamespace(NAMESPACE));
 
 		// addDescription(ADD_DATASET, "Add dataset to workspaces panel");
@@ -136,7 +142,7 @@ public class WorkspacesCyCommandHandler extends AbstractCommandHandler {
 			List<String> clist = Cytoscape.getNetworkAttributes()
 					.getListAttribute(
 							Cytoscape.getCurrentNetwork().getIdentifier(),
-							setname);
+							NET_ATTR_SET_PREFIX + setname);
 			criteriaCount = clist.size() - 1; // subtract 1 for mapTo entry
 
 			String[] split;
