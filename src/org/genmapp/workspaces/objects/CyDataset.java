@@ -1,56 +1,90 @@
 package org.genmapp.workspaces.objects;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 
 public class CyDataset {
 
-	private static URL url;
 	private String displayName;
+	private String commandString;
+	private String source;
 	private int rows;
-	private static boolean urlAttached;
+	public boolean isUrlAttached;
 
-	public static Map<String, URL> datasetUrlMap = new HashMap<String, URL>();
-	public static Map<String, Integer> datasetRowsMap = new HashMap<String, Integer>();
-	public static Map<String, String> datasetNetworkMap = new HashMap<String, String>();
+	public static Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
+	// public static Map<String, URL> datasetUrlMap = new HashMap<String,
+	// URL>();
+	// public static Map<String, Integer> datasetRowsMap = new HashMap<String,
+	// Integer>();
+	// public static Map<String, String> datasetNetworkMap = new HashMap<String,
+	// String>();
 	public static List<String> selectedDatasets = new ArrayList<String>();
 
 	/**
 	 * Analogous to CyNetwork, this is the base class of all dataset objects in
 	 * the workspaces panel.
 	 * 
-	 * @param u
-	 *            URL reference to source of dataset
 	 * @param n
 	 *            display name for dataset
-	 * @param r
-	 *            number of rows in dataset
+	 * @param c
+	 *            command string for dataset import
 	 */
-	public CyDataset(String n, URL u, int r) {
-		this.setUrl(u);
-		this.setDisplayName(n);
-		this.setRows(r);
+	public CyDataset(String n, String c) {
+		this.displayName = n;
+		this.commandString = c;
 
+		datasetNameMap.put(n, this);
+
+		extractRowCount();
 		verifyUrl();
 
-		datasetUrlMap.put(n, u);
-		datasetRowsMap.put(n, r);
-		// TODO: map to networks
-
+		// add to dataset panel
+		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
 	}
 
 	/**
 	 * Use this method to verify the url is still around. The urlAttached
 	 * boolean is set and can be used to inform UI elements and available
-	 * functions, e.g., reimporting a datset.
+	 * functions, e.g., reimporting a datset. If the url is not found, the row
+	 * count is set to 0.
 	 */
-	public static void verifyUrl() {
-		File f = new File(url.toString());
-		urlAttached = f.exists();
+	public void verifyUrl() {
+		String s = null;
+		Pattern p = Pattern.compile("source=\"(.+?)\"");
+		Matcher m = p.matcher(this.commandString);
+		while (m.find())
+			s = m.group(1);
+
+		this.source = s;
+
+		s = s.substring(s.indexOf(":") + 1);
+		File f = new File(s);
+		isUrlAttached = f.exists();
+		if (!isUrlAttached)
+			this.rows = 0;
+
+	}
+
+	/**
+	 * 
+	 */
+	public void extractRowCount() {
+		String s = null;
+		Pattern p = Pattern.compile("rows=\"(\\d+)\"");
+		Matcher m = p.matcher(this.commandString);
+		while (m.find())
+			s = m.group(1);
+
+		this.rows = Integer.decode(s);
 	}
 
 	/**
@@ -68,27 +102,31 @@ public class CyDataset {
 		CyDataset.selectedDatasets = selectedDatasets;
 	}
 
-	public void setUrl(URL url) {
-		this.url = url;
-	}
-
-	public URL getUrl() {
-		return url;
-	}
-
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
-
+	/**
+	 * @return
+	 */
 	public String getDisplayName() {
 		return displayName;
 	}
 
-	public void setRows(int rows) {
-		this.rows = rows;
-	}
-
+	/**
+	 * @return
+	 */
 	public int getRows() {
 		return rows;
+	}
+
+	/**
+	 * @return the commandString
+	 */
+	public String getCommandString() {
+		return commandString;
+	}
+
+	/**
+	 * @return the url
+	 */
+	public String getSource() {
+		return this.source;
 	}
 }

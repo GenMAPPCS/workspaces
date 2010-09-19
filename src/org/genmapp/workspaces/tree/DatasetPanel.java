@@ -22,7 +22,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -50,6 +49,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.command.WorkspacesCyCommandHandler;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -157,10 +157,8 @@ public class DatasetPanel extends JPanel
 
 		// create and populate the popup window
 		popup = new JPopupMenu();
-		destroyDatasetItem = new JMenuItem(
-				PopupActionListener.DESTROY_DATASET);
-		editDatasetTitle = new JMenuItem(
-				PopupActionListener.EDIT_DATASET_TITLE);
+		destroyDatasetItem = new JMenuItem(PopupActionListener.DESTROY_DATASET);
+		editDatasetTitle = new JMenuItem(PopupActionListener.EDIT_DATASET_TITLE);
 		reloadDataset = new JMenuItem(PopupActionListener.RELOAD_DATA);
 		createNetwork = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		// action listener which performs the tasks associated with the popup
@@ -177,9 +175,9 @@ public class DatasetPanel extends JPanel
 
 	public void resetTable() {
 		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName())
-				.setPreferredWidth(215);
+				.setPreferredWidth(230);
 		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
-				.setPreferredWidth(45);
+				.setPreferredWidth(30);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);
 
 	}
@@ -466,19 +464,10 @@ public class DatasetPanel extends JPanel
 			} else if (RELOAD_DATA.equals(label)) {
 				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
 				for (String dataset : selectedDatasets) {
-					URL url = CyDataset.datasetUrlMap.get(dataset);
-					Map<String, Object> args = new HashMap<String, Object>();
-					args.put("source", url);
-					try {
-						CyCommandResult result = CyCommandManager.execute(
-								"genmappimporter", "reimport", args);
-					} catch (CyCommandException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (RuntimeException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					String com = CyDataset.datasetNameMap.get(dataset)
+							.getCommandString();
+					com = "genmappimporter import " + com;
+					WorkspacesCyCommandHandler.handleCommand(com);
 				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
@@ -500,22 +489,24 @@ public class DatasetPanel extends JPanel
 			super.getTreeCellRendererComponent(tree, value, sel, expanded,
 					leaf, row, hasFocus);
 
-			if (isDataset(value)) {
-				setBackgroundNonSelectionColor(java.awt.Color.green.brighter());
-				setBackgroundSelectionColor(java.awt.Color.green.darker());
-			} else {
-				setBackgroundNonSelectionColor(java.awt.Color.red.brighter());
-				setBackgroundSelectionColor(java.awt.Color.red.darker());
+			String nodeid = ((GenericTreeNode) value).getID();
+			
+			if (!nodeid.equals("droot")) {
+				CyDataset cd = CyDataset.datasetNameMap.get(nodeid);
+				setToolTipText(cd.getSource());
+
+				if (cd.isUrlAttached) {
+					setBackgroundNonSelectionColor(java.awt.Color.green
+							.brighter());
+					setBackgroundSelectionColor(java.awt.Color.green.darker());
+				} else {
+					setBackgroundNonSelectionColor(java.awt.Color.red
+							.brighter());
+					setBackgroundSelectionColor(java.awt.Color.red.darker());
+				}
 			}
 
 			return this;
-		}
-
-		private boolean isDataset(Object value) {
-			GenericTreeNode node = (GenericTreeNode) value;
-			setToolTipText(node.getID());
-
-			return CyDataset.datasetUrlMap.containsKey(node.getID());
 		}
 	}
 }

@@ -13,7 +13,7 @@ public enum GenericColumnTypes {
 	DATASET_ICONS("Overview", Icon.class), 
 	ROWS("Rows", String.class),
 	CRITERIA_SET_ICONS("Overview", Icon.class), 
-	CRITERIA_SET("Criteria Sets", TreeTableModel.class), 
+	CRITERIA_SET("Criteria Set", TreeTableModel.class), 
 	CRITERIA("Criteria", String.class);
 
 	private final String displayName;

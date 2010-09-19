@@ -88,7 +88,7 @@ public final class DatasetTreeTableModel extends AbstractTreeTableModel {
 		if (columnNames.get(column).equals(GenericColumnTypes.DATASET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
 		else if (columnNames.get(column).equals(GenericColumnTypes.ROWS)) {
-			int rows = CyDataset.datasetRowsMap.get((((GenericTreeNode) node).getID()));
+			int rows = CyDataset.datasetNameMap.get(((GenericTreeNode) node).getID()).getRows();
 			return "" + rows;
 		} else if (columnNames.get(column).equals(GenericColumnTypes.DATASET_ICONS)) {
 			return datasetIcons.get(((GenericTreeNode) node).getID());

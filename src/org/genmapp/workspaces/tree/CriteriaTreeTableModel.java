@@ -26,7 +26,7 @@ public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 		super(root);
 		columnNames = new ArrayList<GenericColumnTypes>();
 		columnNames.add(GenericColumnTypes.CRITERIA_SET);
-		columnNames.add(GenericColumnTypes.CRITERIA);
+		columnNames.add(GenericColumnTypes.ROWS);
 		columnNames.add(GenericColumnTypes.NODES);
 
 		icons = new HashMap<String, Icon>();
@@ -87,7 +87,7 @@ public final class CriteriaTreeTableModel extends AbstractTreeTableModel {
 	public Object getValueAt(Object node, int column) {
 		if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA_SET))
 			return ((DefaultMutableTreeNode) node).getUserObject();
-		else if (columnNames.get(column).equals(GenericColumnTypes.CRITERIA)) {
+		else if (columnNames.get(column).equals(GenericColumnTypes.ROWS)) {
 			return CyCriteria.criteriaRowsMap.get(((GenericTreeNode) node).getID());
 		} else if (columnNames.get(column).equals(GenericColumnTypes.NODES)){
 			Map<String, Integer> networkNodes = CyCriteria.criteriaNetworkNodesMap.get(((GenericTreeNode) node).getID());
