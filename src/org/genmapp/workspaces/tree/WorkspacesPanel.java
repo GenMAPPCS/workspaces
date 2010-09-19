@@ -16,76 +16,45 @@
 package org.genmapp.workspaces.tree;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import javax.swing.BoxLayout;
-import javax.swing.InputMap;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTree;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.ToolTipManager;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.SwingPropertyChangeSupport;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 
-import org.genmapp.workspaces.objects.CyDataset;
-
-import cytoscape.CyNetwork;
-import cytoscape.CyNetworkTitleChange;
 import cytoscape.Cytoscape;
-import cytoscape.actions.ApplyVisualStyleAction;
-import cytoscape.actions.CreateNetworkViewAction;
-import cytoscape.command.CyCommandException;
-import cytoscape.command.CyCommandManager;
-import cytoscape.command.CyCommandResult;
-import cytoscape.data.SelectEvent;
-import cytoscape.data.SelectEventListener;
-import cytoscape.logger.CyLogger;
-import cytoscape.util.CyNetworkNaming;
-import cytoscape.util.swing.JTreeTable;
-import cytoscape.view.CyNetworkView;
+import cytoscape.CytoscapeInit;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
 
 /**
  * GUI component for managing network list in current session.
  */
-public class WorkspacesPanel extends JPanel {
+public class WorkspacesPanel extends JPanel  {
 
 	private static final long serialVersionUID = -7102083850894612840L;
 
 	private static final int DEF_DEVIDER_LOCATION = 280;
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
+	private SpeciesPanel speciesPanel;
 	private NetworkPanel networkTreePanel;
 	private DatasetPanel datasetTreePanel;
 	private CriteriaPanel criteriaTreePanel;
@@ -107,17 +76,10 @@ public class WorkspacesPanel extends JPanel {
 		super();
 		this.cytoscapeDesktop = Cytoscape.getDesktop();
 
-		initialize();
-
-	}
-
-	/**
-	 * Initialize GUI components
-	 */
-	private void initialize() {
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(PANEL_PREFFERED_WIDTH, 700));
 
+		speciesPanel = new SpeciesPanel();
 		networkTreePanel = new NetworkPanel();
 		datasetTreePanel = new DatasetPanel();
 		criteriaTreePanel = new CriteriaPanel();
@@ -130,7 +92,8 @@ public class WorkspacesPanel extends JPanel {
 		navigatorPanel.setPreferredSize(new Dimension(180, 180));
 
 		JPanel wsPanel = new JPanel();
-		wsPanel.setLayout(new GridLayout(3, 1, 0, 0));
+		wsPanel.setLayout(new GridLayout(4, 1, 0, 0));
+		wsPanel.add(speciesPanel);
 		wsPanel.add(networkTreePanel);
 		wsPanel.add(datasetTreePanel);
 		wsPanel.add(criteriaTreePanel);
@@ -189,5 +152,6 @@ public class WorkspacesPanel extends JPanel {
 	// public ReportPanel getReportTreePanel() {
 	// return reportTreePanel;
 	// }
+
 
 }
