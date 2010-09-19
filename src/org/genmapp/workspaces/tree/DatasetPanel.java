@@ -24,10 +24,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
@@ -54,9 +53,6 @@ import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
-import cytoscape.command.CyCommandException;
-import cytoscape.command.CyCommandManager;
-import cytoscape.command.CyCommandResult;
 import cytoscape.data.SelectEvent;
 import cytoscape.data.SelectEventListener;
 import cytoscape.logger.CyLogger;
@@ -308,40 +304,38 @@ public class DatasetPanel extends JPanel
 		// TODO: Every time user select a network name, this method will be
 		// called 3 times!
 
-		// do nothing. no selection model for datasets
+		/*
+		 * Support concurrent selections across panels
+		 */
+		JTree mtree = treeTable.getTree();
 
-		// /*
-		// * Support concurrent selections across panels
-		// */
-		// JTree mtree = TreeTable.getTree();
-		//
-		// // sets the "current" dataset based on last node in the tree selected
-		// GenericTreeNode node = (GenericTreeNode) mtree
-		// .getLastSelectedPathComponent();
-		// if (node == null || node.getUserObject() == null)
-		// return;
-		//
-		// // creates a list of all selected datasets
-		// final List<String> datasetList = new LinkedList<String>();
-		// try {
-		// for (int i = mtree.getMinSelectionRow(); i <= mtree
-		// .getMaxSelectionRow(); i++) {
-		// GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
-		// .getLastPathComponent();
-		// if (n != null && n.getUserObject() != null
-		// && mtree.isRowSelected(i))
-		// datasetList.add(n.getID());
-		// }
-		// } catch (Exception ex) {
-		// CyLogger.getLogger().warn(
-		// "Exception handling dataset panel change: "
-		// + ex.getMessage());
-		// ex.printStackTrace();
-		// }
-		//
-		// if (datasetList.size() > 0) {
-		// CyDataset.setSelectedDataset(datasetList);
-		// }
+		// sets the "current" dataset based on last node in the tree selected
+		GenericTreeNode node = (GenericTreeNode) mtree
+				.getLastSelectedPathComponent();
+		if (node == null || node.getUserObject() == null)
+			return;
+
+		// creates a list of all selected datasets
+		final List<String> datasetList = new LinkedList<String>();
+		try {
+			for (int i = mtree.getMinSelectionRow(); i <= mtree
+					.getMaxSelectionRow(); i++) {
+				GenericTreeNode n = (GenericTreeNode) mtree.getPathForRow(i)
+						.getLastPathComponent();
+				if (n != null && n.getUserObject() != null
+						&& mtree.isRowSelected(i))
+					datasetList.add(n.getID());
+			}
+		} catch (Exception ex) {
+			CyLogger.getLogger().warn(
+					"Exception handling dataset panel change: "
+							+ ex.getMessage());
+			ex.printStackTrace();
+		}
+
+		if (datasetList.size() > 0) {
+			CyDataset.setSelectedDataset(datasetList);
+		}
 	}
 
 	/**
@@ -490,7 +484,7 @@ public class DatasetPanel extends JPanel
 					leaf, row, hasFocus);
 
 			String nodeid = ((GenericTreeNode) value).getID();
-			
+
 			if (!nodeid.equals("droot")) {
 				CyDataset cd = CyDataset.datasetNameMap.get(nodeid);
 				setToolTipText(cd.getSource());
