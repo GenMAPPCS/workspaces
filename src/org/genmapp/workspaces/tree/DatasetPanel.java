@@ -346,8 +346,13 @@ public class DatasetPanel extends JPanel
 	 */
 	public void propertyChange(PropertyChangeEvent e) {
 		// TODO: add appropriate items here
-		if (Cytoscape.CYTOSCAPE_INITIALIZED.equals(e.getPropertyName())) {
+		String prop = e.getPropertyName();
+		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
 			// ?
+
+		} else if (prop.equals(Cytoscape.NETWORK_CREATED)) {
+			// reload all attached datasets
+			
 		}
 	}
 

@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -42,7 +41,10 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 
-public class SpeciesPanel extends JPanel implements ActionListener {
+public class SpeciesPanel extends JPanel
+		implements
+			ActionListener,
+			PropertyChangeListener {
 
 	private static final String bridgedbOrglist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
 	private static final String bridgedbDerbylist = "http://bridgedb.org/data/gene_database/";
@@ -83,7 +85,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 		speciesBox.setAlignmentX(CENTER_ALIGNMENT);
 
 		/*
-		 * Start thread to fill in available species. 
+		 * Start thread to fill in available species.
 		 */
 		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
@@ -95,7 +97,6 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 			}
 		};
 		worker.execute();
-		
 
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		this.setBackground(grey);
@@ -134,20 +135,46 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 
 		genmappcsdatadir = System.getProperty("user.home") + genmappcsdatadir;
 
-		// hold until Cytoscape is initialized
-		addInitializationListener();
+		// Make this a prop change listener for Cytoscape global events.
+		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
 	}
 
-	public void addInitializationListener() {
-		PropertyChangeSupport pcs = Cytoscape.getPropertyChangeSupport();
+	/**
+	 * DOCUMENT ME!
+	 * 
+	 * @param e
+	 *            DOCUMENT ME!
+	 */
+	public void propertyChange(PropertyChangeEvent e) {
+		// TODO: add appropriate items here
+		String prop = e.getPropertyName();
+		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
+			/*
+			 * Start thread to "listen" for registration of default resources by
+			 * CyThesaurus. Usually takes just over a second so we sleep for bit
+			 * before trying.
+			 */
+			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
-		pcs.addPropertyChangeListener(Cytoscape.CYTOSCAPE_INITIALIZED,
-				new PropertyChangeListener() {
-					public void propertyChange(PropertyChangeEvent evt) {
-						// reach out
-						listResources();
+				public String doInBackground() {
+					String msg = "done!";
+					int resourcesCount = 0;
+					while (resourcesCount == 0) {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						resourcesCount = listResources();
 					}
-				});
+					return msg;
+				}
+			};
+			worker.execute();
+
+		} else if (prop.equals(Cytoscape.NETWORK_CREATED)) {
+			// Apply selected criteria set(s)
+		}
 	}
 
 	private static void checkSupportedOrganisms() {
@@ -183,7 +210,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 				}
 			}
 		});
-
+		//TODO: refactor executor
 		try {
 			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
 				System.err.println("Failed to connect to " + strUrl);
@@ -196,12 +223,14 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 		return ret;
 	}
 
-	public void listResources() {
+	public Integer listResources() {
+		int count = 0;
 		Map<String, Object> args = new HashMap<String, Object>();
 		try {
 			CyCommandResult result = CyCommandManager.execute("idmapping",
 					"list selected resources", args);
 			Set<String> mappers = (Set<String>) result.getResult();
+			count = mappers.size();
 			String db2ReList = "";
 			for (String re : mappers) {
 				if (re.startsWith("idmapper-bridgerest")) {
@@ -236,6 +265,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return count;
 	}
 
 	/**
@@ -400,7 +430,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 					oldSpecies, newSpecies);
 
 		/*
-		 * Start thread to register new resources per species selection. 
+		 * Start thread to register new resources per species selection.
 		 */
 		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
@@ -411,7 +441,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 			}
 		};
 		worker.execute();
-		
+
 		// for debugging...
 		// updateResources();
 	}

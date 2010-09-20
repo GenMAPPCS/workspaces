@@ -1,8 +1,6 @@
 package org.genmapp.workspaces.objects;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,12 +19,6 @@ public class CyDataset {
 	public boolean isUrlAttached;
 
 	public static Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
-	// public static Map<String, URL> datasetUrlMap = new HashMap<String,
-	// URL>();
-	// public static Map<String, Integer> datasetRowsMap = new HashMap<String,
-	// Integer>();
-	// public static Map<String, String> datasetNetworkMap = new HashMap<String,
-	// String>();
 	public static List<String> selectedDatasets = new ArrayList<String>();
 
 	/**
