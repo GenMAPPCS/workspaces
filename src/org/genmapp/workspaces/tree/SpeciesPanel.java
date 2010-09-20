@@ -159,6 +159,7 @@ public class SpeciesPanel extends JPanel
 				public String doInBackground() {
 					String msg = "done!";
 					int resourcesCount = 0;
+					int attempts = 0;
 					while (resourcesCount == 0) {
 						try {
 							Thread.sleep(1000);
@@ -166,6 +167,12 @@ public class SpeciesPanel extends JPanel
 							e.printStackTrace();
 						}
 						resourcesCount = listResources();
+						if (attempts++ == 5){
+							dbConnection.setText("no connections!");
+							dbConnection.setToolTipText("please try again");
+							dbConnection.setForeground(red);
+							resourcesCount = -1;
+						}
 					}
 					return msg;
 				}
