@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -25,12 +27,15 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.BoxLayout;
 import javax.swing.CellRendererPane;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToolTip;
+import javax.swing.SpringLayout;
 import javax.swing.SwingWorker;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
@@ -44,7 +49,8 @@ import cytoscape.command.CyCommandResult;
 public class SpeciesPanel extends JPanel
 		implements
 			ActionListener,
-			PropertyChangeListener {
+			PropertyChangeListener,
+			MouseListener {
 
 	private static final String bridgedbOrglist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
 	private static final String bridgedbDerbylist = "http://bridgedb.org/data/gene_database/";
@@ -52,6 +58,8 @@ public class SpeciesPanel extends JPanel
 	private String speciesState = null;
 	private String connState = null;
 	private static JComboBox speciesBox;
+	private JButton configButton;
+	private JButton downloadButton;
 	private boolean autoRegister = false;
 	private static JLabel dbConnection;
 	private static JLabel db2Connection;
@@ -81,8 +89,17 @@ public class SpeciesPanel extends JPanel
 		this.speciesState = defaultSpecies;
 		speciesBox.addItem(defaultSpecies);
 		speciesBox.addActionListener(this);
-		speciesBox.setAlignmentY(TOP_ALIGNMENT);
-		speciesBox.setAlignmentX(CENTER_ALIGNMENT);
+
+		configButton = new JButton(new ImageIcon(getClass().getResource(
+				"../images/genmappcs.png")));
+		downloadButton = new JButton(new ImageIcon(getClass().getResource(
+				"../images/genmappcs.png")));
+		configButton.addMouseListener(this);
+		downloadButton.addMouseListener(this);
+
+		this.add(speciesBox);
+		this.add(downloadButton);
+		this.add(configButton);
 
 		/*
 		 * Start thread to fill in available species.
@@ -98,11 +115,6 @@ public class SpeciesPanel extends JPanel
 		};
 		worker.execute();
 
-		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		this.setBackground(grey);
-		this.setMinimumSize(new Dimension(180, 60));
-		this.add(speciesBox);
-
 		// add connection text
 		dbConnection = new JLabel("initializing...") {
 			public JToolTip createToolTip() {
@@ -112,10 +124,6 @@ public class SpeciesPanel extends JPanel
 		dbConnection.setForeground(blue);
 		dbConnection.setFont(new Font("Arial", Font.ITALIC, 12));
 		dbConnection.setForeground(blue);
-		dbConnection.setSize(170, 30);
-		dbConnection.setAlignmentX(CENTER_ALIGNMENT);
-		dbConnection.setAlignmentY(TOP_ALIGNMENT);
-
 		this.add(dbConnection);
 
 		// add label for secondary db connections
@@ -126,10 +134,38 @@ public class SpeciesPanel extends JPanel
 		};
 
 		db2Connection.setFont(new Font("Arial", Font.ITALIC, 12));
-		db2Connection.setSize(170, 30);
-		db2Connection.setAlignmentX(CENTER_ALIGNMENT);
-		db2Connection.setAlignmentY(TOP_ALIGNMENT);
 		this.add(db2Connection);
+
+		// Layout
+		SpringLayout layout = new SpringLayout();
+		layout.putConstraint(SpringLayout.WEST, speciesBox, 5,
+				SpringLayout.WEST, this);
+		layout.putConstraint(SpringLayout.NORTH, speciesBox, 3,
+				SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.WEST, downloadButton, 1,
+				SpringLayout.EAST, speciesBox);
+		layout.putConstraint(SpringLayout.NORTH, downloadButton, 1,
+				SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.WEST, configButton, 1,
+				SpringLayout.EAST, downloadButton);
+		layout.putConstraint(SpringLayout.NORTH, configButton, 1,
+				SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, dbConnection,
+				0, SpringLayout.HORIZONTAL_CENTER, this);
+		layout.putConstraint(SpringLayout.NORTH, dbConnection,
+				5, SpringLayout.SOUTH, speciesBox);
+		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, db2Connection,
+				0, SpringLayout.HORIZONTAL_CENTER, this);
+		layout.putConstraint(SpringLayout.NORTH, db2Connection,
+				2, SpringLayout.SOUTH, dbConnection);
+
+		this.setLayout(layout);
+
+		// this.setBackground(grey);
+		this.setMinimumSize(new Dimension(310, 70));
+		this.setPreferredSize(new Dimension(310, 70));
+		this.setMaximumSize(new Dimension(400, 70));
+		
 
 		// add config... and download... links
 
@@ -167,7 +203,7 @@ public class SpeciesPanel extends JPanel
 							e.printStackTrace();
 						}
 						resourcesCount = listResources();
-						if (attempts++ == 5){
+						if (attempts++ == 5) {
 							dbConnection.setText("no connections!");
 							dbConnection.setToolTipText("please try again");
 							dbConnection.setForeground(red);
@@ -217,7 +253,7 @@ public class SpeciesPanel extends JPanel
 				}
 			}
 		});
-		//TODO: refactor executor
+		// TODO: refactor executor
 		try {
 			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
 				System.err.println("Failed to connect to " + strUrl);
@@ -451,6 +487,36 @@ public class SpeciesPanel extends JPanel
 
 		// for debugging...
 		// updateResources();
+	}
+
+	public void mouseClicked(MouseEvent e) {
+
+		if (e.getSource().equals(configButton)) {
+			System.out.println("OPEN CONFIG");
+		} else if (e.getSource().equals(downloadButton)) {
+			System.out.println("OPEN DOWNLOAD");
+		}
+
+	}
+
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+
 	}
 }
 

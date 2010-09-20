@@ -16,32 +16,16 @@
 package org.genmapp.workspaces.tree;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SpringLayout;
 
 import cytoscape.Cytoscape;
-import cytoscape.CytoscapeInit;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
 
@@ -88,7 +72,7 @@ public class WorkspacesPanel extends JPanel  {
 		// reportTreePanel = new ReportPanel();
 
 		navigatorPanel = new JPanel();
-		navigatorPanel.setMinimumSize(new Dimension(120, 120));
+		navigatorPanel.setMinimumSize(new Dimension(180, 180));
 		navigatorPanel.setMaximumSize(new Dimension(180, 180));
 		navigatorPanel.setPreferredSize(new Dimension(180, 180));
 
@@ -97,20 +81,11 @@ public class WorkspacesPanel extends JPanel  {
 		main.add(networkTreePanel);
 		main.add(datasetTreePanel);
 		main.add(criteriaTreePanel);
-		main.setAlignmentX(CENTER_ALIGNMENT);
-		
-		speciesPanel.setAlignmentX(CENTER_ALIGNMENT);
-		speciesPanel.setAlignmentY(TOP_ALIGNMENT);
-		JPanel spacer = new JPanel();
-		spacer.setMinimumSize(new Dimension(180,7));
-		spacer.setBackground(new Color(230, 230, 230));
 		
 		JPanel wsPanel = new JPanel();
 		wsPanel.setLayout(new BoxLayout(wsPanel, BoxLayout.Y_AXIS));
 		wsPanel.add(speciesPanel);
-		wsPanel.add(spacer);
 		wsPanel.add(main);
-
 		// wsPanel.add(analysisTreePanel);
 		// wsPanel.add(reportTreePanel);
 
