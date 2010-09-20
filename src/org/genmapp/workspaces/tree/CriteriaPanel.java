@@ -170,9 +170,9 @@ public class CriteriaPanel extends JPanel
 
 	public void resetTable() {
 		treeTable.getColumn(GenericColumnTypes.CRITERIA_SET.getDisplayName())
-				.setPreferredWidth(200);
+				.setPreferredWidth(190);
 		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
-				.setPreferredWidth(20);
+				.setPreferredWidth(30);
 		treeTable.getColumn(GenericColumnTypes.NODES.getDisplayName())
 				.setPreferredWidth(40);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);

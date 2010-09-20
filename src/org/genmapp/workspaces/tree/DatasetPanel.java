@@ -171,9 +171,9 @@ public class DatasetPanel extends JPanel
 
 	public void resetTable() {
 		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName())
-				.setPreferredWidth(230);
+				.setPreferredWidth(220);
 		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
-				.setPreferredWidth(30);
+				.setPreferredWidth(40);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);
 
 	}

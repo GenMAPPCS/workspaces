@@ -1,7 +1,6 @@
 package org.genmapp.workspaces.tree;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -33,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToolTip;
+import javax.swing.SwingWorker;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
 
@@ -81,18 +81,29 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 		speciesBox.addActionListener(this);
 		speciesBox.setAlignmentY(TOP_ALIGNMENT);
 		speciesBox.setAlignmentX(CENTER_ALIGNMENT);
+
+		/*
+		 * Start thread to fill in available species. 
+		 */
+		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+
+			public String doInBackground() {
+				String msg = "done!";
+				checkSupportedOrganisms();
+				// TODO: store local copy for offline operation
+				return msg;
+			}
+		};
+		worker.execute();
 		
-		checkSupportedOrganisms();
-		// TODO: store local copy for offline operation
 
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		this.setBackground(grey);
 		this.setMinimumSize(new Dimension(180, 60));
 		this.add(speciesBox);
 
-
 		// add connection text
-		dbConnection = new JLabel("initializing..."){
+		dbConnection = new JLabel("initializing...") {
 			public JToolTip createToolTip() {
 				return new JMultiLineToolTip();
 			}
@@ -103,7 +114,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 		dbConnection.setSize(170, 30);
 		dbConnection.setAlignmentX(CENTER_ALIGNMENT);
 		dbConnection.setAlignmentY(TOP_ALIGNMENT);
-		
+
 		this.add(dbConnection);
 
 		// add label for secondary db connections
@@ -372,7 +383,7 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		JComboBox b = (JComboBox) e.getSource();
 		String oldSpecies = this.speciesState;
-		String newSpecies = (String) b.getSelectedItem();
+		final String newSpecies = (String) b.getSelectedItem();
 		CytoscapeInit.getProperties().setProperty("defaultSpeciesName",
 				newSpecies);
 
@@ -388,13 +399,21 @@ public class SpeciesPanel extends JPanel implements ActionListener {
 			Cytoscape.firePropertyChange(Cytoscape.PREFERENCE_MODIFIED,
 					oldSpecies, newSpecies);
 
-		// attempt to register resources per species selection
-		// update text with name of resource connected (in green; use red text
-		// while disconnected);
-		collectResources(newSpecies);
+		/*
+		 * Start thread to register new resources per species selection. 
+		 */
+		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
-		//just testing...
-//		updateResources();
+			public String doInBackground() {
+				String msg = "done!";
+				collectResources(newSpecies);
+				return msg;
+			}
+		};
+		worker.execute();
+		
+		// for debugging...
+		// updateResources();
 	}
 }
 
