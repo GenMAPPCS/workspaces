@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import cytoscape.CyNetwork;
@@ -108,7 +109,8 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 		} else if (columnNames.get(column).equals(GenericColumnTypes.NETWORK_ICONS)
 				&& aValue instanceof Icon) {
 			networkIcons.put(((GenericTreeNode) node).getID(),
-					(Icon) aValue);
+					new ImageIcon(getClass().getResource(
+					"../images/network.png")));
 		}
 	}
 }

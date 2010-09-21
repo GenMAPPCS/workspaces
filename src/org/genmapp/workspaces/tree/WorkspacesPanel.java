@@ -23,7 +23,6 @@ import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.SpringLayout;
 
 import cytoscape.Cytoscape;
 import cytoscape.view.CytoscapeDesktop;
