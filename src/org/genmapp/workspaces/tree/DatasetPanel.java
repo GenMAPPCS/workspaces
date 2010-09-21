@@ -62,9 +62,8 @@ import cytoscape.view.cytopanels.BiModalJSplitPane;
 /**
  * GUI component for managing network list in current session.
  */
-public class DatasetPanel extends JPanel
-		implements
-			PropertyChangeListener,
+public class DatasetPanel extends JPanel implements
+// PropertyChangeListener,
 			TreeSelectionListener,
 			SelectEventListener,
 			ChangeListener {
@@ -123,7 +122,7 @@ public class DatasetPanel extends JPanel
 		pcs = new SwingPropertyChangeSupport(this);
 
 		// Make this a prop change listener for Cytoscape global events.
-		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
+		// Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
 
 		// For listening to adding/removing Visual Style events.
 		Cytoscape.getVisualMappingManager().addChangeListener(this);
@@ -253,6 +252,21 @@ public class DatasetPanel extends JPanel
 	}
 
 	/**
+	 * Reimport all attached datasets
+	 * 
+	 */
+	public void reloadDataset() {
+		for (CyDataset cd : CyDataset.datasetNameMap.values()) {
+			if (cd.isUrlAttached) {
+				String com = cd.getCommandString();
+				com = "genmappimporter import " + com;
+				WorkspacesCommandHandler.handleCommand(com);
+			}
+		}
+
+	}
+
+	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param id
@@ -344,18 +358,14 @@ public class DatasetPanel extends JPanel
 	 * @param e
 	 *            DOCUMENT ME!
 	 */
-	public void propertyChange(PropertyChangeEvent e) {
-		// TODO: add appropriate items here
-		String prop = e.getPropertyName();
-		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
-			// ?
-
-		} else if (prop.equals(Cytoscape.NETWORK_CREATED)) {
-			// reload all attached datasets
-			
-		}
-	}
-
+	// public void propertyChange(PropertyChangeEvent e) {
+	// // TODO: add appropriate items here
+	// String prop = e.getPropertyName();
+	// if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
+	// // nothing
+	//
+	// }
+	// }
 	/**
 	 * This class listens to mouse events from the TreeTable, if the mouse event
 	 * is one that is canonically associated with a popup menu (ie, a right

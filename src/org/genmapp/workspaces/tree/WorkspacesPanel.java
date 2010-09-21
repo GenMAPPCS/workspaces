@@ -19,10 +19,13 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SwingWorker;
 
 import cytoscape.Cytoscape;
 import cytoscape.view.CytoscapeDesktop;
@@ -31,7 +34,7 @@ import cytoscape.view.cytopanels.BiModalJSplitPane;
 /**
  * GUI component for managing network list in current session.
  */
-public class WorkspacesPanel extends JPanel  {
+public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 
 	private static final long serialVersionUID = -7102083850894612840L;
 
@@ -39,16 +42,14 @@ public class WorkspacesPanel extends JPanel  {
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
 	private SpeciesPanel speciesPanel;
-	private NetworkPanel networkTreePanel;
-	private DatasetPanel datasetTreePanel;
-	private CriteriaPanel criteriaTreePanel;
+	private NetworkPanel networkPanel;
+	private DatasetPanel datasetPanel;
+	private CriteriaPanel criteriaPanel;
 	// private AnalysisPanel analysisTreePanel;
 	// private ReportPanel reportTreePanel;
 
 	private JPanel navigatorPanel;
-
 	private BiModalJSplitPane split;
-
 	private final CytoscapeDesktop cytoscapeDesktop;
 
 	/**
@@ -64,9 +65,9 @@ public class WorkspacesPanel extends JPanel  {
 		setPreferredSize(new Dimension(PANEL_PREFFERED_WIDTH, 700));
 
 		speciesPanel = new SpeciesPanel();
-		networkTreePanel = new NetworkPanel();
-		datasetTreePanel = new DatasetPanel();
-		criteriaTreePanel = new CriteriaPanel();
+		networkPanel = new NetworkPanel();
+		datasetPanel = new DatasetPanel();
+		criteriaPanel = new CriteriaPanel();
 		// analysisTreePanel = new AnalysisPanel();
 		// reportTreePanel = new ReportPanel();
 
@@ -77,9 +78,9 @@ public class WorkspacesPanel extends JPanel  {
 
 		JPanel main = new JPanel();
 		main.setLayout(new GridLayout(3, 1, 0, 0));
-		main.add(networkTreePanel);
-		main.add(datasetTreePanel);
-		main.add(criteriaTreePanel);
+		main.add(networkPanel);
+		main.add(datasetPanel);
+		main.add(criteriaPanel);
 		
 		JPanel wsPanel = new JPanel();
 		wsPanel.setLayout(new BoxLayout(wsPanel, BoxLayout.Y_AXIS));
@@ -94,6 +95,9 @@ public class WorkspacesPanel extends JPanel  {
 		split.setResizeWeight(1);
 		split.setDividerLocation(DEF_DEVIDER_LOCATION);
 		add(split);
+		
+		// Make this a prop change listener for Cytoscape global events.
+		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
 	}
 	/**
 	 * DOCUMENT ME!
@@ -110,21 +114,55 @@ public class WorkspacesPanel extends JPanel  {
 	 * @return the networkTreePanel
 	 */
 	public NetworkPanel getNetworkTreePanel() {
-		return networkTreePanel;
+		return networkPanel;
 	}
 
 	/**
 	 * @return the datasetTreePanel
 	 */
 	public DatasetPanel getDatasetTreePanel() {
-		return datasetTreePanel;
+		return datasetPanel;
 	}
 
 	/**
 	 * @return the criteriaTreePanel
 	 */
 	public CriteriaPanel getCriteriaTreePanel() {
-		return criteriaTreePanel;
+		return criteriaPanel;
+	}
+	public void propertyChange(PropertyChangeEvent evt) {
+		String prop = evt.getPropertyName();
+		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
+			// nothing
+
+		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
+			// reload all attached datasets
+//			try {
+//				Thread.sleep(10000);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			
+			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+
+				public String doInBackground() {
+					String msg = "done!";
+//					System.out.println("NEW :"+evt.getNewValue());
+					datasetPanel.reloadDataset();
+					
+					return msg;
+				}
+			};
+			worker.execute();
+
+			
+			
+			// then apply select criteria set(s)
+			
+		}
+
+		
 	}
 
 	// /**
