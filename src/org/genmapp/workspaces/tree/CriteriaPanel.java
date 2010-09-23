@@ -99,7 +99,7 @@ public class CriteriaPanel extends JPanel
 	public CriteriaPanel() {
 		super();
 
-		root = new GenericTreeNode("Criteria Root", "droot");
+		root = new GenericTreeNode("Criteria Root", "croot");
 		criteriaTreeTableModel = new CriteriaTreeTableModel(root);
 
 		treeTable = new JTreeTable(criteriaTreeTableModel);
@@ -217,6 +217,13 @@ public class CriteriaPanel extends JPanel
 		node.removeFromParent();
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
+
+		// reset view
+		if (criteriaTreeTableModel.getChildCount(root) < 1) {
+			this.setVisible(false);
+			ActionPanel.runGoelite.setDoable(false);
+		}
+
 	}
 
 	/**
@@ -227,6 +234,10 @@ public class CriteriaPanel extends JPanel
 	 * 
 	 */
 	public void addItem(String id, String parent_id) {
+		// activate
+		this.setVisible(true);
+		ActionPanel.runGoelite.setDoable(true);
+
 		// first see if it exists
 		if (getTreeNode(id) == null) {
 			GenericTreeNode dmtn = new GenericTreeNode(id, id);

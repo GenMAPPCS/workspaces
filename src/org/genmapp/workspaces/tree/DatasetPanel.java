@@ -49,6 +49,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
+import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -226,6 +227,12 @@ public class DatasetPanel extends JPanel implements
 	 *            DOCUMENT ME!
 	 */
 	public void addItem(String id, String parent_id) {
+		// activate
+		this.setVisible(true);
+		ActionPanel.newCriteriaSet.setDoable(true);
+		if (CyCriteria.criteriaNameMap.isEmpty() && !ActionPanel.workflowState)
+			ActionPanel.actionCombobox.setSelectedItem(ActionPanel.newCriteriaSet);
+		
 		// first see if it exists
 		if (getTreeNode(id) == null) {
 			GenericTreeNode dmtn = new GenericTreeNode(id, id);

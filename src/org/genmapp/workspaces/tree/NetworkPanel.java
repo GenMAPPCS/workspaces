@@ -15,24 +15,18 @@
  ******************************************************************************/
 package org.genmapp.workspaces.tree;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -43,7 +37,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -65,9 +58,6 @@ import cytoscape.CyNetworkTitleChange;
 import cytoscape.Cytoscape;
 import cytoscape.actions.ApplyVisualStyleAction;
 import cytoscape.actions.CreateNetworkViewAction;
-import cytoscape.command.CyCommandException;
-import cytoscape.command.CyCommandManager;
-import cytoscape.command.CyCommandResult;
 import cytoscape.data.SelectEvent;
 import cytoscape.data.SelectEventListener;
 import cytoscape.logger.CyLogger;
@@ -175,14 +165,11 @@ public class NetworkPanel extends JPanel
 
 		// NETWORKS: create and populate the popup window
 		popup = new JPopupMenu();
-		editNetworkTitle = new JMenuItem(
-				PopupActionListener.EDIT_NETWORK_TITLE);
+		editNetworkTitle = new JMenuItem(PopupActionListener.EDIT_NETWORK_TITLE);
 		createViewItem = new JMenuItem(PopupActionListener.CREATE_VIEW);
 		destroyViewItem = new JMenuItem(PopupActionListener.DESTROY_VIEW);
-		destroyNetworkItem = new JMenuItem(
-				PopupActionListener.DESTROY_NETWORK);
-		applyVisualStyleMenu = new JMenu(
-				PopupActionListener.APPLY_VISUAL_STYLE);
+		destroyNetworkItem = new JMenuItem(PopupActionListener.DESTROY_NETWORK);
+		applyVisualStyleMenu = new JMenu(PopupActionListener.APPLY_VISUAL_STYLE);
 		// action listener which performs the tasks associated with the popup
 		popupActionListener = new PopupActionListener();
 		editNetworkTitle.addActionListener(popupActionListener);
@@ -237,6 +224,13 @@ public class NetworkPanel extends JPanel
 		node.removeFromParent();
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
+
+		// reset view
+		if (networkTreeTableModel.getChildCount(root) < 1) {
+			this.setVisible(false);
+			ActionPanel.runClustermaker.setDoable(false);
+		}
+
 	}
 
 	/**
@@ -270,6 +264,12 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void addNetwork(String network_id, String parent_id) {
+		// activate
+		this.setVisible(true);
+		ActionPanel.runClustermaker.setDoable(true);
+		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
+			ActionPanel.actionCombobox.setSelectedItem(ActionPanel.newDatasetFile);
+
 		// first see if it exists
 		if (getNetworkTreeNode(network_id) == null) {
 			// logger.info("NetworkPanel: addNetwork " + network_id);

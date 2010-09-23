@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
 import javax.swing.CellRendererPane;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -42,6 +43,7 @@ import javax.swing.JTextArea;
 import javax.swing.JToolTip;
 import javax.swing.SpringLayout;
 import javax.swing.SwingWorker;
+import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
 
@@ -106,6 +108,7 @@ public class SpeciesPanel extends JPanel
 		this.speciesState = defaultSpecies;
 		speciesBox.addItem(defaultSpecies);
 		speciesBox.addActionListener(this);
+		speciesBox.setToolTipText("Select a species-specific database");
 
 		configButton = new JButton(new ImageIcon(getClass().getResource(
 				"../images/configure.png")));
@@ -182,15 +185,15 @@ public class SpeciesPanel extends JPanel
 		SpringLayout layout = new SpringLayout();
 		layout.putConstraint(SpringLayout.WEST, speciesBox, 5,
 				SpringLayout.WEST, this);
-		layout.putConstraint(SpringLayout.NORTH, speciesBox, 3,
+		layout.putConstraint(SpringLayout.NORTH, speciesBox, 2,
 				SpringLayout.NORTH, this);
 		layout.putConstraint(SpringLayout.WEST, downloadButton, 1,
 				SpringLayout.EAST, speciesBox);
-		layout.putConstraint(SpringLayout.NORTH, downloadButton, 1,
+		layout.putConstraint(SpringLayout.NORTH, downloadButton, 0,
 				SpringLayout.NORTH, this);
 		layout.putConstraint(SpringLayout.WEST, configButton, 1,
 				SpringLayout.EAST, downloadButton);
-		layout.putConstraint(SpringLayout.NORTH, configButton, 1,
+		layout.putConstraint(SpringLayout.NORTH, configButton, 0,
 				SpringLayout.NORTH, this);
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, dbConnection, 0,
 				SpringLayout.HORIZONTAL_CENTER, this);
@@ -204,9 +207,13 @@ public class SpeciesPanel extends JPanel
 		this.setLayout(layout);
 
 		// this.setBackground(grey);
-		this.setMinimumSize(new Dimension(310, 70));
-		this.setPreferredSize(new Dimension(310, 70));
-		this.setMaximumSize(new Dimension(400, 70));
+		this.setMinimumSize(new Dimension(320, 95));
+		this.setPreferredSize(new Dimension(320, 95));
+		this.setMaximumSize(new Dimension(400, 95));
+		
+		Border etchedBdr = BorderFactory.createEtchedBorder();
+		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr, "Database");
+		this.setBorder(titledBdr);
 
 		// add config... and download... links
 

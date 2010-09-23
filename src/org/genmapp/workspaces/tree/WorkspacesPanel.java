@@ -42,6 +42,7 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
 	private SpeciesPanel speciesPanel;
+	private ActionPanel actionPanel;
 	private NetworkPanel networkPanel;
 	private DatasetPanel datasetPanel;
 	private CriteriaPanel criteriaPanel;
@@ -65,11 +66,17 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 		setPreferredSize(new Dimension(PANEL_PREFFERED_WIDTH, 700));
 
 		speciesPanel = new SpeciesPanel();
+		actionPanel = new ActionPanel();
 		networkPanel = new NetworkPanel();
 		datasetPanel = new DatasetPanel();
 		criteriaPanel = new CriteriaPanel();
 		// analysisTreePanel = new AnalysisPanel();
 		// reportTreePanel = new ReportPanel();
+		
+		//set default viz
+		networkPanel.setVisible(false);
+		datasetPanel.setVisible(false);
+		criteriaPanel.setVisible(false);
 
 		navigatorPanel = new JPanel();
 		navigatorPanel.setMinimumSize(new Dimension(180, 180));
@@ -85,6 +92,7 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 		JPanel wsPanel = new JPanel();
 		wsPanel.setLayout(new BoxLayout(wsPanel, BoxLayout.Y_AXIS));
 		wsPanel.add(speciesPanel);
+		wsPanel.add(actionPanel);
 		wsPanel.add(main);
 		// wsPanel.add(analysisTreePanel);
 		// wsPanel.add(reportTreePanel);
@@ -137,18 +145,10 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 
 		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
 			// reload all attached datasets
-//			try {
-//				Thread.sleep(10000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-			
 			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
 				public String doInBackground() {
 					String msg = "done!";
-//					System.out.println("NEW :"+evt.getNewValue());
 					datasetPanel.reloadDataset();
 					
 					return msg;
