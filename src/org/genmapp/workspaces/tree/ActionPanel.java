@@ -7,6 +7,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -14,12 +20,20 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
+import javax.xml.bind.JAXBException;
 
 import org.genmapp.workspaces.objects.CyAction;
+
+import cytoscape.Cytoscape;
+import cytoscape.actions.ImportGraphFileAction;
+import cytoscape.actions.LoadNetworkTask;
+import cytoscape.actions.OpenSessionAction;
+import cytoscape.dialogs.ImportNetworkDialog;
 
 public class ActionPanel extends JPanel
 		implements
@@ -32,8 +46,9 @@ public class ActionPanel extends JPanel
 	public static boolean workflowState;
 
 	// Action Strings
-	public final static String NEW_NETWORK_FILE = "Open network from file...";
-	public final static String NEW_NETWORK_WEB = "Load network from web...";
+	public final static String OPEN_SESSION_FILE = "Open session file...";
+	public final static String OPEN_NETWORK_FILE = "Open network file...";
+	public final static String LOAD_NETWORK_WEB = "Load network from web...";
 	public final static String NEW_NETWORK_TABLE = "Import network from table...";
 	public final static String NEW_DATASET_TABLE = "Import dataset from table...";
 	public final static String NEW_CRITERIA_SET = "Create new criteria set...";
@@ -49,7 +64,7 @@ public class ActionPanel extends JPanel
 		// initialize all actions and prepare default set
 		CyAction actions[] = initializeActions();
 
-		loadActions(actions, true);
+		loadActions(actions, false);
 		// actionCombobox = new JComboBox(actions);
 		MyCellRenderer renderer = new MyCellRenderer();
 		actionCombobox.setRenderer(renderer);
@@ -108,18 +123,24 @@ public class ActionPanel extends JPanel
 	 */
 	private final static CyAction[] initializeActions() {
 		// Create all action items
-		CyAction newNetworkFile = new CyAction(NEW_NETWORK_FILE);
-		newNetworkFile.setDoable(true);
-		newNetworkFile
+		CyAction openSessionFile = new CyAction(OPEN_SESSION_FILE);
+		openSessionFile.setDoable(true);
+		openSessionFile.setDescription("Select a CYS session file");
+		openSessionFile
+				.setRequirements("Your must have a CYS cytoscape session file");
+
+		CyAction openNetworkFile = new CyAction(OPEN_NETWORK_FILE);
+		openNetworkFile.setDoable(true);
+		openNetworkFile
 				.setDescription("Select an xGMML, GPML, BioPAX, SIF or other supported network file format");
-		newNetworkFile
+		openNetworkFile
 				.setRequirements("Your must have an xGMML, GPML, BioPAX, SIF or other supported network file format");
 
-		CyAction newNetworkWeb = new CyAction(NEW_NETWORK_WEB);
-		newNetworkWeb.setDoable(true);
-		newNetworkWeb
+		CyAction loadNetworkWeb = new CyAction(LOAD_NETWORK_WEB);
+		loadNetworkWeb.setDoable(true);
+		loadNetworkWeb
 				.setDescription("Search and browse content from WikiPathways, Pathway Commons and other web services");
-		newNetworkWeb.setRequirements("You must be connected to the internet");
+		loadNetworkWeb.setRequirements("You must be connected to the internet");
 
 		CyAction newNetworkTable = new CyAction(NEW_NETWORK_TABLE);
 		newNetworkTable.setDoable(true);
@@ -153,11 +174,10 @@ public class ActionPanel extends JPanel
 				.setDescription("Perform GO/Pathway overrepresentation analysis per criteria");
 		runGoelite.setRequirements("You must first define criteria");
 
-
 		// prepare default list of actions
-		CyAction actions[] = {newNetworkFile, newNetworkWeb, newNetworkTable,
+		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
 				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite};
-		
+
 		return actions;
 	}
 
@@ -184,6 +204,7 @@ public class ActionPanel extends JPanel
 				goButton.setEnabled(false);
 				goButton.setToolTipText(action.getRequirements());
 			}
+
 		}
 
 	}
@@ -192,8 +213,19 @@ public class ActionPanel extends JPanel
 
 		if (e.getSource().equals(goButton) && goButton.isEnabled()) {
 			// do stuff
-			CyAction action = (CyAction) actionCombobox.getSelectedItem();
+			String action = ((CyAction) actionCombobox.getSelectedItem())
+					.toString();
 			System.out.println(action);
+
+			if (action.equals(OPEN_SESSION_FILE)) {
+				OpenSessionAction osa = new OpenSessionAction();
+				osa.actionPerformed(new ActionEvent(osa, ActionEvent.ACTION_PERFORMED, action) );
+
+			} else if (action.equals(OPEN_NETWORK_FILE)) {
+				ImportGraphFileAction igfa = new ImportGraphFileAction(Cytoscape.getDesktop().getCyMenus());
+				igfa.actionPerformed(new ActionEvent(igfa, ActionEvent.ACTION_PERFORMED, action) );
+			}
+			
 		} else if (e.getSource().equals(configButton)
 				&& configButton.isEnabled()) {
 			// open config dialog
