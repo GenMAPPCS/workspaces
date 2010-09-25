@@ -49,6 +49,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
+import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
 
@@ -216,6 +217,12 @@ public class DatasetPanel extends JPanel implements
 		node.removeFromParent();
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
+		
+		// reset view
+		if (datasetTreeTableModel.getChildCount(root) < 1) {
+			this.setVisible(false);
+		}
+
 	}
 
 	/**
@@ -227,11 +234,13 @@ public class DatasetPanel extends JPanel implements
 	 *            DOCUMENT ME!
 	 */
 	public void addItem(String id, String parent_id) {
-		// activate
+		// activate panel
 		this.setVisible(true);
-		ActionPanel.newCriteriaSet.setDoable(true);
+		// activate dataset-dependent actions
+		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET).setDoable(true);
+		// prompt next action
 		if (CyCriteria.criteriaNameMap.isEmpty() && !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(ActionPanel.newCriteriaSet);
+			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET));
 		
 		// first see if it exists
 		if (getTreeNode(id) == null) {

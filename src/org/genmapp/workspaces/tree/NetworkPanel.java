@@ -51,6 +51,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -228,7 +229,7 @@ public class NetworkPanel extends JPanel
 		// reset view
 		if (networkTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
-			ActionPanel.runClustermaker.setDoable(false);
+			CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(false);
 		}
 
 	}
@@ -264,11 +265,13 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void addNetwork(String network_id, String parent_id) {
-		// activate
+		// activate panel
 		this.setVisible(true);
-		ActionPanel.runClustermaker.setDoable(true);
+		// activate network-dependent actions
+		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(true);
+		// prompt next action
 		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(ActionPanel.newDatasetFile);
+			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_DATASET_TABLE));
 
 		// first see if it exists
 		if (getNetworkTreeNode(network_id) == null) {

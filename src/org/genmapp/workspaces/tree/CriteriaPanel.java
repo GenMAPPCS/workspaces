@@ -47,6 +47,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
 
@@ -221,7 +222,7 @@ public class CriteriaPanel extends JPanel
 		// reset view
 		if (criteriaTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
-			ActionPanel.runGoelite.setDoable(false);
+			CyAction.actionNameMap.get(ActionPanel.RUN_GOELITE).setDoable(false);
 		}
 
 	}
@@ -234,9 +235,10 @@ public class CriteriaPanel extends JPanel
 	 * 
 	 */
 	public void addItem(String id, String parent_id) {
-		// activate
+		// activate panel
 		this.setVisible(true);
-		ActionPanel.runGoelite.setDoable(true);
+		// activate criteria-dependent actions
+		CyAction.actionNameMap.get(ActionPanel.RUN_GOELITE).setDoable(true);
 
 		// first see if it exists
 		if (getTreeNode(id) == null) {
