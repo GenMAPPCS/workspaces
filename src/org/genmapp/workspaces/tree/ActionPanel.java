@@ -41,6 +41,7 @@ public class ActionPanel extends JPanel
 	private JButton goButton;
 	private JButton configButton;
 	public static boolean workflowState;
+	private static int workflowIndex;
 
 	// Action Strings
 	public final static String OPEN_SESSION_FILE = "Open session file...";
@@ -87,6 +88,7 @@ public class ActionPanel extends JPanel
 
 		// trigger initial tooltips via actionPerformed
 		actionCombobox.setSelectedIndex(0);
+		workflowIndex = 0;
 
 		// Layout
 		SpringLayout layout = new SpringLayout();
@@ -199,6 +201,7 @@ public class ActionPanel extends JPanel
 	public static void loadActions(CyAction actions[], boolean workflow) {
 		currentActionsList = actions;
 		workflowState = workflow;
+		workflowIndex = 0;
 		actionCombobox.removeAllItems();
 		for (CyAction ca: actions){
 			actionCombobox.addItem(ca);
@@ -311,7 +314,7 @@ public class ActionPanel extends JPanel
 		// Set selection based on workflow
 		if (e.getSource().equals(goButton) && goButton.isEnabled()
 				&& workflowState) {
-			Integer nextAction = actionCombobox.getSelectedIndex() + 1;
+			Integer nextAction = workflowIndex + 1;
 			boolean clear = false;
 			while (!clear) {
 				if (nextAction >= actionCombobox.getItemCount()) {
@@ -320,6 +323,7 @@ public class ActionPanel extends JPanel
 				actionCombobox.setSelectedIndex(nextAction);
 				clear = ((CyAction) actionCombobox.getSelectedItem())
 						.isDoable();
+				workflowIndex = nextAction;
 				nextAction++;
 			}
 
