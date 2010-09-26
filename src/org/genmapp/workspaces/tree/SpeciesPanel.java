@@ -257,7 +257,7 @@ public class SpeciesPanel extends JPanel
 						}
 						resourcesCount = updateResourceDisplay();
 						if (attempts++ == 5) {
-							dbConnection.setText("no connections!");
+							dbConnection.setText("no databases found");
 							dbConnection
 									.setToolTipText("You've basically got three options:\n 1. Try the download button\n 2. Configure your own resources\n 3. Select another species");
 							dbConnection.setForeground(red);
@@ -458,6 +458,14 @@ public class SpeciesPanel extends JPanel
 					"list selected resources", args);
 			Set<String> mappers = (Set<String>) result.getResult();
 			count = mappers.size();
+			if (count < 1){
+				// no databases selected
+				dbConnection.setText("no databases selected");
+				dbConnection.setToolTipText("Make species selection or manually configure resources");
+				dbConnection.setForeground(red);				
+				this.connState = null;
+				this.derbyState = null;
+			}
 			String db2ReList = "";
 			for (String re : mappers) {
 				if (re.startsWith("idmapper-bridgerest")) {
