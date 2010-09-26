@@ -81,7 +81,7 @@ public class PartsDownloaderThread implements Runnable {
                 connection.setReadTimeout(15000);
                 connection.connect();
 
-                File outputDir = new File(SpeciesPanel.genmappcsdatadir);
+                File outputDir = new File(SpeciesPanel.genmappcsdatabasedir);
                 if (!outputDir.exists() || !outputDir.isDirectory()) {
                     outputDir.mkdir();
                 }
@@ -89,7 +89,7 @@ public class PartsDownloaderThread implements Runnable {
                 int res = connection.getResponseCode();
 //                System.out.println("Response=" + connection.getResponseMessage());
                 InputStream in = connection.getInputStream();
-                OutputStream out = new BufferedOutputStream(new FileOutputStream(SpeciesPanel.genmappcsdatadir + task.getID() + "/" + task.getID() + "part" + partNumber));
+                OutputStream out = new BufferedOutputStream(new FileOutputStream(SpeciesPanel.genmappcsdatabasedir + task.getID() + "/" + task.getID() + "part" + partNumber));
 
                 int d = 0;
 //                System.out.println("READING part " + partNumber);

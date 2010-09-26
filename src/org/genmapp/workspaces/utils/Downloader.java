@@ -79,12 +79,12 @@ public class Downloader implements DownloadListener {
 
         downloadStatus = Status.DOWNLOADING;
 
-        File downloadParentDirectory = new File(SpeciesPanel.genmappcsdatadir);
+        File downloadParentDirectory = new File(SpeciesPanel.genmappcsdatabasedir);
         if (!downloadParentDirectory.exists()) {
             downloadParentDirectory.mkdir();
         }
 
-        File tempDirectory = new File(SpeciesPanel.genmappcsdatadir + ID);
+        File tempDirectory = new File(SpeciesPanel.genmappcsdatabasedir + ID);
         if (!tempDirectory.exists()) {
             tempDirectory.mkdir();
         }
@@ -158,12 +158,12 @@ public class Downloader implements DownloadListener {
 
         //check if the fileName exists in current directory, if so rename it to filename_1 and so on
 
-        File testFile = new File(SpeciesPanel.genmappcsdatadir + outputFileName);
+        File testFile = new File(SpeciesPanel.genmappcsdatabasedir + outputFileName);
         if (testFile.exists()) {
             String newName = null;
             for (int i = 1; testFile.exists(); i++) {
                 newName = outputFileName + "_" + i;
-                testFile = new File(SpeciesPanel.genmappcsdatadir + newName);
+                testFile = new File(SpeciesPanel.genmappcsdatabasedir + newName);
             }
             outputFileName = newName;
         }
@@ -176,12 +176,12 @@ public class Downloader implements DownloadListener {
             pbar.setString("rebuilding File...");
         }
         try {
-            outputFile = new File(SpeciesPanel.genmappcsdatadir+ outputFileName);
+            outputFile = new File(SpeciesPanel.genmappcsdatabasedir+ outputFileName);
             BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outputFile, true));
             byte buffer[] = new byte[1024];
 
             for (int i = 0; i < JET_COUNT; i++) {
-                File file = new File(SpeciesPanel.genmappcsdatadir + identifier + "/" + identifier + "part" + i);
+                File file = new File(SpeciesPanel.genmappcsdatabasedir + identifier + "/" + identifier + "part" + i);
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
                 int d = 0;
                 while ((d = in.read(buffer)) != -1) {
@@ -194,7 +194,7 @@ public class Downloader implements DownloadListener {
                 file.delete();
             }
 
-            File tempDirectory = new File(SpeciesPanel.genmappcsdatadir+ identifier);
+            File tempDirectory = new File(SpeciesPanel.genmappcsdatabasedir+ identifier);
             tempDirectory.delete();
 
             out.close();

@@ -62,10 +62,10 @@ public class SpeciesPanel extends JPanel
 			MouseListener {
 
 	private static final long serialVersionUID = 1L;
-	private static final String bridgedbOrglist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
+	private static final String bridgedbSpecieslist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
 	public static final String bridgedbDerbyDir = "http://bridgedb.org/data/gene_database/";
 	public static String genmappcsdir = "/GenMAPP-CS-Data/";
-	public static String genmappcsdatadir;
+	public static String genmappcsdatabasedir;
 	private String speciesState = null;
 	private String connState = null;
 	private String derbyState = null;
@@ -91,7 +91,7 @@ public class SpeciesPanel extends JPanel
 	 * Hash of latin name keys mapped to arrays of common[0] and two-letter[1]
 	 * values.
 	 */
-	public static Map<String, String[]> supportedOrganisms = new HashMap<String, String[]>();
+	public static Map<String, String[]> supportedSpecies = new HashMap<String, String[]>();
 
 	public SpeciesPanel() {
 		super();
@@ -124,6 +124,15 @@ public class SpeciesPanel extends JPanel
 		this.add(downloadButton);
 		this.add(configButton);
 
+		// Create main genmappcsdata dir
+		genmappcsdir = System.getProperty("user.home") + genmappcsdir;
+		genmappcsdatabasedir = genmappcsdir + "databases/";
+
+		File gcsdir = new File(genmappcsdir);
+		if (!gcsdir.exists()) {
+			gcsdir.mkdir();
+		}
+
 		/*
 		 * Start thread to fill in available species.
 		 */
@@ -131,7 +140,7 @@ public class SpeciesPanel extends JPanel
 
 			public String doInBackground() {
 				String msg = "done!";
-				checkSupportedOrganisms();
+				initializeSupportedSpecies();
 				// TODO: store local copy for offline operation
 				return msg;
 			}
@@ -146,7 +155,7 @@ public class SpeciesPanel extends JPanel
 			public String doInBackground() {
 				String msg = "done!";
 				try {
-					checkLatestDatabases();
+					initializeLatestDatabases();
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -210,15 +219,11 @@ public class SpeciesPanel extends JPanel
 		this.setMinimumSize(new Dimension(320, 95));
 		this.setPreferredSize(new Dimension(320, 95));
 		this.setMaximumSize(new Dimension(400, 95));
-		
+
 		Border etchedBdr = BorderFactory.createEtchedBorder();
-		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr, "Database");
+		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr,
+				"Database");
 		this.setBorder(titledBdr);
-
-		// add config... and download... links
-
-		genmappcsdir = System.getProperty("user.home") + genmappcsdir;
-		genmappcsdatadir = genmappcsdir + "databases/";
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
@@ -251,7 +256,7 @@ public class SpeciesPanel extends JPanel
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
-						resourcesCount = listResources();
+						resourcesCount = updateResourceDisplay();
 						if (attempts++ == 5) {
 							dbConnection.setText("no connections!");
 							dbConnection
@@ -265,6 +270,9 @@ public class SpeciesPanel extends JPanel
 			};
 			worker.execute();
 
+			// perform final check against available resources
+			connectToResources(this.speciesState);
+
 			// now you can click on this
 			configButton.setEnabled(true);
 
@@ -274,15 +282,17 @@ public class SpeciesPanel extends JPanel
 	}
 
 	/**
+	 * Collects list of species from centralized BridgeDb file and populates
+	 * species selector. Should only run once per session
 	 * 
 	 */
-	private static void checkSupportedOrganisms() {
-		List<String> lines = readUrl(bridgedbOrglist);
+	private static void initializeSupportedSpecies() {
+		List<String> lines = readUrl(bridgedbSpecieslist);
 
 		for (String line : lines) {
 			String[] s = line.split("\t");
 			// format: genus \t species \t common \t two-letter
-			supportedOrganisms.put(s[0] + " " + s[1], new String[]{s[2], s[3]});
+			supportedSpecies.put(s[0] + " " + s[1], new String[]{s[2], s[3]});
 			speciesBox.addItem(s[0] + " " + s[1]);
 		}
 
@@ -290,11 +300,12 @@ public class SpeciesPanel extends JPanel
 
 	/**
 	 * Check the BridgeDb download site for the lateset Derby database files.
-	 * Store these in a hash for reference later.
+	 * Stores these in a hash for reference later. Should only run once per
+	 * session.
 	 * 
 	 * @param species
 	 */
-	private void checkLatestDatabases() throws MalformedURLException,
+	private void initializeLatestDatabases() throws MalformedURLException,
 			IOException {
 		// TODO: should make local file for offline performance
 		String derbyfile = null;
@@ -331,14 +342,18 @@ public class SpeciesPanel extends JPanel
 	}
 
 	/**
+	 * Sets status and tooltip for the download button based on availability of
+	 * derby databases remotely and currently attached derby databases. Should
+	 * run every time resources or species are changed.
+	 * 
 	 * @param species
 	 */
-	private void checkDownloadStatus(String species) {
+	private void setDownloadButton(String species) {
 		String remote = null;
 		String local = this.derbyState;
 
 		// two-letter code
-		String key = supportedOrganisms.get(species)[1];
+		String key = supportedSpecies.get(species)[1];
 		remote = latestDatabases.get(key);
 		this.downloadFile = remote;
 
@@ -350,7 +365,7 @@ public class SpeciesPanel extends JPanel
 			} else {
 				// no local database; database to download
 				downloadButton.setToolTipText("download database for "
-						+ supportedOrganisms.get(species)[0]);
+						+ supportedSpecies.get(species)[0]);
 				downloadButton.setEnabled(true);
 			}
 		} else {
@@ -368,7 +383,7 @@ public class SpeciesPanel extends JPanel
 					// updated database available
 					downloadButton
 							.setToolTipText("download updated database for "
-									+ supportedOrganisms.get(species)[0]);
+									+ supportedSpecies.get(species)[0]);
 					downloadButton.setEnabled(true);
 				} else {
 					// using latest database
@@ -420,7 +435,13 @@ public class SpeciesPanel extends JPanel
 		return ret;
 	}
 
-	public Integer listResources() {
+	/**
+	 * Queries CyThesaurus for currently selected resources. Prepares display
+	 * list based on database type. Should run every time resources are changed.
+	 * 
+	 * @return number of selected resources
+	 */
+	public Integer updateResourceDisplay() {
 		int count = 0;
 		Map<String, Object> args = new HashMap<String, Object>();
 		try {
@@ -432,14 +453,14 @@ public class SpeciesPanel extends JPanel
 			for (String re : mappers) {
 				if (re.startsWith("idmapper-bridgerest")) {
 					String url = re.substring(re.indexOf("http"));
-					dbConnection.setText("Web service: " + url);
+					dbConnection.setText(url);
 					dbConnection.setToolTipText(re);
 					dbConnection.setForeground(green);
 					this.connState = re;
 					this.derbyState = null;
 				} else if (re.startsWith("idmapper-pgdb")) {
 					String filename = re.substring(re.indexOf(".") - 17);
-					dbConnection.setText("file: " + filename);
+					dbConnection.setText(filename);
 					dbConnection.setToolTipText(re);
 					dbConnection.setForeground(green);
 					this.connState = re;
@@ -466,15 +487,21 @@ public class SpeciesPanel extends JPanel
 		}
 
 		// update status of download button
-		checkDownloadStatus(this.speciesState);
+		setDownloadButton(this.speciesState);
 
 		return count;
 	}
 
 	/**
+	 * Deselects current resource selection (derby or web service), then
+	 * searches locally for latest species-specific database. If not found, then
+	 * finds appropriate BridgeRest service. Registers and selects found derby
+	 * or web service resources. Updates display of selected resources. Should
+	 * be called when species or resources change.
+	 * 
 	 * @param species
 	 */
-	public void collectResources(String species) {
+	public void connectToResources(String species) {
 
 		/*
 		 * Deselect old derby or web service resources
@@ -499,9 +526,9 @@ public class SpeciesPanel extends JPanel
 		 * Find latest local derby file for new species
 		 */
 		String derbyfile = null;
-		final String prefix = supportedOrganisms.get(species)[1];
+		final String prefix = supportedSpecies.get(species)[1];
 		int latest = 0;
-		File dir = new File(genmappcsdatadir);
+		File dir = new File(genmappcsdatabasedir);
 
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -543,8 +570,8 @@ public class SpeciesPanel extends JPanel
 		} else {
 			dbConnection.setText("connecting to " + derbyfile + "...");
 			classpath = "org.bridgedb.rdb.IDMapperRdb";
-			connstring = "idmapper-pgdb:" + genmappcsdatadir + derbyfile;
-			displayname = "file: " + derbyfile;
+			connstring = "idmapper-pgdb:" + genmappcsdatabasedir + derbyfile;
+			displayname = derbyfile;
 		}
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("classpath", classpath);
@@ -586,13 +613,14 @@ public class SpeciesPanel extends JPanel
 		this.speciesState = species;
 
 		// and, finally, refresh list of selected resources
-		listResources();
+		updateResourceDisplay();
 	}
 
 	/**
-	 * 
+	 * Opens CyThesaurus resource configuration dialog. Updates display of
+	 * selected resources after dialog is closed.
 	 */
-	private void configureResources() {
+	private void configureManually() {
 		boolean b = false;
 		Map<String, Object> noargs = new HashMap<String, Object>();
 		try {
@@ -609,7 +637,7 @@ public class SpeciesPanel extends JPanel
 
 		// update list of selected resources
 		if (b)
-			listResources();
+			updateResourceDisplay();
 	}
 
 	/*
@@ -649,7 +677,7 @@ public class SpeciesPanel extends JPanel
 
 			public String doInBackground() {
 				String msg = "done!";
-				collectResources(newSpecies);
+				connectToResources(newSpecies);
 				return msg;
 			}
 		};
@@ -662,7 +690,7 @@ public class SpeciesPanel extends JPanel
 	public void mouseClicked(MouseEvent e) {
 
 		if (e.getSource().equals(configButton) && configButton.isEnabled()) {
-			configureResources();
+			configureManually();
 		} else if (e.getSource().equals(downloadButton)
 				&& downloadButton.isEnabled()) {
 			dbConnection.setText("downloading " + this.downloadFile + "...");
@@ -671,7 +699,7 @@ public class SpeciesPanel extends JPanel
 			downloadButton.setToolTipText("downloading...");
 			downloadButton.setEnabled(false);
 			configButton.setEnabled(false);
-			
+
 			try {
 				Downloader d = new Downloader();
 				d.download(bridgedbDerbyDir + this.downloadFile);
@@ -686,7 +714,7 @@ public class SpeciesPanel extends JPanel
 			}
 
 			// recollect resources
-			collectResources(this.speciesState);
+			connectToResources(this.speciesState);
 		}
 
 	}
@@ -712,7 +740,6 @@ public class SpeciesPanel extends JPanel
 	}
 
 }
-
 
 /**
  * Nifty override to support multi-line tool tips. Copied from
