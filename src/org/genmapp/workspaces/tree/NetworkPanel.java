@@ -226,10 +226,11 @@ public class NetworkPanel extends JPanel
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
 
-		// reset view
+		// reset view and network-dependent actions
 		if (networkTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
 			CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(false);
+			CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(false);
 		}
 
 	}
@@ -269,6 +270,7 @@ public class NetworkPanel extends JPanel
 		this.setVisible(true);
 		// activate network-dependent actions
 		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
 		// prompt next action
 		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
 			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_DATASET_TABLE));
