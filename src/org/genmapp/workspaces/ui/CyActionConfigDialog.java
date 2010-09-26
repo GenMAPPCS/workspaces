@@ -70,7 +70,6 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 	private OrderedActionsListModel selectedActionsData = new OrderedActionsListModel();
 	private javax.swing.JList availableActionsList;
 	private SortedActionsListModel availableActionsData = new SortedActionsListModel();
-	private boolean workflow;
 	private JCheckBox workflowBox = new JCheckBox();
 	private JLabel description;
 	private final String DESC = "Description: ";
@@ -216,8 +215,7 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 
 		workflowPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		workflowBox.setText("Automatically step through actions");
-		workflow = ActionPanel.workflowState;
-		workflowBox.setSelected(workflow);
+		workflowBox.setSelected(ActionPanel.workflowState);
 		workflowBox.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				checkboxActionPerformed(evt);
@@ -380,8 +378,8 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 	}
 	private void checkboxActionPerformed(java.awt.event.ActionEvent evt) {
 		// toggle values
-		workflow = !workflow;
-		workflowBox.setSelected(workflow);
+		ActionPanel.workflowState = !ActionPanel.workflowState;
+		workflowBox.setSelected(ActionPanel.workflowState);
 	}
 
 	private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {
@@ -396,7 +394,7 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 	private void OKBtnActionPerformed(java.awt.event.ActionEvent evt) {
 
 		CyAction actions[] = selectedActionsData.getActions();
-		ActionPanel.loadActions(actions, workflow);
+		ActionPanel.loadActions(actions);
 
 		setVisible(false);
 		dispose();

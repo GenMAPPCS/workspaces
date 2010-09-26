@@ -53,7 +53,7 @@ public class ActionPanel extends JPanel
 	public final static String RUN_CLUSTERMAKER = "Run clusterMaker...";
 	public final static String RUN_GOELITE = "Run GO-Elite...";
 	public final static String EXPORT_GRAPHICS = "Export image...";
-	
+
 	public static CyAction[] currentActionsList;
 	public static CyAction[] availableActionsList;
 
@@ -64,9 +64,8 @@ public class ActionPanel extends JPanel
 		super();
 
 		// initialize all actions and prepare default set
-		CyAction actions[] = initializeActions();
-		loadActions(actions, false);
-		
+		initializeActions();
+
 		// actionCombobox = new JComboBox(actions);
 		MyCellRenderer renderer = new MyCellRenderer();
 		actionCombobox.setRenderer(renderer);
@@ -124,7 +123,7 @@ public class ActionPanel extends JPanel
 	/**
 	 * @return
 	 */
-	private final static CyAction[] initializeActions() {
+	private final static void initializeActions() {
 		// Create all action items
 		CyAction openSessionFile = new CyAction(OPEN_SESSION_FILE);
 		openSessionFile.setDoable(true);
@@ -181,29 +180,31 @@ public class ActionPanel extends JPanel
 		exportGraphics.setDoable(false);
 		exportGraphics
 				.setDescription("Export current network view as an image file, e.g., PDF, SVG, JPG");
-		exportGraphics.setRequirements("You must have an active network view selected");
+		exportGraphics
+				.setRequirements("You must have an active network view selected");
 
 		// prepare full list of available actions
-		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile, loadNetworkWeb,
-				newNetworkTable, newDatasetFile, newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
-		
-		// prepare default list of actions
-		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
-				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
+		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
+				loadNetworkWeb, newNetworkTable, newDatasetFile,
+				newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
 
-		return  actions;
+		// prepare default list of actions and behavior
+		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
+				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
+				exportGraphics};
+		workflowState = false;
+		loadActions(actions);
 	}
 
 	/**
 	 * @param actions
 	 * @param workflow
 	 */
-	public static void loadActions(CyAction actions[], boolean workflow) {
+	public static void loadActions(CyAction actions[]) {
 		currentActionsList = actions;
-		workflowState = workflow;
 		workflowIndex = 0;
 		actionCombobox.removeAllItems();
-		for (CyAction ca: actions){
+		for (CyAction ca : actions) {
 			actionCombobox.addItem(ca);
 		}
 	}
@@ -212,10 +213,10 @@ public class ActionPanel extends JPanel
 
 		if (e.getSource().equals(actionCombobox)) {
 			CyAction action = (CyAction) actionCombobox.getSelectedItem();
-			if (null == action){
-				return; //reloading list
+			if (null == action) {
+				return; // reloading list
 			}
-			
+
 			// reset button optimistically
 			goButton.setEnabled(true);
 			goButton.setToolTipText(action.getDescription());
@@ -240,21 +241,26 @@ public class ActionPanel extends JPanel
 
 			if (action.equals(OPEN_SESSION_FILE)) {
 				OpenSessionAction osa = new OpenSessionAction();
-				osa.actionPerformed(new ActionEvent(osa, ActionEvent.ACTION_PERFORMED, action) );
+				osa.actionPerformed(new ActionEvent(osa,
+						ActionEvent.ACTION_PERFORMED, action));
 
 			} else if (action.equals(OPEN_NETWORK_FILE)) {
-				ImportGraphFileAction igfa = new ImportGraphFileAction(Cytoscape.getDesktop().getCyMenus());
-				igfa.actionPerformed(new ActionEvent(igfa, ActionEvent.ACTION_PERFORMED, action) );
+				ImportGraphFileAction igfa = new ImportGraphFileAction(
+						Cytoscape.getDesktop().getCyMenus());
+				igfa.actionPerformed(new ActionEvent(igfa,
+						ActionEvent.ACTION_PERFORMED, action));
 			} else if (action.equals(LOAD_NETWORK_WEB)) {
 				WebServiceNetworkImportAction wsnia = new WebServiceNetworkImportAction();
-				wsnia.actionPerformed(new ActionEvent(wsnia, ActionEvent.ACTION_PERFORMED, action) );
-			}else if (action.equals(NEW_NETWORK_TABLE)) {
-				//TODO
+				wsnia.actionPerformed(new ActionEvent(wsnia,
+						ActionEvent.ACTION_PERFORMED, action));
+			} else if (action.equals(NEW_NETWORK_TABLE)) {
+				// TODO
 				System.out.println("coming soon...");
-			}else if (action.equals(NEW_DATASET_TABLE)) {
+			} else if (action.equals(NEW_DATASET_TABLE)) {
 				Map<String, Object> noargs = new HashMap<String, Object>();
 				try {
-					CyCommandManager.execute("genmappimporter", "open dialog", noargs);
+					CyCommandManager.execute("genmappimporter", "open dialog",
+							noargs);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -262,31 +268,33 @@ public class ActionPanel extends JPanel
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-			}else if (action.equals(NEW_CRITERIA_SET)) {
+			} else if (action.equals(NEW_CRITERIA_SET)) {
 				Map<String, Object> noargs = new HashMap<String, Object>();
 				try {
-					CyCommandManager.execute("criteriamapper", "open dialog", noargs);
+					CyCommandManager.execute("criteriamapper", "open dialog",
+							noargs);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (RuntimeException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}				
-			}else if (action.equals(RUN_CLUSTERMAKER)) {
+				}
+			} else if (action.equals(RUN_CLUSTERMAKER)) {
 				Map<String, Object> args = new HashMap<String, Object>();
 				args.put("type", "hierarchical");
 				try {
-					CyCommandManager.execute("clustermaker", "showDialog", args);
+					CyCommandManager
+							.execute("clustermaker", "showDialog", args);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (RuntimeException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}				
+				}
 
-			}else if (action.equals(RUN_GOELITE)) {
+			} else if (action.equals(RUN_GOELITE)) {
 				Map<String, Object> noargs = new HashMap<String, Object>();
 				try {
 					CyCommandManager.execute("goelite", "open dialog", noargs);
@@ -296,17 +304,19 @@ public class ActionPanel extends JPanel
 				} catch (RuntimeException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}				
+				}
 
-			}else if (action.equals(EXPORT_GRAPHICS)) {
+			} else if (action.equals(EXPORT_GRAPHICS)) {
 				ExportAsGraphicsAction eaga = new ExportAsGraphicsAction();
-				eaga.actionPerformed(new ActionEvent(eaga, ActionEvent.ACTION_PERFORMED, action) );
+				eaga.actionPerformed(new ActionEvent(eaga,
+						ActionEvent.ACTION_PERFORMED, action));
 			}
-			
+
 		} else if (e.getSource().equals(configButton)
 				&& configButton.isEnabled()) {
 
-			CyActionConfigDialog actionDialog = new CyActionConfigDialog(Cytoscape.getDesktop(), true);
+			CyActionConfigDialog actionDialog = new CyActionConfigDialog(
+					Cytoscape.getDesktop(), true);
 			actionDialog.setLocationRelativeTo(Cytoscape.getDesktop());
 			actionDialog.setVisible(true);
 		}
