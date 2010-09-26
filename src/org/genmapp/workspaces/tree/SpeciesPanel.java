@@ -245,7 +245,6 @@ public class SpeciesPanel extends JPanel
 			 * before trying.
 			 */
 			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-
 				public String doInBackground() {
 					String msg = "done!";
 					int resourcesCount = 0;
@@ -270,8 +269,18 @@ public class SpeciesPanel extends JPanel
 			};
 			worker.execute();
 
-			// perform final check against available resources
-			connectToResources(this.speciesState);
+		 
+			/*
+			 * Start thread to perform final check against available resources.
+			 */
+			SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
+				public String doInBackground() {
+					String msg = "done!";
+					connectToResources(speciesState);
+					return msg;
+				}
+			};
+			worker2.execute();
 
 			// now you can click on this
 			configButton.setEnabled(true);
@@ -502,7 +511,6 @@ public class SpeciesPanel extends JPanel
 	 * @param species
 	 */
 	public void connectToResources(String species) {
-
 		/*
 		 * Deselect old derby or web service resources
 		 */
@@ -529,6 +537,9 @@ public class SpeciesPanel extends JPanel
 		final String prefix = supportedSpecies.get(species)[1];
 		int latest = 0;
 		File dir = new File(genmappcsdatabasedir);
+        if (!dir.exists()) {
+        	dir.mkdir();
+        }
 
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
