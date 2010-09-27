@@ -337,7 +337,7 @@ public class SpeciesPanel extends JPanel
 	}
 
 	private void timedResourceCheck(SwingWorker<String, Void> worker) {
-		System.out.print("TIMING : ");
+		//System.out.print("TIMING : ");
 		int resourcesCount = 0;
 		int attempts = 0;
 		while (resourcesCount == 0) {
@@ -346,7 +346,7 @@ public class SpeciesPanel extends JPanel
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.print(attempts + "...");
+			//System.out.print(attempts + "...");
 			resourcesCount = updateResourceDisplay();
 			if (attempts++ >= 10) {
 				dbConnection.setText("No databases found!  ");
