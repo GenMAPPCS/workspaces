@@ -122,7 +122,7 @@ public class SpeciesPanel extends JPanel
 		downloadButton.addMouseListener(this);
 		configButton.setEnabled(false);
 		downloadButton.setEnabled(false);
-		configButton.setToolTipText("manually configure database resources");
+		configButton.setToolTipText("Manually configure database resources");
 
 		this.add(speciesBox);
 		this.add(downloadButton);
@@ -335,9 +335,9 @@ public class SpeciesPanel extends JPanel
 			System.out.println("No databases found at " + bridgedbDerbyDir);
 		}
 	}
-	
+
 	private void timedResourceCheck(SwingWorker<String, Void> worker) {
-		System.out.println("TIMING");
+		System.out.print("TIMING : ");
 		int resourcesCount = 0;
 		int attempts = 0;
 		while (resourcesCount == 0) {
@@ -346,16 +346,16 @@ public class SpeciesPanel extends JPanel
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.println(attempts);
+			System.out.print(attempts + "...");
 			resourcesCount = updateResourceDisplay();
 			if (attempts++ >= 10) {
-				dbConnection.setText("no databases found!  ");
+				dbConnection.setText("No databases found!  ");
 				dbConnection
 						.setToolTipText("You've basically got three options:\n 1. Try the download button\n 2. Configure your own resources\n 3. Select another species");
 				dbConnection.setForeground(red);
 				resourcesCount = -1;
-				
-				//try to kill worker
+
+				// try to kill worker
 				worker.cancel(true);
 				try {
 					Thread.sleep(1);
@@ -387,11 +387,11 @@ public class SpeciesPanel extends JPanel
 		if (null == current) {
 			if (null == remote) {
 				// no database; no database!
-				downloadButton.setToolTipText("sorry, no database to be found");
+				downloadButton.setToolTipText("Sorry, no database to be found");
 				downloadButton.setEnabled(false);
 			} else {
 				// no local database; database to download
-				downloadButton.setToolTipText("download database for "
+				downloadButton.setToolTipText("Download database for "
 						+ supportedSpecies.get(species)[0]);
 				downloadButton.setEnabled(true);
 			}
@@ -400,7 +400,7 @@ public class SpeciesPanel extends JPanel
 			if (null == remote) {
 				// nothing to do
 				// using latest database
-				downloadButton.setToolTipText("no update available");
+				downloadButton.setToolTipText("No update available");
 				downloadButton.setEnabled(false);
 			} else {
 				/*
@@ -415,20 +415,20 @@ public class SpeciesPanel extends JPanel
 					if (!latestlocalname.equals(currentname)) {
 						// already got it locally
 						downloadButton
-								.setToolTipText("switch to latest database for "
+								.setToolTipText("Switch to latest database for "
 										+ supportedSpecies.get(species)[0]);
 
 					} else {
 						// download it
 						downloadButton
-								.setToolTipText("download updated database for "
+								.setToolTipText("Download updated database for "
 										+ supportedSpecies.get(species)[0]);
 					}
 					downloadButton.setEnabled(true);
 				} else {
 					// using latest database
 					downloadButton
-							.setToolTipText("already using latest database");
+							.setToolTipText("Already using latest database");
 					downloadButton.setEnabled(false);
 				}
 			}
@@ -490,13 +490,20 @@ public class SpeciesPanel extends JPanel
 			Set<String> mappers = (Set<String>) result.getResult();
 			count = mappers.size();
 			if (count < 1) {
-				// no databases selected
-				dbConnection.setText("no databases selected  ");
-				dbConnection
-						.setToolTipText("Make species selection or manually configure resources");
-				dbConnection.setForeground(blue);
-				this.connState = null;
-				this.derbyState = null;
+				if (this.latestLocalState != null) {
+					/*
+					 * No database selected, but there is one there. This
+					 * awkward state can occur when user manually configures 0
+					 * databases
+					 */
+					dbConnection.setText("No database selected  ");
+					dbConnection
+							.setToolTipText("Make species selection or manually configure resources");
+					dbConnection.setForeground(blue);
+				} else {
+					this.connState = null;
+					this.derbyState = null;
+				}
 			}
 			String db2ReList = "";
 			for (String re : mappers) {
@@ -584,14 +591,14 @@ public class SpeciesPanel extends JPanel
 		String displayname;
 		if (null == this.latestLocalState) {
 			// then try web service
-			dbConnection.setText("connecting to BridgeDb web service...");
+			dbConnection.setText("Connecting to BridgeDb web service...");
 			dbConnection.setForeground(blue);
 			classpath = "org.bridgedb.webservice.bridgerest.BridgeRest";
 			connstring = "idmapper-bridgerest:http://webservice.bridgedb.org/"
 					+ this.speciesState;
 			displayname = "http://webservice.bridgedb.org/" + this.speciesState;
 		} else {
-			dbConnection.setText("connecting to " + this.latestLocalState
+			dbConnection.setText("Connecting to " + this.latestLocalState
 					+ "...");
 			dbConnection.setForeground(blue);
 			classpath = "org.bridgedb.rdb.IDMapperRdb";
@@ -618,10 +625,10 @@ public class SpeciesPanel extends JPanel
 					}
 				}
 			} else {
-				dbConnection.setText("failed to connect to " + displayname
-						+ "!");
-				dbConnection.setToolTipText(connstring);
+				dbConnection.setText("Failed to connect!  ");
+				dbConnection.setToolTipText(displayname);
 				dbConnection.setForeground(red);
+				this.connState = null;
 			}
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
@@ -713,7 +720,7 @@ public class SpeciesPanel extends JPanel
 		 */
 		downloadButton.setEnabled(false);
 		configButton.setEnabled(false);
-		dbConnection.setText("connecting...  ");
+		dbConnection.setText("Connecting...  ");
 		dbConnection.setToolTipText("one moment please");
 		dbConnection.setForeground(blue);
 
@@ -734,9 +741,6 @@ public class SpeciesPanel extends JPanel
 			}
 		};
 		worker.execute();
-		//TODO: timer protects against web service failure, BUT
-		// it hogs the ui. Need better solution here.
-		//timedResourceCheck(worker);
 	}
 
 	public void mouseClicked(MouseEvent e) {
@@ -798,7 +802,7 @@ public class SpeciesPanel extends JPanel
 			dbConnection.setText(downloadFile + ": 0%");
 			dbConnection.setToolTipText("one moment please...");
 			dbConnection.setForeground(blue);
-			downloadButton.setToolTipText("downloading...");
+			downloadButton.setToolTipText("Downloading...");
 
 			/*
 			 * Start thread to connect to newly downloaded resources.

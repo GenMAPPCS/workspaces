@@ -76,7 +76,7 @@ public class ActionPanel extends JPanel
 				"../images/go-green.png")));
 		configButton = new JButton(new ImageIcon(getClass().getResource(
 				"../images/configure.png")));
-		configButton.setToolTipText("manually configure action list");
+		configButton.setToolTipText("Manually configure action list");
 
 		goButton.addMouseListener(this);
 		configButton.addMouseListener(this);
