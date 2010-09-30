@@ -222,7 +222,7 @@ public abstract class NetworkMapping {
 		}
 
 		for (String msg : result.getMessages()) {
-			System.out.println(msg);
+			//System.out.println(msg);
 		}
 		return result;
 	}
