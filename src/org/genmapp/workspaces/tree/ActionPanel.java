@@ -171,7 +171,7 @@ public class ActionPanel extends JPanel
 		runClustermaker.setRequirements("You must have a network with data");
 
 		CyAction runGoelite = new CyAction(RUN_GOELITE);
-		runGoelite.setDoable(false);
+		runGoelite.setDoable(true);
 		runGoelite
 				.setDescription("Perform GO/Pathway overrepresentation analysis per criteria");
 		runGoelite.setRequirements("You must first define criteria");

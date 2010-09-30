@@ -37,14 +37,19 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ARG_CRITERIASET_NAME = "name";
 
 	private final static String UPDATE_DATASETS = "update datasets";
-	private final static String ARG_DATASET_NAME = "name";
 	private final static String ARG_DATASET_COM = "command";
+
+	private final static String UPDATE_DATASETS2 = "update datasets2";
+	private final static String ARG_DATASET_NAME = "name";
+	private final static String ARG_DATASET_TYPE = "type";
+	private final static String ARG_DATASET_NODES = "nodes";
+	private final static String ARG_DATASET_ATTRS = "attrs";
 
 	private final static String ADD_GOELITE_JOB = "add job";
 	private final static String ARG_GOELITE_JOB = "jobid";
 	private final static String ARG_GOELITE_TABLABEL = "tablabel";
-	
-	//VERSIONING
+
+	// VERSIONING
 	private final static String NET_ATTR_SETS = "org.genmapp.criteriasets_1.0";
 	private final static String NET_ATTR_SET_PREFIX = "org.genmapp.criteriaset.";
 	private final static String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
@@ -65,6 +70,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		addDescription(UPDATE_DATASETS,
 				"Tell Workspaces to update the dataset panel");
 		addArgument(UPDATE_DATASETS, ARG_DATASET_NAME);
+
+		addDescription(UPDATE_DATASETS2,
+				"Tell Workspaces to update the dataset panel");
+		addArgument(UPDATE_DATASETS2, ARG_DATASET_NAME);
+		addArgument(UPDATE_DATASETS2, ARG_DATASET_TYPE);
+		addArgument(UPDATE_DATASETS2, ARG_DATASET_NODES);
+		addArgument(UPDATE_DATASETS2, ARG_DATASET_ATTRS);
+
 
 	}
 
@@ -221,6 +234,83 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 						+ " already listed in Workspaces.");
 			} else {
 				CyDataset dataset = new CyDataset(name, com);
+				result.addMessage("Dataset " + name + " added to Workspaces.");
+			}
+
+		} else if (UPDATE_DATASETS2.equals(command)) {
+			String name;
+			String type;
+			List<Integer> nodes;
+			List<String> attrs;
+			Object n = getArg(command, ARG_DATASET_NAME, args);
+			if (n instanceof String) {
+				name = (String) n;
+			} else
+				throw new CyCommandException(ARG_DATASET_NAME
+						+ ": unknown type (try String!)");
+
+			Object t = getArg(command, ARG_DATASET_TYPE, args);
+			if (t instanceof String) {
+				type = (String) t;
+			} else
+				throw new CyCommandException(ARG_DATASET_TYPE
+						+ ": unknown type (try String!)");
+
+			Object dn = getArg(command, ARG_DATASET_NODES, args);
+			if (dn instanceof List) {
+				if (((List) dn).get(0) instanceof Integer) {
+					nodes = (List<Integer>) dn;
+				} else
+					throw new CyCommandException(ARG_DATASET_NODES
+							+ ": unknown type (try List<Integer>!)");
+			} else if (dn instanceof String) {
+				nodes = new ArrayList<Integer>();
+				// escape the escape characters
+				dn = ((String) dn).replaceAll("\t", "\\\\t");
+				// remove brackets, if they are there
+				if (((String) dn).startsWith("[") && ((String) dn).endsWith("]"))
+					dn = ((String) dn).substring(1, ((String) dn).length() - 1);
+				// parse at comma delimiters
+				String[] list = ((String) dn).split(",");
+				for (String item : list) {
+					// remove all whitespace before trying to generate int
+					item = item.replaceAll("\\s+", "");
+					nodes.add(new Integer(item));
+				}
+			} else
+				throw new CyCommandException(ARG_DATASET_NODES
+						+ ": unknown type (try List<Integer>!)");
+
+			Object a = getArg(command, ARG_DATASET_ATTRS, args);
+			if (a instanceof List) {
+				if (((List) a).get(0) instanceof String) {
+					attrs = (List<String>) a;
+				} else
+					throw new CyCommandException(ARG_DATASET_ATTRS
+							+ ": unknown type (try List<String>!)");
+			} else if (a instanceof String) {
+				attrs = new ArrayList<String>();
+				// escape the escape characters
+				a = ((String) a).replaceAll("\t", "\\\\t");
+				// remove brackets, if they are there
+				if (((String) a).startsWith("[") && ((String) a).endsWith("]"))
+					a = ((String) a).substring(1, ((String) a).length() - 1);
+				// parse at comma delimiters
+				String[] list = ((String) a).split(",");
+				for (String item : list) {
+					// remove all leading and trailing whitespace 
+					item = item.replaceAll("^\\s+|\\s+$", "");
+					attrs.add(item);
+				}
+			} else
+				throw new CyCommandException(ARG_DATASET_ATTRS
+						+ ": unknown type (try List<String>!)");
+
+			if (CyDataset.datasetNameMap.containsKey(name)) {
+				result.addMessage("Dataset " + name
+						+ " already listed in Workspaces.");
+			} else {
+				CyDataset dataset = new CyDataset(name, type, nodes, attrs);
 				result.addMessage("Dataset " + name + " added to Workspaces.");
 			}
 

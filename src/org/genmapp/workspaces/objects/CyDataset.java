@@ -9,14 +9,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.utils.DatasetMapping;
+
+import cytoscape.CyNode;
 
 public class CyDataset {
 
-	private String displayName;
 	private String commandString;
 	private String source;
-	private int rows;
 	public boolean isUrlAttached;
+	
+	private String displayName;
+	private String keyType;
+	private List<Integer> nodes;
+	private List<String> attrs;
+	private int rows;
 
 	public static Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
 	public static List<String> selectedDatasets = new ArrayList<String>();
@@ -41,6 +48,23 @@ public class CyDataset {
 
 		// add to dataset panel
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
+	}
+
+	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
+		this.displayName = n;
+		this.keyType = t;
+		this.nodes = nl;
+		this.attrs = al;
+
+		datasetNameMap.put(n, this);
+
+		this.rows = nl.size();
+
+		// add to dataset panel
+		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
+		
+		// perform dataset mapping
+		DatasetMapping.performDatasetMapping(this);
 	}
 
 	/**
@@ -106,6 +130,27 @@ public class CyDataset {
 	 */
 	public int getRows() {
 		return rows;
+	}
+
+	/**
+	 * @return the keyType
+	 */
+	public String getKeyType() {
+		return keyType;
+	}
+
+	/**
+	 * @return the nodes
+	 */
+	public List<Integer> getNodes() {
+		return nodes;
+	}
+
+	/**
+	 * @return the attrs
+	 */
+	public List<String> getAttrs() {
+		return attrs;
 	}
 
 	/**

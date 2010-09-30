@@ -25,8 +25,10 @@ import java.beans.PropertyChangeListener;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.SwingWorker;
 
+import org.genmapp.workspaces.utils.NetworkMapping;
+
+import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
@@ -144,22 +146,16 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 			// nothing
 
 		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
+			for (CyNetwork net: Cytoscape.getNetworkSet()){
+				System.out.println(net.getIdentifier());
+				NetworkMapping.performNetworkMappings(net);
+			}
+
 			// reload all attached datasets
-			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-
-				public String doInBackground() {
-					String msg = "done!";
-					datasetPanel.reloadDataset();
-					
-					return msg;
-				}
-			};
-			worker.execute();
-
-			
 			
 			// then apply select criteria set(s)
 			
+				
 		}
 
 		

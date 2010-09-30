@@ -20,13 +20,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
@@ -55,6 +55,8 @@ import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
+import cytoscape.command.CyCommandException;
+import cytoscape.command.CyCommandManager;
 import cytoscape.data.SelectEvent;
 import cytoscape.data.SelectEventListener;
 import cytoscape.logger.CyLogger;
@@ -217,7 +219,7 @@ public class DatasetPanel extends JPanel implements
 		node.removeFromParent();
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
-		
+
 		// reset view
 		if (datasetTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
@@ -237,11 +239,13 @@ public class DatasetPanel extends JPanel implements
 		// activate panel
 		this.setVisible(true);
 		// activate dataset-dependent actions
-		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET)
+				.setDoable(true);
 		// prompt next action
 		if (CyCriteria.criteriaNameMap.isEmpty() && !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET));
-		
+			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
+					.get(ActionPanel.NEW_CRITERIA_SET));
+
 		// first see if it exists
 		if (getTreeNode(id) == null) {
 			GenericTreeNode dmtn = new GenericTreeNode(id, id);
@@ -485,7 +489,35 @@ public class DatasetPanel extends JPanel implements
 			} else if (EDIT_DATASET_TITLE.equals(label)) {
 				// TODO
 			} else if (CREATE_NETWORK.equals(label)) {
-				// TODO
+				Map<String, Object> args = new HashMap<String, Object>();
+				args.put("toggle", "true");
+				try {
+					CyCommandManager.execute("genmappimporter", "create network", args);
+				} catch (CyCommandException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (RuntimeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
+				for (String dataset : selectedDatasets) {
+					String com = CyDataset.datasetNameMap.get(dataset)
+							.getCommandString();
+					com = "genmappimporter import " + com;
+					WorkspacesCommandHandler.handleCommand(com);
+				}
+				args.clear();
+				args.put("toggle", "false");
+				try {
+					CyCommandManager.execute("genmappimporter", "create network", args);
+				} catch (CyCommandException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (RuntimeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else if (RELOAD_DATA.equals(label)) {
 				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
 				for (String dataset : selectedDatasets) {
@@ -498,7 +530,6 @@ public class DatasetPanel extends JPanel implements
 				CyLogger.getLogger().warn("Unexpected panel popup option");
 			}
 		}
-
 	}
 
 	/**
