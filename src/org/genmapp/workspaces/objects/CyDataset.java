@@ -94,11 +94,19 @@ public class CyDataset {
 				.getListAttribute(
 						Cytoscape.getCurrentNetwork().getIdentifier(),
 						DatasetMapping.NET_ATTR_DATASETS);
-
-		if (datasetList.contains(this.displayName))
+		
+		if (datasetList != null) {
+			if (datasetList.contains(this.displayName))
+				this.isMappedToNetwork = true;
+			else
+				this.isMappedToNetwork = false;
+		} else if (null == Cytoscape.getCurrentNetwork()) {
+			//go ahead and paint green if no networks loaded at all
 			this.isMappedToNetwork = true;
-		else
+		} else 	{
+			// current network has NO datasets mapped
 			this.isMappedToNetwork = false;
+		}
 
 		DatasetPanel.getTreeTable().getTree().updateUI();
 	}

@@ -61,23 +61,27 @@ public abstract class DatasetMapping {
 			CyNode dn = (CyNode) Cytoscape.getRootGraph().getNode(dni);
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
-			List<String> secKeyList = new ArrayList<String>();
-			for (String sk : secKeys) {
-				secKeyList.add(sk);
+			if (secKeys != null) {
+				List<String> secKeyList = new ArrayList<String>();
+				for (String sk : secKeys) {
+					secKeyList.add(sk);
+				}
+
+				/*
+				 * First, annotation every datanode with it's secondary key
+				 * mappings and dataset source
+				 */
+				nodeAttrs
+						.setListAttribute(dnKey, "__" + secKeyType, secKeyList);
+				List<String> datasetlist;
+				datasetlist = nodeAttrs.getListAttribute(dnKey,
+						NET_ATTR_DATASETS);
+				if (null == datasetlist)
+					datasetlist = new ArrayList<String>();
+				datasetlist.add(datasetName);
+				nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS,
+						datasetlist);
 			}
-
-			/*
-			 * First, annotation every datanode with it's secondary key mappings
-			 * and dataset source
-			 */
-			nodeAttrs.setListAttribute(dnKey, "__" + secKeyType, secKeyList);
-			List<String> datasetlist;
-			datasetlist = nodeAttrs.getListAttribute(dnKey, NET_ATTR_DATASETS);
-			if (null == datasetlist)
-				datasetlist = new ArrayList<String>();
-			datasetlist.add(datasetName);
-			nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS, datasetlist);
-
 			/*
 			 * Perform mapping on a per network basis to track associations with
 			 * datasets
@@ -113,28 +117,30 @@ public abstract class DatasetMapping {
 					/*
 					 * Next, check matches with datanode secondary keys
 					 */
-					for (String secondaryKey : secKeys) {
-						/*
-						 * Check network node ids
-						 */
-						if (nodeKey.equals(secondaryKey)) {
-							mapAttributes(dn, dnKeyType, attrs, cn);
-							mappedToNetworks.add(network);
-							break; // skip remaining secondary keys
-						}
+					if (secKeys != null) {
+						for (String secondaryKey : secKeys) {
+							/*
+							 * Check network node ids
+							 */
+							if (nodeKey.equals(secondaryKey)) {
+								mapAttributes(dn, dnKeyType, attrs, cn);
+								mappedToNetworks.add(network);
+								break; // skip remaining secondary keys
+							}
 
-						/*
-						 * And check network node secondary keys
-						 */
-						List<String> sk = (List<String>) Cytoscape
-								.getNodeAttributes().getListAttribute(nodeKey,
-										"__" + secKeyType);
-						if (sk != null) {
-							if (sk.size() > 0) {
-								if (sk.contains(secondaryKey)) {
-									mapAttributes(dn, dnKeyType, attrs, cn);
-									mappedToNetworks.add(network);
-									break; // skip remaining secondary keys
+							/*
+							 * And check network node secondary keys
+							 */
+							List<String> sk = (List<String>) Cytoscape
+									.getNodeAttributes().getListAttribute(
+											nodeKey, "__" + secKeyType);
+							if (sk != null) {
+								if (sk.size() > 0) {
+									if (sk.contains(secondaryKey)) {
+										mapAttributes(dn, dnKeyType, attrs, cn);
+										mappedToNetworks.add(network);
+										break; // skip remaining secondary keys
+									}
 								}
 							}
 						}
@@ -404,7 +410,7 @@ public abstract class DatasetMapping {
 	 */
 	private static Map<String, Set<String>> collectTableMappings(
 			List<String> nodeIds, String pkt, String skt) {
-		Map<String, Set<String>> primaryMap = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> secondaryKeyMap = new HashMap<String, Set<String>>();
 
 		CyCommandResult result = mapIdentifiers(nodeIds, pkt, skt);
 
@@ -412,12 +418,12 @@ public abstract class DatasetMapping {
 			Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
 					.getResult();
 			for (String primaryKey : keyMappings.keySet()) {
-				primaryMap.put(primaryKey, keyMappings.get(primaryKey));
+				secondaryKeyMap.put(primaryKey, keyMappings.get(primaryKey));
 
 			}
 
 		}
-		return primaryMap;
+		return secondaryKeyMap;
 	}
 
 	/**
