@@ -79,7 +79,7 @@ public class DatasetPanel extends JPanel implements
 	// Make this panel as a source of events.
 	private final SwingPropertyChangeSupport pcs;
 
-	private final JTreeTable treeTable;
+	private static JTreeTable treeTable = null;
 	private final GenericTreeNode root;
 
 	private JPopupMenu popup;
@@ -106,7 +106,7 @@ public class DatasetPanel extends JPanel implements
 		datasetTreeTableModel = new DatasetTreeTableModel(root);
 
 		treeTable = new JTreeTable(datasetTreeTableModel);
-		treeTable
+		getTreeTable()
 				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		initialize();
@@ -114,12 +114,12 @@ public class DatasetPanel extends JPanel implements
 		/*
 		 * Remove CTR-A for enabling select all function in the main window.
 		 */
-		for (KeyStroke listener : treeTable.getRegisteredKeyStrokes()) {
+		for (KeyStroke listener : getTreeTable().getRegisteredKeyStrokes()) {
 			if (listener.toString().equals("ctrl pressed A")) {
-				final InputMap map = treeTable.getInputMap();
+				final InputMap map = getTreeTable().getInputMap();
 				map.remove(listener);
-				treeTable.setInputMap(WHEN_FOCUSED, map);
-				treeTable.setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
+				getTreeTable().setInputMap(WHEN_FOCUSED, map);
+				getTreeTable().setInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, map);
 			}
 		}
 
@@ -139,20 +139,20 @@ public class DatasetPanel extends JPanel implements
 
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-		treeTable.getTree().addTreeSelectionListener(this);
-		treeTable.getTree().setRootVisible(false);
-		ToolTipManager.sharedInstance().registerComponent(treeTable);
-		treeTable.getTree().setCellRenderer(new TreeCellRenderer());
+		getTreeTable().getTree().addTreeSelectionListener(this);
+		getTreeTable().getTree().setRootVisible(false);
+		ToolTipManager.sharedInstance().registerComponent(getTreeTable());
+		getTreeTable().getTree().setCellRenderer(new TreeCellRenderer());
 
 		resetTable();
 
-		JScrollPane scroll = new JScrollPane(treeTable);
+		JScrollPane scroll = new JScrollPane(getTreeTable());
 		this.add(scroll);
 
 		// this mouse listener listens for the right-click event and will show
 		// the pop-up
 		// window when that occurrs
-		treeTable.addMouseListener(new PopupListener());
+		getTreeTable().addMouseListener(new PopupListener());
 
 		// create and populate the popup window
 		popup = new JPopupMenu();
@@ -173,11 +173,11 @@ public class DatasetPanel extends JPanel implements
 	}
 
 	public void resetTable() {
-		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName())
+		getTreeTable().getColumn(GenericColumnTypes.DATASET.getDisplayName())
 				.setPreferredWidth(220);
-		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
+		getTreeTable().getColumn(GenericColumnTypes.ROWS.getDisplayName())
 				.setPreferredWidth(40);
-		treeTable.setRowHeight(DEF_ROW_HEIGHT);
+		getTreeTable().setRowHeight(DEF_ROW_HEIGHT);
 
 	}
 
@@ -217,8 +217,8 @@ public class DatasetPanel extends JPanel implements
 		}
 
 		node.removeFromParent();
-		treeTable.getTree().updateUI();
-		treeTable.doLayout();
+		getTreeTable().getTree().updateUI();
+		getTreeTable().doLayout();
 
 		// reset view
 		if (datasetTreeTableModel.getChildCount(root) < 1) {
@@ -257,14 +257,14 @@ public class DatasetPanel extends JPanel implements
 			}
 
 			// apparently this doesn't fire valueChanged
-			treeTable.getTree()
+			getTreeTable().getTree()
 					.collapsePath(new TreePath(new TreeNode[]{root}));
 
-			treeTable.getTree().updateUI();
+			getTreeTable().getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
-			treeTable.getTree().expandPath(path);
-			treeTable.getTree().scrollPathToVisible(path);
-			treeTable.doLayout();
+			getTreeTable().getTree().expandPath(path);
+			getTreeTable().getTree().scrollPathToVisible(path);
+			getTreeTable().doLayout();
 
 			// this is necessary because valueChanged is not fired above
 			focusNode(id);
@@ -277,7 +277,7 @@ public class DatasetPanel extends JPanel implements
 	 */
 	public void reloadDataset() {
 		for (CyDataset cd : CyDataset.datasetNameMap.values()) {
-			if (cd.isUrlAttached) {
+			if (cd.isMappedToNetwork) {
 				String com = cd.getCommandString();
 				com = "genmappimporter import " + com;
 				WorkspacesCommandHandler.handleCommand(com);
@@ -298,9 +298,9 @@ public class DatasetPanel extends JPanel implements
 
 		if (node != null) {
 			// fires valueChanged if the network isn't already selected
-			treeTable.getTree().getSelectionModel().setSelectionPath(
+			getTreeTable().getTree().getSelectionModel().setSelectionPath(
 					new TreePath(node.getPath()));
-			treeTable.getTree().scrollPathToVisible(
+			getTreeTable().getTree().scrollPathToVisible(
 					new TreePath(node.getPath()));
 		}
 	}
@@ -341,7 +341,7 @@ public class DatasetPanel extends JPanel implements
 		/*
 		 * Support concurrent selections across panels
 		 */
-		JTree mtree = treeTable.getTree();
+		JTree mtree = getTreeTable().getTree();
 
 		// sets the "current" dataset based on last node in the tree selected
 		GenericTreeNode node = (GenericTreeNode) mtree
@@ -416,7 +416,7 @@ public class DatasetPanel extends JPanel implements
 			// check for the popup type
 			if (e.isPopupTrigger()) {
 				// get the row where the mouse-click originated
-				final int[] selected = treeTable.getSelectedRows();
+				final int[] selected = getTreeTable().getSelectedRows();
 
 				// if (e.isShiftDown()){ // TODO:fake for DATASETS
 				// if (dselected.length > nselected.length) {
@@ -455,7 +455,14 @@ public class DatasetPanel extends JPanel implements
 	 */
 	public void onSelectEvent(SelectEvent event) {
 		// TODO is this the right method to call?
-		treeTable.getTree().updateUI();
+		getTreeTable().getTree().updateUI();
+	}
+
+	/**
+	 * @return the treeTable
+	 */
+	public static JTreeTable getTreeTable() {
+		return treeTable;
 	}
 
 	/**
@@ -551,7 +558,7 @@ public class DatasetPanel extends JPanel implements
 				CyDataset cd = CyDataset.datasetNameMap.get(nodeid);
 				setToolTipText(cd.getSource());
 
-				if (cd.isUrlAttached) {
+				if (cd.isMappedToNetwork) {
 					setBackgroundNonSelectionColor(java.awt.Color.green
 							.brighter());
 					setBackgroundSelectionColor(java.awt.Color.green.darker());

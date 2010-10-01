@@ -53,6 +53,7 @@ import javax.swing.tree.TreePath;
 
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNetworkTitleChange;
@@ -229,8 +230,10 @@ public class NetworkPanel extends JPanel
 		// reset view and network-dependent actions
 		if (networkTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
-			CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(false);
-			CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(false);
+			CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(
+					false);
+			CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(
+					false);
 		}
 
 	}
@@ -269,11 +272,13 @@ public class NetworkPanel extends JPanel
 		// activate panel
 		this.setVisible(true);
 		// activate network-dependent actions
-		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER)
+				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
 		// prompt next action
 		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_DATASET_TABLE));
+			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
+					.get(ActionPanel.NEW_DATASET_TABLE));
 
 		// first see if it exists
 		if (getNetworkTreeNode(network_id) == null) {
@@ -388,6 +393,22 @@ public class NetworkPanel extends JPanel
 		if (networkList.size() > 0) {
 			Cytoscape.setSelectedNetworks(networkList);
 			Cytoscape.setSelectedNetworkViews(networkList);
+
+			// update dataset highlighting
+			for (String net : networkList) {
+				List<String> datasetList = Cytoscape
+						.getNetworkAttributes()
+						.getListAttribute(net, DatasetMapping.NET_ATTR_DATASETS);
+				if (null != datasetList) {
+					for (String dataset : CyDataset.datasetNameMap.keySet()) {
+						if (datasetList.contains(dataset))
+							CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = true;
+						else
+							CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = false;
+					}
+					DatasetPanel.getTreeTable().getTree().updateUI();
+				}
+			}
 		}
 	}
 
@@ -446,6 +467,7 @@ public class NetworkPanel extends JPanel
 	public void onSelectEvent(SelectEvent event) {
 		// TODO is this the right method to call?
 		treeTable.getTree().updateUI();
+
 	}
 
 	/**

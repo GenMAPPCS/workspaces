@@ -37,9 +37,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ARG_CRITERIASET_NAME = "name";
 
 	private final static String UPDATE_DATASETS = "update datasets";
-	private final static String ARG_DATASET_COM = "command";
-
-	private final static String UPDATE_DATASETS2 = "update datasets2";
 	private final static String ARG_DATASET_NAME = "name";
 	private final static String ARG_DATASET_TYPE = "type";
 	private final static String ARG_DATASET_NODES = "nodes";
@@ -70,13 +67,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		addDescription(UPDATE_DATASETS,
 				"Tell Workspaces to update the dataset panel");
 		addArgument(UPDATE_DATASETS, ARG_DATASET_NAME);
-
-		addDescription(UPDATE_DATASETS2,
-				"Tell Workspaces to update the dataset panel");
-		addArgument(UPDATE_DATASETS2, ARG_DATASET_NAME);
-		addArgument(UPDATE_DATASETS2, ARG_DATASET_TYPE);
-		addArgument(UPDATE_DATASETS2, ARG_DATASET_NODES);
-		addArgument(UPDATE_DATASETS2, ARG_DATASET_ATTRS);
+		addArgument(UPDATE_DATASETS, ARG_DATASET_TYPE);
+		addArgument(UPDATE_DATASETS, ARG_DATASET_NODES);
+		addArgument(UPDATE_DATASETS, ARG_DATASET_ATTRS);
 
 
 	}
@@ -213,31 +206,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			cyCriteria.criteriaNetworkNodesMap.put(setname, networkNodes);
 
 		} else if (UPDATE_DATASETS.equals(command)) {
-			String name;
-			String com;
-			Object d = getArg(command, ARG_DATASET_NAME, args);
-			if (d instanceof String) {
-				name = (String) d;
-			} else
-				throw new CyCommandException(ARG_DATASET_NAME
-						+ ": unknown type (try String!)");
-
-			Object c = getArg(command, ARG_DATASET_COM, args);
-			if (c instanceof String) {
-				com = (String) c;
-			} else
-				throw new CyCommandException(ARG_DATASET_COM
-						+ ": unknown type (try String!)");
-
-			if (CyDataset.datasetNameMap.containsKey(name)) {
-				result.addMessage("Dataset " + name
-						+ " already listed in Workspaces.");
-			} else {
-				CyDataset dataset = new CyDataset(name, com);
-				result.addMessage("Dataset " + name + " added to Workspaces.");
-			}
-
-		} else if (UPDATE_DATASETS2.equals(command)) {
 			String name;
 			String type;
 			List<Integer> nodes;

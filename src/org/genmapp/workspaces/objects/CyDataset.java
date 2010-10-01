@@ -1,6 +1,5 @@
 package org.genmapp.workspaces.objects;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,16 +8,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.tree.DatasetPanel;
 import org.genmapp.workspaces.utils.DatasetMapping;
 
-import cytoscape.CyNode;
+import cytoscape.Cytoscape;
 
 public class CyDataset {
 
 	private String commandString;
 	private String source;
-	public boolean isUrlAttached;
-	
+	public boolean isMappedToNetwork;
+
 	private String displayName;
 	private String keyType;
 	private List<Integer> nodes;
@@ -30,26 +30,13 @@ public class CyDataset {
 
 	/**
 	 * Analogous to CyNetwork, this is the base class of all dataset objects in
-	 * the workspaces panel.
+	 * the workspaces panel. Called by data importers.
 	 * 
 	 * @param n
-	 *            display name for dataset
-	 * @param c
-	 *            command string for dataset import
+	 * @param t
+	 * @param nl
+	 * @param al
 	 */
-	public CyDataset(String n, String c) {
-		this.displayName = n;
-		this.commandString = c;
-
-		datasetNameMap.put(n, this);
-
-		extractRowCount();
-		verifyUrl();
-
-		// add to dataset panel
-		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
-	}
-
 	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
 		this.displayName = n;
 		this.keyType = t;
@@ -62,32 +49,58 @@ public class CyDataset {
 
 		// add to dataset panel
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
-		
+
 		// perform dataset mapping
 		DatasetMapping.performDatasetMapping(this);
+
+		// set color of entry in panel
+		setCurrentHighlight();
 	}
 
 	/**
-	 * Use this method to verify the url is still around. The urlAttached
-	 * boolean is set and can be used to inform UI elements and available
-	 * functions, e.g., reimporting a datset. If the url is not found, the row
-	 * count is set to 0.
+	 * Called when loading session file containing datasets.
+	 * 
+	 * @param n
+	 * @param al
 	 */
-	public void verifyUrl() {
-		String s = null;
-		Pattern p = Pattern.compile("source=\"(.+?)\"");
-		Matcher m = p.matcher(this.commandString);
-		while (m.find())
-			s = m.group(1);
+	public CyDataset(String n, List<String> al) {
+		this.displayName = n;
+		this.attrs = al;
 
-		this.source = s;
+		datasetNameMap.put(n, this);
 
-		s = s.substring(s.indexOf(":") + 1);
-		File f = new File(s);
-		isUrlAttached = f.exists();
-		if (!isUrlAttached)
-			this.rows = 0;
+		/*
+		 * Once all nodes are loaded from xGMML, then scan all nodes to collect
+		 * this.keyType and this.nodes based on nodeAtts. Don't need to run
+		 * performDatasetMapping.
+		 */
 
+		this.rows = this.nodes.size();
+
+		// add to dataset panel
+		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
+
+		// set color of entry in panel
+		setCurrentHighlight();
+
+	}
+
+	/**
+	 * 
+	 */
+	private void setCurrentHighlight() {
+
+		List<String> datasetList = Cytoscape.getNetworkAttributes()
+				.getListAttribute(
+						Cytoscape.getCurrentNetwork().getIdentifier(),
+						DatasetMapping.NET_ATTR_DATASETS);
+
+		if (datasetList.contains(this.displayName))
+			this.isMappedToNetwork = true;
+		else
+			this.isMappedToNetwork = false;
+
+		DatasetPanel.getTreeTable().getTree().updateUI();
 	}
 
 	/**

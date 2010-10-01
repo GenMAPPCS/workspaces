@@ -21,7 +21,7 @@ public abstract class DatasetMapping {
 	private static Map<String, Object> invalid = new HashMap<String, Object>();
 	private static CyAttributes nodeAttrs = Cytoscape.getNodeAttributes();
 
-	private static final String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
+	public static final String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
 	private static final String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 	public static final String ID = "GeneID";
 	public static final String CODE = "SystemCode";
@@ -68,8 +68,15 @@ public abstract class DatasetMapping {
 
 			/*
 			 * First, annotation every datanode with it's secondary key mappings
+			 * and dataset source
 			 */
 			nodeAttrs.setListAttribute(dnKey, "__" + secKeyType, secKeyList);
+			List<String> datasetlist;
+			datasetlist = nodeAttrs.getListAttribute(dnKey, NET_ATTR_DATASETS);
+			if (null == datasetlist)
+				datasetlist = new ArrayList<String>();
+			datasetlist.add(datasetName);
+			nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS, datasetlist);
 
 			/*
 			 * Perform mapping on a per network basis to track associations with
@@ -83,8 +90,8 @@ public abstract class DatasetMapping {
 					 * First, check if datanode == existing network node
 					 */
 					if (dn == cn) {
-						// mapping has already been performed, naturally
-						// just register and tag network
+						// mapping has already been performed, naturally,
+						// so just tag network
 						mappedToNetworks.add(network);
 					}
 
@@ -107,14 +114,18 @@ public abstract class DatasetMapping {
 					 * Next, check matches with datanode secondary keys
 					 */
 					for (String secondaryKey : secKeys) {
-						// check network node ids
+						/*
+						 * Check network node ids
+						 */
 						if (nodeKey.equals(secondaryKey)) {
 							mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
 							break; // skip remaining secondary keys
 						}
 
-						// and check network node secondary keys
+						/*
+						 * And check network node secondary keys
+						 */
 						List<String> sk = (List<String>) Cytoscape
 								.getNodeAttributes().getListAttribute(nodeKey,
 										"__" + secKeyType);

@@ -156,7 +156,7 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 			// then apply select criteria set(s)
 			
 				
-		}
+		} 
 
 		
 	}

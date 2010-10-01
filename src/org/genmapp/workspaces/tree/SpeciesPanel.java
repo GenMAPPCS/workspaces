@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -251,6 +252,7 @@ public class SpeciesPanel extends JPanel
 			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 				public String doInBackground() {
 					String msg = "done!";
+					System.out.println("1. checking");
 					timedResourceCheck(this);
 					return msg;
 				}
@@ -263,6 +265,7 @@ public class SpeciesPanel extends JPanel
 			SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
 				public String doInBackground() {
 					String msg = "done!";
+					System.out.println("3. moving on");
 					connectToResources();
 					return msg;
 				}
@@ -337,7 +340,7 @@ public class SpeciesPanel extends JPanel
 	}
 
 	private void timedResourceCheck(SwingWorker<String, Void> worker) {
-		//System.out.print("TIMING : ");
+		// System.out.print("TIMING : ");
 		int resourcesCount = 0;
 		int attempts = 0;
 		while (resourcesCount == 0) {
@@ -346,7 +349,7 @@ public class SpeciesPanel extends JPanel
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			//System.out.print(attempts + "...");
+			// System.out.print(attempts + "...");
 			resourcesCount = updateResourceDisplay();
 			if (attempts++ >= 10) {
 				dbConnection.setText("No databases found!  ");
@@ -365,7 +368,7 @@ public class SpeciesPanel extends JPanel
 				}
 			}
 		}
-
+		System.out.println("2. checked");
 	}
 
 	/**
@@ -754,11 +757,13 @@ public class SpeciesPanel extends JPanel
 			 * If there is a more recent database locally, then simply trigger
 			 * speciesBox action performed to make the switch
 			 */
-			if (!this.latestLocalState.equals(this.derbyState)) {
-				speciesBox.setSelectedItem(this.speciesState);
+			if (null != this.latestLocalState) {
+				if (!this.latestLocalState.equals(this.derbyState)) {
+					speciesBox.setSelectedItem(this.speciesState);
 
-				// and skip download
-				return;
+					// and skip download
+					return;
+				}
 			}
 
 			/*
@@ -777,12 +782,15 @@ public class SpeciesPanel extends JPanel
 									+ "%");
 							Thread.sleep(500);
 							progress = d.getProgress();
+
 						}
 						dbConnection.setText(downloadFile + ": 100%");
 						dbConnection.setText("Uncompressing " + downloadFile);
 						// important to wait for completion
 						// before handing off to next worker
+						System.out.println("4. waiting for finish");
 						d.waitFor();
+						System.out.println("7. finished");
 					} catch (MalformedURLException e1) {
 						e1.printStackTrace();
 					} catch (IOException e1) {
@@ -791,6 +799,10 @@ public class SpeciesPanel extends JPanel
 						e.printStackTrace();
 					}
 					return msg;
+				}
+
+				public void done() {
+
 				}
 			};
 			worker.execute();
@@ -811,15 +823,18 @@ public class SpeciesPanel extends JPanel
 
 				public String doInBackground() {
 					String msg = "done!";
+					System.out.println("8. moving on");
 					connectToResources();
 					speciesBox.setEnabled(true);
 					return msg;
 				}
 			};
-			worker2.execute();
+			//need this 'if' to synchronize workers on "other" machines
+			// but, it blocks the "meantime" display above
+//			if (worker.isDone())
+				worker2.execute();
 		}
 	}
-
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
 
