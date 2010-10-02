@@ -137,6 +137,38 @@ public class SpeciesPanel extends JPanel
 		if (!gcsdir.exists()) {
 			gcsdir.mkdir();
 		}
+		
+		/*
+		 * Start thread to fill in available species.
+		 */
+		SwingWorker<String, Void> workerA = new SwingWorker<String, Void>() {
+
+			public String doInBackground() {
+				String msg = "done!";
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println("1. do this first");
+				return msg;
+			}
+		};
+		workerA.execute();
+
+		/*
+		 * Start thread to compile list of downloadable databases.
+		 */
+		SwingWorker<String, Void> workerB = new SwingWorker<String, Void>() {
+
+			public String doInBackground() {
+				String msg = "done!";
+				System.out.println("2. then, do this first");
+				return msg;
+			}
+		};
+		workerB.execute();
 
 		/*
 		 * Start thread to fill in available species.
@@ -252,7 +284,6 @@ public class SpeciesPanel extends JPanel
 			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 				public String doInBackground() {
 					String msg = "done!";
-					System.out.println("1. checking");
 					timedResourceCheck(this);
 					return msg;
 				}
@@ -265,7 +296,6 @@ public class SpeciesPanel extends JPanel
 			SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
 				public String doInBackground() {
 					String msg = "done!";
-					System.out.println("3. moving on");
 					connectToResources();
 					return msg;
 				}
@@ -368,7 +398,6 @@ public class SpeciesPanel extends JPanel
 				}
 			}
 		}
-		System.out.println("2. checked");
 	}
 
 	/**
