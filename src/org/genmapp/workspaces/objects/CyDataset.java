@@ -32,10 +32,10 @@ public class CyDataset {
 	 * Analogous to CyNetwork, this is the base class of all dataset objects in
 	 * the workspaces panel. Called by data importers.
 	 * 
-	 * @param n
-	 * @param t
-	 * @param nl
-	 * @param al
+	 * @param n = name
+	 * @param k = keyType
+	 * @param nl = node list
+	 * @param al = attribute list
 	 */
 	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
 		this.displayName = n;

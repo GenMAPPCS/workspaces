@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.genmapp.workspaces.tree.ActionPanel;
 import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -135,65 +135,77 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		//
 		// } else
 		if (UPDATE_CRITERIASETS.equals(command)) {
+			ActionPanel.showMessage( "Update criteriasets" );
+			
 			String setname;
 			Object s = getArg(command, ARG_CRITERIASET_NAME, args);
 			if (s instanceof String) {
 				setname = (String) s;
 			} else
+			{
 				throw new CyCommandException(ARG_CRITERIASET_NAME
 						+ ": unknown type (try String!)");
-
-			// gather info on criteria from network attributes
-			int criteriaCount = 0;
-			List<String> clist = Cytoscape.getNetworkAttributes()
-					.getListAttribute(
-							Cytoscape.getCurrentNetwork().getIdentifier(),
-							NET_ATTR_SET_PREFIX + setname);
-			criteriaCount = clist.size() - 1; // subtract 1 for mapTo entry
-
-			String[] split;
-			String nodeAttr = "";
-			for (String c : clist) {
-				split = c.split(":");
-				if (split.length < 3)
-					continue; // skip mapTo entry
-				nodeAttr = nodeAttr + setname + "_" + split[1] + ":";
 			}
-			nodeAttr = nodeAttr.substring(0, nodeAttr.length() - 1); // prune
-			// final
-			// ":"
-
+			// gather info on criteria from session props
+			// create the node attribute label for a given criteria inside the criteriaset
+			String[] cList = CyCriteria.getCriteria( setname );
+			if ( cList.length == 0 )
+			{
+				// no criteria in criteriaset, nothing to do
+				return result;
+			}
+			
 			// add item and create cycriteria
 			CyCriteria cyCriteria;
 			if (CyCriteria.criteriaNameMap.containsKey(setname)) {
-				cyCriteria = CyCriteria.criteriaNameMap.get(setname);
-				result.addMessage("Criteria " + setname
+					cyCriteria = CyCriteria.criteriaNameMap.get(setname);
+					result.addMessage("Criteria " + setname
 						+ " already listed in Workspaces.");
 			} else {
-				cyCriteria = new CyCriteria(setname, criteriaCount);
+				cyCriteria = new CyCriteria(setname, cList.length );
 				GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().addItem(
 						setname, "croot");
 				result.addMessage("Criteria " + setname
 						+ " added to Workspaces.");
 			}
-			// collect node counts per network for given criteria set
+
+			// we are trying to find which nodes are activated by the criteriaset
+			// a shortcut for doing so is to look for the mashed-up dummy criteria that combines all the criteria that is created anytime 
+			//   > 1 criteria exists in the set.
+			// This way we need only to check a single criteria for activation.
+			String[] split;
+			String nodeAttr = "";
+			int criteriaCount = cList.length;
+			for (String c : cList) {
+			    nodeAttr = nodeAttr + setname + "_" + c + ":";
+			}
+			nodeAttr = nodeAttr.substring(0, nodeAttr.length() - 1); // prune
+																	// final
+																	// ":"
+
+			ActionPanel.showMessage( "2:" + nodeAttr );
+			
+		    // collect node counts per network for given criteria set
 			CyAttributes ca = Cytoscape.getNodeAttributes();
 			Map<String, Integer> networkNodes = new HashMap<String, Integer>();
+			
 			for (CyNetwork net : Cytoscape.getNetworkSet()) {
+				ActionPanel.showMessage( "3:" + net.getIdentifier() );
+
 				int nodeCount = 0;
 				for (CyNode n : (List<CyNode>) net.nodesList()) {
 					if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
 						if (criteriaCount == 1) {
-
-							boolean b = ca.getBooleanAttribute(n
-									.getIdentifier(), nodeAttr);
+							// only one criteria exists, so use it to judge activation
+							boolean b = ca.getBooleanAttribute(n.getIdentifier(), nodeAttr);
+                                        
 							if (b) {
 								nodeCount++;
 							}
-
 						} else if (criteriaCount > 1) {
-							Integer i = ca.getIntegerAttribute(n
-									.getIdentifier(), nodeAttr);
+							// we are using the mashup criteria, which has an integer value
+							// the value is -1 if not active, >=0 if active ( it is used to tell which color in the list to display )
+							Integer i = ca.getIntegerAttribute(n.getIdentifier(), nodeAttr);
 							if (i >= 0) {
 								nodeCount++;
 							}
@@ -202,8 +214,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				}
 				networkNodes.put(net.getIdentifier(), nodeCount);
 			}
+
 			// set criteria map'o'map
-			cyCriteria.criteriaNetworkNodesMap.put(setname, networkNodes);
+			CyCriteria.criteriaNetworkNodesMap.put(setname, networkNodes);
 
 		} else if (UPDATE_DATASETS.equals(command)) {
 			String name;

@@ -414,6 +414,8 @@ public class DatasetPanel extends JPanel implements
 		 */
 		private void maybeShowPopup(MouseEvent e) {
 			// check for the popup type
+			ActionPanel.showMessage( "maybeShowPopup" );
+
 			if (e.isPopupTrigger()) {
 				// get the row where the mouse-click originated
 				final int[] selected = getTreeTable().getSelectedRows();
@@ -498,15 +500,23 @@ public class DatasetPanel extends JPanel implements
 			} else if (CREATE_NETWORK.equals(label)) {
 				Map<String, Object> args = new HashMap<String, Object>();
 				args.put("toggle", "true");
+				ActionPanel.showMessage( "create network" );
+
 				try {
 					CyCommandManager.execute("genmappimporter", "create network", args);
 				} catch (CyCommandException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					ActionPanel.showMessage( "error "+ e );
+
 				} catch (RuntimeException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					ActionPanel.showMessage( "error " + e );
+
 				}
+				ActionPanel.showMessage( "1" );
+
 				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
 				for (String dataset : selectedDatasets) {
 					String com = CyDataset.datasetNameMap.get(dataset)
@@ -514,6 +524,8 @@ public class DatasetPanel extends JPanel implements
 					com = "genmappimporter import " + com;
 					WorkspacesCommandHandler.handleCommand(com);
 				}
+				ActionPanel.showMessage( "2" );
+
 				args.clear();
 				args.put("toggle", "false");
 				try {
@@ -521,10 +533,16 @@ public class DatasetPanel extends JPanel implements
 				} catch (CyCommandException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					ActionPanel.showMessage( "error " + e );
+
 				} catch (RuntimeException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					ActionPanel.showMessage( "error " + e );
+
 				}
+				ActionPanel.showMessage( "3" );
+
 			} else if (RELOAD_DATA.equals(label)) {
 				List<String> selectedDatasets = CyDataset.getSelectedDatasets();
 				for (String dataset : selectedDatasets) {

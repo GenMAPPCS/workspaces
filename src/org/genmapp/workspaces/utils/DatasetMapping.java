@@ -42,9 +42,12 @@ public abstract class DatasetMapping {
 
 		List<Integer> datanodeIndices = d.getNodes();
 		List<String> nodeIds = new ArrayList<String>();
+		
+		// compile list of nodeIds from int node ids
 		for (Integer dni : datanodeIndices) {
 			nodeIds.add(Cytoscape.getRootGraph().getNode(dni).getIdentifier());
 		}
+		// create map of nodeIds -> set of possible matching ids in the secondary key system
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
 				nodeIds, dnKeyType, secKeyType);
 
@@ -62,14 +65,18 @@ public abstract class DatasetMapping {
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
 			if (secKeys != null) {
+				// convert Set to List for easy processing
 				List<String> secKeyList = new ArrayList<String>();
 				for (String sk : secKeys) {
 					secKeyList.add(sk);
 				}
 
 				/*
-				 * First, annotation every datanode with it's secondary key
-				 * mappings and dataset source
+				 * Annotate every datanode with it's secondary key
+				 *   mappings and dataset source
+				 * These changes are made to the node attributes
+				 * e.g., "__Ensembl mouse" = "[ENS00241,ENS123151]"
+				 * 
 				 */
 				nodeAttrs
 						.setListAttribute(dnKey, "__" + secKeyType, secKeyList);
@@ -82,9 +89,13 @@ public abstract class DatasetMapping {
 				nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS,
 						datasetlist);
 			}
+			
 			/*
-			 * Perform mapping on a per network basis to track associations with
-			 * datasets
+			 * Map the dataset values as node attributes
+			 * 
+			 * We go in priority-order to determine which system to use for mapping
+			 * 1) primary key ( "ID" ) matches the primary key type and id value
+			 * 2) secondary key matches 
 			 */
 			for (CyNetwork network : networkList) {
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
@@ -99,7 +110,7 @@ public abstract class DatasetMapping {
 						mappedToNetworks.add(network);
 					}
 
-					/*
+					/*  
 					 * Next, check if datanode matches ID/CODE directly
 					 */
 					String pk = Cytoscape.getNodeAttributes()
@@ -357,10 +368,17 @@ public abstract class DatasetMapping {
 	private static List<CyNetwork> collectVirginNetworks(String title) {
 		// collect list of virgin networks
 		List<CyNetwork> netList = new ArrayList<CyNetwork>();
+		
+		// for each network in cytoscape
 		for (CyNetwork network : Cytoscape.getNetworkSet()) {
 			String netid = network.getIdentifier();
 			System.out.println(netid);
+			
+			// it's considered virgin if either no dataset tag has been applied,
+			//   or if there is a dataset tag but the tag's value as an attribute
+			//   does not contain "title"
 			if (Cytoscape.viewExists(netid)) {
+				// if a view exists, 
 				// check network attributes for dataset tag
 				if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
 						NET_ATTR_DATASETS)) {
