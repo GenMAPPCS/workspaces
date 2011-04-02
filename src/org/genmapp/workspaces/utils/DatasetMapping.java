@@ -2,6 +2,7 @@ package org.genmapp.workspaces.utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,32 +28,45 @@ public abstract class DatasetMapping {
 	public static final String CODE = "SystemCode";
 
 	/**
-	 * Annotate every datanode with it's secondary key mappings. Then match key
-	 * and secondary keys to existing network node ids, secondary keys and
-	 * special id/code attributes.
+	 * Gather secondary key mappings for every datanode. Then match key and
+	 * secondary keys to existing network node ids, secondary keys and special
+	 * id/code attributes.
 	 * 
 	 * @param d
+	 *            CyDataset
+	 * @param nl
+	 *            list of CyNetworks to map to. Use null to map to all unmapped
+	 *            networks.
+	 * @param isNew
+	 *            is this a new CyDataset, or are you re-mapping
 	 */
-	public static void performDatasetMapping(CyDataset d) {
+	public static void performDatasetMapping(CyDataset d, List<CyNetwork> nl,
+			boolean isNew) {
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
-
-		if (dnKeyType.equals(secKeyType))
-			return;
+		System.out.println("Dataset primary key ("+dnKeyType+") and secondary key ("+secKeyType+")");
+		/*
+		 * Don't do the following, because it will skip the manual annotation of
+		 * Ensembl ID columns, e.g., in the case of Yeast ORFs
+		 */
+		// if (dnKeyType.equals(secKeyType))
+		// return;
 
 		List<Integer> datanodeIndices = d.getNodes();
 		List<String> nodeIds = new ArrayList<String>();
-		
-		// compile list of nodeIds from int node ids
 		for (Integer dni : datanodeIndices) {
 			nodeIds.add(Cytoscape.getRootGraph().getNode(dni).getIdentifier());
 		}
-		// create map of nodeIds -> set of possible matching ids in the secondary key system
+
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
-				nodeIds, dnKeyType, secKeyType);
+				nodeIds, dnKeyType, secKeyType, isNew);
 
 		String datasetName = d.getDisplayName();
-		List<CyNetwork> networkList = collectVirginNetworks(datasetName);
+		List<CyNetwork> networkList = nl;
+		if (null == networkList) {
+			// null means all
+			networkList = collectVirginNetworks(datasetName);
+		}
 
 		List<String> attrs = d.getAttrs();
 		List<CyNetwork> mappedToNetworks = new ArrayList<CyNetwork>();
@@ -64,19 +78,16 @@ public abstract class DatasetMapping {
 			CyNode dn = (CyNode) Cytoscape.getRootGraph().getNode(dni);
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
-			if (secKeys != null) {
-				// convert Set to List for easy processing
+
+			if (isNew && secKeys != null) {
 				List<String> secKeyList = new ArrayList<String>();
 				for (String sk : secKeys) {
 					secKeyList.add(sk);
 				}
 
 				/*
-				 * Annotate every datanode with it's secondary key
-				 *   mappings and dataset source
-				 * These changes are made to the node attributes
-				 * e.g., "__Ensembl mouse" = "[ENS00241,ENS123151]"
-				 * 
+				 * First, annotate every datanode with it's secondary key
+				 * mappings and dataset source
 				 */
 				nodeAttrs
 						.setListAttribute(dnKey, "__" + secKeyType, secKeyList);
@@ -89,18 +100,13 @@ public abstract class DatasetMapping {
 				nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS,
 						datasetlist);
 			}
-			
 			/*
-			 * Map the dataset values as node attributes
-			 * 
-			 * We go in priority-order to determine which system to use for mapping
-			 * 1) primary key ( "ID" ) matches the primary key type and id value
-			 * 2) secondary key matches 
+			 * Perform mapping on a per network basis to track associations with
+			 * datasets
 			 */
 			for (CyNetwork network : networkList) {
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
 					String nodeKey = cn.getIdentifier();
-					boolean didMap = false;
 					/*
 					 * First, check if datanode == existing network node
 					 */
@@ -108,9 +114,10 @@ public abstract class DatasetMapping {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
+						System.out.println(network.getIdentifier()+":"+dn.getIdentifier()+" - mapped naturally");
 					}
 
-					/*  
+					/*
 					 * Next, check if datanode matches ID/CODE directly
 					 */
 					String pk = Cytoscape.getNodeAttributes()
@@ -121,7 +128,7 @@ public abstract class DatasetMapping {
 						if (pkt.equals(dnKeyType) && pk.equals(dnKey)) {
 							mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
-
+							System.out.println(network.getIdentifier()+":"+dn.getIdentifier()+" - mapped via ID/CODE");
 						}
 					}
 
@@ -136,6 +143,7 @@ public abstract class DatasetMapping {
 							if (nodeKey.equals(secondaryKey)) {
 								mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
+								System.out.println(network.getIdentifier()+" - mapped via dataset secondary key: "+secondaryKey);
 								break; // skip remaining secondary keys
 							}
 
@@ -150,6 +158,7 @@ public abstract class DatasetMapping {
 									if (sk.contains(secondaryKey)) {
 										mapAttributes(dn, dnKeyType, attrs, cn);
 										mappedToNetworks.add(network);
+										System.out.println(network.getIdentifier()+" - mapped via network-dataset secondary key: "+secondaryKey);
 										break; // skip remaining secondary keys
 									}
 								}
@@ -228,6 +237,7 @@ public abstract class DatasetMapping {
 
 		return true;
 	}
+
 	/**
 	 * Based on the attribute types, map the entry to CyAttributes.
 	 * 
@@ -241,77 +251,77 @@ public abstract class DatasetMapping {
 			final Object entry, final Byte type, final Object listsample) {
 
 		switch (type) {
-			case CyAttributes.TYPE_BOOLEAN :
+		case CyAttributes.TYPE_BOOLEAN:
 
-				Boolean newBool;
+			Boolean newBool;
 
-				try {
-					newBool = (Boolean) entry;
-					nodeAttrs.setAttribute(key, name, newBool);
-				} catch (Exception e) {
-					invalid.put(key, entry);
-				}
-
-				break;
-
-			case CyAttributes.TYPE_INTEGER :
-
-				Integer newInt;
-
-				try {
-					newInt = (Integer) entry;
-					nodeAttrs.setAttribute(key, name, newInt);
-				} catch (Exception e) {
-					invalid.put(key, entry);
-				}
-
-				break;
-
-			case CyAttributes.TYPE_FLOATING :
-
-				Double newDouble;
-
-				try {
-					newDouble = (Double) entry;
-					nodeAttrs.setAttribute(key, name, newDouble);
-				} catch (Exception e) {
-					invalid.put(key, entry);
-				}
-
-				break;
-
-			case CyAttributes.TYPE_STRING :
-				String newString;
-				try {
-					newString = (String) entry;
-					nodeAttrs.setAttribute(key, name, newString);
-				} catch (Exception e) {
-					invalid.put(key, entry);
-				}
-
-				break;
-
-			case CyAttributes.TYPE_SIMPLE_LIST :
-				List newList;
-				if (listsample instanceof Boolean)
-					newList = (List<Boolean>) entry;
-				else if (listsample instanceof Integer)
-					newList = (List<Integer>) entry;
-				else if (listsample instanceof Double)
-					newList = (List<Double>) entry;
-				else
-					newList = (List<String>) entry;
-
-				try {
-					nodeAttrs.setListAttribute(key, name, newList);
-				} catch (Exception e) {
-					invalid.put(key, entry);
-				}
-
-				break;
-
-			default :
+			try {
+				newBool = (Boolean) entry;
+				nodeAttrs.setAttribute(key, name, newBool);
+			} catch (Exception e) {
 				invalid.put(key, entry);
+			}
+
+			break;
+
+		case CyAttributes.TYPE_INTEGER:
+
+			Integer newInt;
+
+			try {
+				newInt = (Integer) entry;
+				nodeAttrs.setAttribute(key, name, newInt);
+			} catch (Exception e) {
+				invalid.put(key, entry);
+			}
+
+			break;
+
+		case CyAttributes.TYPE_FLOATING:
+
+			Double newDouble;
+
+			try {
+				newDouble = (Double) entry;
+				nodeAttrs.setAttribute(key, name, newDouble);
+			} catch (Exception e) {
+				invalid.put(key, entry);
+			}
+
+			break;
+
+		case CyAttributes.TYPE_STRING:
+			String newString;
+			try {
+				newString = (String) entry;
+				nodeAttrs.setAttribute(key, name, newString);
+			} catch (Exception e) {
+				invalid.put(key, entry);
+			}
+
+			break;
+
+		case CyAttributes.TYPE_SIMPLE_LIST:
+			List newList;
+			if (listsample instanceof Boolean)
+				newList = (List<Boolean>) entry;
+			else if (listsample instanceof Integer)
+				newList = (List<Integer>) entry;
+			else if (listsample instanceof Double)
+				newList = (List<Double>) entry;
+			else
+				newList = (List<String>) entry;
+
+			try {
+				nodeAttrs.setListAttribute(key, name, newList);
+			} catch (Exception e) {
+				invalid.put(key, entry);
+			}
+
+			break;
+
+		default:
+			invalid.put(key, entry);
 
 		}
 	}
@@ -333,28 +343,28 @@ public abstract class DatasetMapping {
 
 		for (String listItem : parts) {
 			switch (dataType) {
-				case CyAttributes.TYPE_BOOLEAN :
-					listAttr.add(Boolean.parseBoolean(listItem.trim()));
+			case CyAttributes.TYPE_BOOLEAN:
+				listAttr.add(Boolean.parseBoolean(listItem.trim()));
 
-					break;
+				break;
 
-				case CyAttributes.TYPE_INTEGER :
-					listAttr.add(Integer.parseInt(listItem.trim()));
+			case CyAttributes.TYPE_INTEGER:
+				listAttr.add(Integer.parseInt(listItem.trim()));
 
-					break;
+				break;
 
-				case CyAttributes.TYPE_FLOATING :
-					listAttr.add(Double.parseDouble(listItem.trim()));
+			case CyAttributes.TYPE_FLOATING:
+				listAttr.add(Double.parseDouble(listItem.trim()));
 
-					break;
+				break;
 
-				case CyAttributes.TYPE_STRING :
-					listAttr.add(listItem.trim());
+			case CyAttributes.TYPE_STRING:
+				listAttr.add(listItem.trim());
 
-					break;
+				break;
 
-				default :
-					break;
+			default:
+				break;
 			}
 		}
 
@@ -368,17 +378,9 @@ public abstract class DatasetMapping {
 	private static List<CyNetwork> collectVirginNetworks(String title) {
 		// collect list of virgin networks
 		List<CyNetwork> netList = new ArrayList<CyNetwork>();
-		
-		// for each network in cytoscape
 		for (CyNetwork network : Cytoscape.getNetworkSet()) {
 			String netid = network.getIdentifier();
-			System.out.println(netid);
-			
-			// it's considered virgin if either no dataset tag has been applied,
-			//   or if there is a dataset tag but the tag's value as an attribute
-			//   does not contain "title"
 			if (Cytoscape.viewExists(netid)) {
-				// if a view exists, 
 				// check network attributes for dataset tag
 				if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
 						NET_ATTR_DATASETS)) {
@@ -386,7 +388,6 @@ public abstract class DatasetMapping {
 							.getNetworkAttributes().getListAttribute(netid,
 									NET_ATTR_DATASETS);
 					if (!sourcelist.contains(title)) {
-						System.out.println("2 " + netid);
 						netList.add(network);
 					}
 				} else {
@@ -418,26 +419,40 @@ public abstract class DatasetMapping {
 			Set<String> idTypes = (Set<String>) result.getResult();
 			for (String t : idTypes) {
 				if (t.contains("Ensembl"))
+					//System.out.println("Hits: "+t);
 					type = t;
 			}
 		}
 		return type;
 	}
+
 	/**
 	 * 
 	 */
 	private static Map<String, Set<String>> collectTableMappings(
-			List<String> nodeIds, String pkt, String skt) {
+			List<String> nodeIds, String pkt, String skt, boolean isNew) {
 		Map<String, Set<String>> secondaryKeyMap = new HashMap<String, Set<String>>();
 
-		CyCommandResult result = mapIdentifiers(nodeIds, pkt, skt);
-
-		if (null != result) {
-			Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
-					.getResult();
-			for (String primaryKey : keyMappings.keySet()) {
-				secondaryKeyMap.put(primaryKey, keyMappings.get(primaryKey));
-
+		if (isNew) {
+			CyCommandResult result = mapIdentifiers(nodeIds, pkt, skt);
+			if (null != result) {
+				Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
+						.getResult();
+				for (String primaryKey : keyMappings.keySet()) {
+					secondaryKeyMap
+							.put(primaryKey, keyMappings.get(primaryKey));
+				}
+			}
+		} else {
+			// collect from prior mapping
+			for (String id : nodeIds) {
+				List<String> sklist = nodeAttrs
+						.getListAttribute(id, "__" + skt);
+				Set<String> secKeys = new HashSet<String>();
+				for (String sk : sklist) {
+					secKeys.add(sk);
+				}
+				secondaryKeyMap.put(id, secKeys);
 			}
 
 		}

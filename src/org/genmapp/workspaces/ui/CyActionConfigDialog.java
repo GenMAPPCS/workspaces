@@ -60,6 +60,8 @@ import org.genmapp.workspaces.tree.ActionPanel;
  */
 public class CyActionConfigDialog extends javax.swing.JDialog {
 
+	private static final long serialVersionUID = 5106703609005644456L;
+	
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private javax.swing.JButton okBtn;
 	private javax.swing.JButton saveBtn;

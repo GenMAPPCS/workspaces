@@ -15,6 +15,8 @@
  ******************************************************************************/
 package org.genmapp.workspaces.tree;
 
+import giny.model.Node;
+
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -56,6 +58,8 @@ import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.CyNetwork;
+import cytoscape.CyNetworkEvent;
+import cytoscape.CyNetworkListener;
 import cytoscape.CyNetworkTitleChange;
 import cytoscape.Cytoscape;
 import cytoscape.actions.ApplyVisualStyleAction;
@@ -69,17 +73,19 @@ import cytoscape.view.CyNetworkView;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
 
+
 /**
  * GUI component for managing network list in current session.
  */
 public class NetworkPanel extends JPanel
 		implements
-			PropertyChangeListener,
+			PropertyChangeListener, 
 			TreeSelectionListener,
 			SelectEventListener,
 			ChangeListener {
 
-	private static final long serialVersionUID = -7102083850894612840L;
+	private static final long serialVersionUID = -4655014551140885915L;
+
 
 	private static final int DEF_DEVIDER_LOCATION = 280;
 	private static final int PANEL_PREFFERED_WIDTH = 250;
@@ -102,8 +108,12 @@ public class NetworkPanel extends JPanel
 	private JMenuItem applyVisualStyleMenu;
 
 	private BiModalJSplitPane split;
+	
+	private boolean doNotEnterValueChanged = false;
 
 	private final NetworkTreeTableModel networkTreeTableModel;
+//	public final JPanel oriNetworkPanel = (JPanel) Cytoscape.getDesktop().getCytoPanel(
+//			SwingConstants.WEST).getComponentAt(1);
 
 	/**
 	 * Constructor for the Network Panel.
@@ -134,10 +144,11 @@ public class NetworkPanel extends JPanel
 			}
 		}
 
-		pcs = new SwingPropertyChangeSupport(this);
+		pcs = Cytoscape.getSwingPropertyChangeSupport(); //new SwingPropertyChangeSupport(this);
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
+		Cytoscape.getDesktop().getSwingPropertyChangeSupport().addPropertyChangeListener(Cytoscape.getDesktop().NETWORK_VIEW_FOCUSED,	this);
 
 		// For listening to adding/removing Visual Style events.
 		Cytoscape.getVisualMappingManager().addChangeListener(this);
@@ -196,6 +207,15 @@ public class NetworkPanel extends JPanel
 		treeTable.getColumn(GenericColumnTypes.EDGES.getDisplayName())
 				.setPreferredWidth(45);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);
+	}
+
+	/**
+	 *  DOCUMENT ME!
+	 *
+	 * @return  DOCUMENT ME!
+	 */
+	public SwingPropertyChangeSupport getSwingPropertyChangeSupport() {
+		return pcs;
 	}
 
 	/**
@@ -358,8 +378,10 @@ public class NetworkPanel extends JPanel
 	 */
 	public void valueChanged(TreeSelectionEvent e) {
 		// TODO: Every time user select a network name, this method will be
-		// called 3 times!
-
+		// called 3 times and run code twice!
+		if (doNotEnterValueChanged)
+			return;
+		
 		JTree mtree = treeTable.getTree();
 
 		// sets the "current" network based on last node in the tree selected
@@ -368,10 +390,12 @@ public class NetworkPanel extends JPanel
 		if (node == null || node.getUserObject() == null)
 			return;
 
+		//System.out.println("NET_FOCUS: "+node.getID());
 		pcs.firePropertyChange(new PropertyChangeEvent(this,
-				CytoscapeDesktop.NETWORK_VIEW_FOCUS, null, (String) node
+				CytoscapeDesktop.NETWORK_VIEW_FOCUS, null, node
 						.getID()));
-
+//		Cytoscape.getDesktop().setFocus(node.getID());
+		
 		// creates a list of all selected networks
 		final List<String> networkList = new LinkedList<String>();
 		try {
@@ -419,6 +443,7 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void propertyChange(PropertyChangeEvent e) {
+//		System.out.println("HEARD: " +e.getPropertyName());
 		if (Cytoscape.NETWORK_CREATED.equals(e.getPropertyName())) {
 			addNetwork((String) e.getNewValue(), (String) e.getOldValue());
 		} else if (Cytoscape.NETWORK_DESTROYED.equals(e.getPropertyName())) {
@@ -439,6 +464,9 @@ public class NetworkPanel extends JPanel
 		} else if (Cytoscape.CYTOSCAPE_INITIALIZED.equals(e.getPropertyName())) {
 			updateVSMenu();
 		}
+		
+		// and refresh
+		treeTable.getTree().updateUI();
 	}
 
 	private void updateVSMenu() {
@@ -465,7 +493,41 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void onSelectEvent(SelectEvent event) {
-		// TODO is this the right method to call?
+		if (event.getTargetType() == SelectEvent.SINGLE_NODE || event.getTargetType() == SelectEvent.NODE_SET) {
+			final Set<Node> selectedNodes = (Set<Node>)Cytoscape.getCurrentNetwork().getSelectedNodes();
+			final List<String> selectedNestedNetworkIDs = new ArrayList<String>();
+			for (final Node node : selectedNodes) {
+				final CyNetwork nestedNetwork = (CyNetwork)node.getNestedNetwork();
+				if (nestedNetwork != null)
+					selectedNestedNetworkIDs.add(nestedNetwork.getIdentifier());
+			}
+
+			doNotEnterValueChanged = true;
+			try {
+				final TreePath[] treePaths = new TreePath[selectedNestedNetworkIDs.size() + 1];
+				int index = 0;
+				final String currentNetworkID = Cytoscape.getCurrentNetwork().getIdentifier();
+				TreePath currentPath = null;
+				final JTree tree = treeTable.getTree();
+				for (int row = 0; row < tree.getRowCount(); ++row) {
+					final TreePath path = tree.getPathForRow(row);
+					final String ID = ((GenericTreeNode)path.getLastPathComponent()).getID();
+					if (ID.equals(currentNetworkID))
+						currentPath = path;
+					else if (selectedNestedNetworkIDs.contains(ID))
+						treePaths[index++] = path;
+				}
+
+				Cytoscape.setSelectedNetworks(selectedNestedNetworkIDs);
+
+				treePaths[index] = currentPath;
+				tree.getSelectionModel().setSelectionPaths(treePaths);
+				tree.scrollPathToVisible(currentPath);
+			} finally {
+				doNotEnterValueChanged = false;
+			}
+		}
+
 		treeTable.getTree().updateUI();
 
 	}
@@ -649,4 +711,5 @@ public class NetworkPanel extends JPanel
 		}
 
 	}
+
 }

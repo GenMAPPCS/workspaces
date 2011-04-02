@@ -29,8 +29,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +39,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToolTip;
@@ -51,7 +50,6 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
 
 import org.genmapp.workspaces.utils.Downloader;
-import org.genmapp.workspaces.utils.Status;
 
 import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
@@ -59,13 +57,11 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 
-public class SpeciesPanel extends JPanel
-		implements
-			ActionListener,
-			PropertyChangeListener,
-			MouseListener {
+public class SpeciesPanel extends JPanel implements ActionListener,
+		PropertyChangeListener, MouseListener {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 3824505202304808596L;
+
 	private static final String bridgedbSpecieslist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
 	public static final String bridgedbDerbyDir = "http://bridgedb.org/data/gene_database/";
 	public static String genmappcsdir = "/GenMAPP-CS-Data/";
@@ -74,12 +70,12 @@ public class SpeciesPanel extends JPanel
 	private String connState = null;
 	private String derbyState = null;
 	private String latestLocalState = null;
-	private String downloadFile = null;
-	private static JComboBox speciesBox;
+	String downloadFile = null;
+	static JComboBox speciesBox;
 	private JButton configButton;
 	private JButton downloadButton;
 	// private boolean autoRegister = false;
-	private static JLabel dbConnection;
+	static JLabel dbConnection;
 	private static JLabel db2Connection;
 	private Color green = new Color(20, 150, 20);
 	private Color red = new Color(200, 50, 50);
@@ -137,71 +133,41 @@ public class SpeciesPanel extends JPanel
 		if (!gcsdir.exists()) {
 			gcsdir.mkdir();
 		}
-		
-		/*
-		 * Start thread to fill in available species.
-		 */
-		SwingWorker<String, Void> workerA = new SwingWorker<String, Void>() {
-
-			public String doInBackground() {
-				String msg = "done!";
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				System.out.println("1. do this first");
-				return msg;
-			}
-		};
-		workerA.execute();
-
-		/*
-		 * Start thread to compile list of downloadable databases.
-		 */
-		SwingWorker<String, Void> workerB = new SwingWorker<String, Void>() {
-
-			public String doInBackground() {
-				String msg = "done!";
-				System.out.println("2. then, do this first");
-				return msg;
-			}
-		};
-		workerB.execute();
 
 		/*
 		 * Start thread to fill in available species.
 		 */
-		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+		final SwingWorker<Boolean, Void> worker1 = new SwingWorker<Boolean, Void>() {
 
-			public String doInBackground() {
-				String msg = "done!";
+			public Boolean doInBackground() {
 				initializeSupportedSpecies();
-				// TODO: store local copy for offline operation
-				return msg;
+				return true;
 			}
 		};
-		worker.execute();
+		worker1.execute();
 
 		/*
 		 * Start thread to compile list of downloadable databases.
 		 */
-		SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
+		SwingWorker<Boolean, Void> worker2 = new SwingWorker<Boolean, Void>() {
 
-			public String doInBackground() {
-				String msg = "done!";
+			public Boolean doInBackground() {
+				try {
+					worker1.get();
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				} catch (ExecutionException e1) {
+					e1.printStackTrace();
+				}
+				// AFTER worker1 is done
 				try {
 					initializeLatestDatabases();
 				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				// TODO: store local copy for offline operation
-				return msg;
+				return true;
 			}
 		};
 		worker2.execute();
@@ -276,31 +242,11 @@ public class SpeciesPanel extends JPanel
 		// TODO: add appropriate items here
 		String prop = e.getPropertyName();
 		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
-			/*
-			 * Start thread to "listen" for registration of default resources by
-			 * CyThesaurus. Usually takes just over a second so we sleep for bit
-			 * before trying.
-			 */
-			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-				public String doInBackground() {
-					String msg = "done!";
-					timedResourceCheck(this);
-					return msg;
-				}
-			};
-			worker.execute();
+			WaitForResoucesThread a = new WaitForResoucesThread(this);
+			a.start();
 
-			/*
-			 * Start thread to perform final check against available resources.
-			 */
-			SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
-				public String doInBackground() {
-					String msg = "done!";
-					connectToResources();
-					return msg;
-				}
-			};
-			worker2.execute();
+			ConnectResourcesThread b = new ConnectResourcesThread(a, this);
+			b.start();
 
 			// now you can click on this
 			configButton.setEnabled(true);
@@ -312,17 +258,70 @@ public class SpeciesPanel extends JPanel
 
 	/**
 	 * Collects list of species from centralized BridgeDb file and populates
-	 * species selector. Should only run once per session
+	 * species selector. Should only run once per session.
 	 * 
 	 */
 	private static void initializeSupportedSpecies() {
 		List<String> lines = readUrl(bridgedbSpecieslist);
 
-		for (String line : lines) {
-			String[] s = line.split("\t");
-			// format: genus \t species \t common \t two-letter
-			supportedSpecies.put(s[0] + " " + s[1], new String[]{s[2], s[3]});
-			speciesBox.addItem(s[0] + " " + s[1]);
+		/*
+		 * If readUrl fails (for whatever reason), then just read local files to
+		 * provide offline performance.
+		 */
+		if (null == lines || lines.size() < 1) {
+			String derbyfile = null;
+			int latest = 0;
+			File dir = new File(genmappcsdatabasedir);
+			if (!dir.exists()) {
+				dir.mkdir();
+			}
+
+			FilenameFilter filter = new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					return (name.endsWith(".bridge") || name.endsWith(".pgdb"));
+				}
+			};
+
+			String[] children = dir.list(filter);
+			if (children == null) {
+				JOptionPane
+						.showMessageDialog(
+								Cytoscape.getDesktop(),
+								"Can not find databases online or in local directory.\n Please verify internet connection or download databases at your own convenience from\n\t http://bridgedb.org/data/gene_database/ \n and place in your user directory under GenMAPP-CS-Data/databases/",
+								"Show stopper", JOptionPane.WARNING_MESSAGE);
+			} else {
+				JOptionPane
+						.showMessageDialog(
+								Cytoscape.getDesktop(),
+								"Can not find databases online, but we did find some in a local directory.\n We will attempt to use these without reference to centralized resources. \n You may experience unexpected behaviors...",
+								"Technical difficulty",
+								JOptionPane.WARNING_MESSAGE);
+
+				// TODO: need better solution here
+				// e.g., create and reuse local file
+				for (int i = 0; i < children.length; i++) {
+					// Get filename of file or directory
+					String filename = children[i];
+					String twoletter = filename.substring(0, 2);
+					// add unique list of twoletter codes
+					if (!supportedSpecies.containsKey(twoletter))
+						speciesBox.addItem(twoletter);
+					supportedSpecies.put(twoletter, new String[] { twoletter,
+							twoletter });
+
+				}
+				speciesBox.removeItemAt(0);
+
+			}
+
+		} else {
+			for (String line : lines) {
+				String[] s = line.split("\t");
+				// format: genus \t species \t common \t two-letter
+				supportedSpecies.put(s[0] + " " + s[1], new String[] { s[2],
+						s[3] });
+				speciesBox.addItem(s[0] + " " + s[1]);
+			}
 		}
 	}
 
@@ -335,7 +334,7 @@ public class SpeciesPanel extends JPanel
 	 */
 	private void initializeLatestDatabases() throws MalformedURLException,
 			IOException {
-		// TODO: should make local file for offline performance
+
 		String derbyfile = null;
 		URL url = new URL(bridgedbDerbyDir);
 		System.out.println("connecting to " + url.toString());
@@ -369,7 +368,10 @@ public class SpeciesPanel extends JPanel
 		}
 	}
 
-	private void timedResourceCheck(SwingWorker<String, Void> worker) {
+	/**
+	 * @param thread
+	 */
+	protected void timedResourceCheck(Thread thread) {
 		// System.out.print("TIMING : ");
 		int resourcesCount = 0;
 		int attempts = 0;
@@ -379,8 +381,8 @@ public class SpeciesPanel extends JPanel
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			// System.out.print(attempts + "...");
-			resourcesCount = updateResourceDisplay();
+			resourcesCount = latestDatabases.size();
+			// System.out.print(attempts + "..." + resourcesCount + "\n");
 			if (attempts++ >= 10) {
 				dbConnection.setText("No databases found!  ");
 				dbConnection
@@ -389,7 +391,7 @@ public class SpeciesPanel extends JPanel
 				resourcesCount = -1;
 
 				// try to kill worker
-				worker.cancel(true);
+				thread.interrupt();
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) {
@@ -413,7 +415,9 @@ public class SpeciesPanel extends JPanel
 
 		// two-letter code
 		String key = supportedSpecies.get(species)[1];
-		remote = latestDatabases.get(key);
+		if (null != latestDatabases && !latestDatabases.isEmpty())
+			remote = latestDatabases.get(key);
+
 		this.downloadFile = remote;
 
 		if (null == current) {
@@ -515,6 +519,7 @@ public class SpeciesPanel extends JPanel
 	 */
 	public Integer updateResourceDisplay() {
 		int count = 0;
+		// TODO: move to CommandHandler
 		Map<String, Object> args = new HashMap<String, Object>();
 		try {
 			CyCommandResult result = CyCommandManager.execute("idmapping",
@@ -595,6 +600,7 @@ public class SpeciesPanel extends JPanel
 		 * Deselect old derby or web service resources
 		 */
 		if (null != this.connState) {
+			// TODO: Move to CommandHandler
 			Map<String, Object> args = new HashMap<String, Object>();
 			args.put("connstring", this.connState);
 			CyCommandResult result;
@@ -638,6 +644,7 @@ public class SpeciesPanel extends JPanel
 					+ this.latestLocalState;
 			displayname = this.latestLocalState;
 		}
+		// TODO: Move to CommandHandler
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("classpath", classpath);
 		args.put("connstring", connstring);
@@ -720,6 +727,7 @@ public class SpeciesPanel extends JPanel
 	 */
 	private void configureManually() {
 		boolean b = false;
+		// TODO: Move to CommandHandler
 		Map<String, Object> noargs = new HashMap<String, Object>();
 		try {
 			CyCommandResult result = CyCommandManager.execute("idmapping",
@@ -764,12 +772,11 @@ public class SpeciesPanel extends JPanel
 		/*
 		 * Start thread to register new resources per species selection.
 		 */
-		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+		SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
 
-			public String doInBackground() {
-				String msg = "done!";
+			public Boolean doInBackground() {
 				connectToResources();
-				return msg;
+				return true;
 			}
 		};
 		worker.execute();
@@ -795,47 +802,6 @@ public class SpeciesPanel extends JPanel
 				}
 			}
 
-			/*
-			 * Start thread to download database.
-			 */
-			SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-
-				public String doInBackground() {
-					String msg = "done!";
-					try {
-						Downloader d = new Downloader();
-						d.download(bridgedbDerbyDir + downloadFile);
-						int progress = d.getProgress();
-						while (progress < 99) {
-							dbConnection.setText(downloadFile + ": " + progress
-									+ "%");
-							Thread.sleep(500);
-							progress = d.getProgress();
-
-						}
-						dbConnection.setText(downloadFile + ": 100%");
-						dbConnection.setText("Uncompressing " + downloadFile);
-						// important to wait for completion
-						// before handing off to next worker
-						System.out.println("4. waiting for finish");
-						d.waitFor();
-						System.out.println("7. finished");
-					} catch (MalformedURLException e1) {
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					return msg;
-				}
-
-				public void done() {
-
-				}
-			};
-			worker.execute();
-
 			// In the meantime display message and progress
 			speciesBox.setEnabled(false);
 			downloadButton.setEnabled(false);
@@ -845,25 +811,14 @@ public class SpeciesPanel extends JPanel
 			dbConnection.setForeground(blue);
 			downloadButton.setToolTipText("Downloading...");
 
-			/*
-			 * Start thread to connect to newly downloaded resources.
-			 */
-			SwingWorker<String, Void> worker2 = new SwingWorker<String, Void>() {
+			DownloadThread a = new DownloadThread(this);
+			a.start();
+			ConnectResourcesThread b = new ConnectResourcesThread(a, this);
+			b.start();
 
-				public String doInBackground() {
-					String msg = "done!";
-					System.out.println("8. moving on");
-					connectToResources();
-					speciesBox.setEnabled(true);
-					return msg;
-				}
-			};
-			//need this 'if' to synchronize workers on "other" machines
-			// but, it blocks the "meantime" display above
-//			if (worker.isDone())
-				worker2.execute();
 		}
 	}
+
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
 
@@ -884,6 +839,87 @@ public class SpeciesPanel extends JPanel
 
 	}
 
+}
+
+/**
+ * 
+ * @author Anurag Sharma
+ */
+class DownloadThread extends Thread {
+
+	private SpeciesPanel sp;
+
+	public DownloadThread(SpeciesPanel sp) {
+		this.sp = sp;
+	}
+
+	public void run() {
+		try {
+			System.out.println("starting download");
+			Downloader d = new Downloader();
+			d.download(sp.bridgedbDerbyDir + sp.downloadFile);
+			int progress = d.getProgress();
+			while (progress < 99) {
+				sp.dbConnection
+						.setText(sp.downloadFile + ": " + progress + "%");
+				Thread.sleep(500);
+				progress = d.getProgress();
+
+			}
+			sp.dbConnection.setText(sp.downloadFile + ": 100%");
+			sp.dbConnection.setText("Uncompressing " + sp.downloadFile + "...");
+
+			// must wait for completion of uncompression before giving up thread
+			d.waitFor();
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+/**
+ * Start thread to check on web resources, such as latestDatabases, before
+ * making connections. This coupling of threads is critical to get the
+ * initialization timing right.
+ */
+class WaitForResoucesThread extends Thread {
+
+	private SpeciesPanel sp;
+
+	public WaitForResoucesThread(SpeciesPanel sp) {
+		this.sp = sp;
+	}
+
+	public void run() {
+		sp.timedResourceCheck(this);
+	}
+}
+
+/**
+ * After prior thread, connect to available resources.
+ */
+class ConnectResourcesThread extends Thread {
+
+	private Thread priorThread;
+	private SpeciesPanel sp;
+
+	public ConnectResourcesThread(Thread a, SpeciesPanel sp) {
+		this.priorThread = a;
+		this.sp = sp;
+	}
+
+	public void run() {
+		try {
+			priorThread.join(); // wait for prior thread to finish
+		} catch (InterruptedException ex) {
+		}
+		sp.connectToResources();
+		sp.speciesBox.setEnabled(true);
+	}
 }
 
 /**

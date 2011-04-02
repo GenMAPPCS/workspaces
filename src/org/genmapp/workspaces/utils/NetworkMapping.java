@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.genmapp.workspaces.objects.CyDataset;
+
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
@@ -28,23 +30,10 @@ public abstract class NetworkMapping {
 
 	/**
 	 * @param parts
-	 * 
-	 * The purpose of this function is to
-	 * - determine the SystemCode for the primary ids of this network 
-	 * - map these ids to a secondary key
-	 * 
-	 * In the process, one or more additional node attributes ( "__" + secondaryKeyType ) are created
-	 * to hold the secondaryKeys.
-	 * 
-	 * The idea is to first try and find a secondary key type that works for most of the nodes,
-	 * and then, if need be, map individual nodes on a special case-by-case basis; some of the
-	 * networks could have multiple key types for their primary id.   Such networks will have
-	 * their SystemCode set to "MIXED".
 	 */
 	public static void performNetworkMappings(CyNetwork network) {
 		String netid = network.getIdentifier();
 		String secKeyType = DatasetMapping.getSecKeyType();
-
 		// check network-level system code
 		String networkCode = Cytoscape.getNetworkAttributes()
 				.getStringAttribute(netid, CODE);
@@ -155,12 +144,17 @@ public abstract class NetworkMapping {
 				}
 			}
 		}
+		
+		// Now, map all datasets to this network
+		List<CyNetwork> networklist = new ArrayList<CyNetwork>();
+		networklist.add(network);
+		for (CyDataset d: CyDataset.datasetNameMap.values()){
+			DatasetMapping.performDatasetMapping(d, networklist, false);
+		}
+		CyDataset.setCurrentHighlight();
 	}
 
 	/**
-	 * Returns true iff mapping between the source and target key types is supported
-	 *   by the idmapping infrastructure.
-	 *   
 	 * @param st
 	 * @param tt
 	 * @return
@@ -191,11 +185,6 @@ public abstract class NetworkMapping {
 		return false;
 	}
 
-	/*
-	 *  Performs a mapping of primary keys to their secondary key type and stores
-	 *  them in a result array.  No side effects.
-	 */
-
 	private static CyCommandResult mapIdentifiers(List<String> l, String pkt,
 			String skt) {
 		Map<String, Object> args = new HashMap<String, Object>();
@@ -220,10 +209,6 @@ public abstract class NetworkMapping {
 		return result;
 	}
 
-	/*
-	 * Creates a new node attribute column called ( "__" + skt ) and fills it with the
-	 *   secondary key that has been mapped from the primary key / primary key type.
-	 */
 	private static CyCommandResult mapIdentifiersByAttr(CyNetwork net,
 			String pkt, String skt) {
 

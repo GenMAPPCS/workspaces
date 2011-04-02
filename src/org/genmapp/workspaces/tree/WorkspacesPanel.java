@@ -26,33 +26,38 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
+import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
+import ding.view.BirdsEyeView;
+import ding.view.DGraphView;
 
 /**
  * GUI component for managing network list in current session.
  */
-public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
+public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
-	private static final long serialVersionUID = -7102083850894612840L;
-
+	private static final long serialVersionUID = 3500704003585438431L;
+	
 	private static final int DEF_DEVIDER_LOCATION = 280;
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
 	private SpeciesPanel speciesPanel;
 	private ActionPanel actionPanel;
-	private NetworkPanel networkPanel;
-	private DatasetPanel datasetPanel;
-	private CriteriaPanel criteriaPanel;
+	private static NetworkPanel networkPanel;
+	private static DatasetPanel datasetPanel;
+	private static CriteriasetPanel criteriaPanel;
 	// private AnalysisPanel analysisTreePanel;
 	// private ReportPanel reportTreePanel;
 
 	private JPanel navigatorPanel;
-	private BiModalJSplitPane split;
+//	BirdsEyeView bev;
+//	private BiModalJSplitPane split;
 	private final CytoscapeDesktop cytoscapeDesktop;
 
 	/**
@@ -71,26 +76,28 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 		actionPanel = new ActionPanel();
 		networkPanel = new NetworkPanel();
 		datasetPanel = new DatasetPanel();
-		criteriaPanel = new CriteriaPanel();
+		criteriaPanel = new CriteriasetPanel();
 		// analysisTreePanel = new AnalysisPanel();
 		// reportTreePanel = new ReportPanel();
-		
-		//set default viz
+
+		// set default viz
 		networkPanel.setVisible(false);
 		datasetPanel.setVisible(false);
 		criteriaPanel.setVisible(false);
 
 		navigatorPanel = new JPanel();
-		navigatorPanel.setMinimumSize(new Dimension(180, 180));
-		navigatorPanel.setMaximumSize(new Dimension(180, 180));
-		navigatorPanel.setPreferredSize(new Dimension(180, 180));
+		navigatorPanel.setMinimumSize(new Dimension(40, 40));
+		navigatorPanel.setMaximumSize(new Dimension(120, 120));
+		navigatorPanel.setPreferredSize(new Dimension(120, 120));
+		
+//		setNavigator(getBev());
 
 		JPanel main = new JPanel();
 		main.setLayout(new GridLayout(3, 1, 0, 0));
 		main.add(networkPanel);
 		main.add(datasetPanel);
 		main.add(criteriaPanel);
-		
+
 		JPanel wsPanel = new JPanel();
 		wsPanel.setLayout(new BoxLayout(wsPanel, BoxLayout.Y_AXIS));
 		wsPanel.add(speciesPanel);
@@ -99,66 +106,101 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 		// wsPanel.add(analysisTreePanel);
 		// wsPanel.add(reportTreePanel);
 
-		split = new BiModalJSplitPane(cytoscapeDesktop,
-				JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
-				wsPanel, navigatorPanel);
-		split.setResizeWeight(1);
-		split.setDividerLocation(DEF_DEVIDER_LOCATION);
-		add(split);
+//		split = new BiModalJSplitPane(cytoscapeDesktop,
+//				JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
+//				wsPanel, navigatorPanel);
+//		split.setResizeWeight(1);
+//		split.setDividerLocation(DEF_DEVIDER_LOCATION);
+//		add(split);
 		
+		add(wsPanel);
+
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
 	}
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param comp
-	 *            DOCUMENT ME!
-	 */
-	public void setNavigator(final Component comp) {
-		split.setRightComponent(comp);
-		split.validate();
-	}
+
+//	/**
+//	 * DOCUMENT ME!
+//	 * 
+//	 * @param comp
+//	 *            DOCUMENT ME!
+//	 */
+//	public void setNavigator(final Component comp) {
+//		split.setRightComponent(comp);
+//		split.validate();
+//	}
+//	
+//	/**
+//	 * Creates a new BirdsEyeViewHandler object.
+//	 * @param desktopPane The JDesktopPane of the NetworkViewManager. Can be null.
+//	 */
+//	private BirdsEyeView getBev() {
+//		return bev = new BirdsEyeView((DGraphView) Cytoscape.getCurrentNetworkView()) {
+//				public Dimension getMinimumSize() {
+//					return new Dimension(180, 180);
+//				}
+//
+//				public Dimension getMaximumSize() {
+//					return new Dimension(180, 180);
+//				}
+//
+//				public Dimension getPreferredSize() {
+//					return new Dimension(180, 180);
+//				}
+//			};
+//	}
 
 	/**
 	 * @return the networkTreePanel
 	 */
-	public NetworkPanel getNetworkTreePanel() {
+	public static NetworkPanel getNetworkTreePanel() {
 		return networkPanel;
 	}
 
 	/**
 	 * @return the datasetTreePanel
 	 */
-	public DatasetPanel getDatasetTreePanel() {
+	public static DatasetPanel getDatasetTreePanel() {
 		return datasetPanel;
 	}
 
 	/**
 	 * @return the criteriaTreePanel
 	 */
-	public CriteriaPanel getCriteriaTreePanel() {
+	public static CriteriasetPanel getCriteriaTreePanel() {
 		return criteriaPanel;
 	}
+
 	public void propertyChange(PropertyChangeEvent evt) {
 		String prop = evt.getPropertyName();
 		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
 			// nothing
 
 		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
-			for (CyNetwork net: Cytoscape.getNetworkSet()){
-				System.out.println(net.getIdentifier());
-				NetworkMapping.performNetworkMappings(net);
+			 // handle new sessions separately below
+			if (evt.getNewValue() != null) {
+				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
+						.getNewValue())[0];
+				NetworkMapping.performNetworkMappings(newNetwork);
+				for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
+						.values()) {
+					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
+							newNetwork);
+				}
 			}
 
-			// reload all attached datasets
-			
-			// then apply select criteria set(s)
-			
-				
-		} 
+		} else if (prop.equals(Cytoscape.SESSION_LOADED)){
+			for (CyNetwork newNetwork : Cytoscape.getNetworkSet()){
+				NetworkMapping.performNetworkMappings(newNetwork);
+				for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
+						.values()) {
+					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
+							newNetwork);
+				}
 
-		
+			}
+		}
+
 	}
 
 	// /**
@@ -174,6 +216,5 @@ public class WorkspacesPanel extends JPanel  implements PropertyChangeListener {
 	// public ReportPanel getReportTreePanel() {
 	// return reportTreePanel;
 	// }
-
 
 }

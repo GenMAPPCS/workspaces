@@ -262,7 +262,7 @@ public class Downloader implements DownloadListener {
 			return;
 		}
 		// proudly proclaim completion
-		System.out.println("5. proclaiming finish");
+		//System.out.println("5. proclaiming finish");
 		downloadStatus = Status.FINISHED;
 	}
 
@@ -293,7 +293,7 @@ public class Downloader implements DownloadListener {
 			} catch (Exception ex) {
 			}
 		}
-		System.out.println("6. recognizing finish");
+		//System.out.println("6. recognizing finish");
 	}
 
 	/**

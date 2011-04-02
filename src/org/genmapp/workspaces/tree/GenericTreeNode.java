@@ -4,7 +4,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class GenericTreeNode extends DefaultMutableTreeNode {
 	
-	private static final long serialVersionUID = -1504239724666254584L;
+	private static final long serialVersionUID = -1212141922462409588L;
 	
 	private String uid;
 

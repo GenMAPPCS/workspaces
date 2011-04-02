@@ -1,23 +1,22 @@
 package org.genmapp.workspaces.command;
 
+import java.awt.Color;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.genmapp.workspaces.tree.ActionPanel;
+
 import org.genmapp.workspaces.GenMAPPWorkspaces;
-import org.genmapp.workspaces.objects.CyCriteria;
+import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
-import org.genmapp.workspaces.tree.CriteriaTreeTableModel;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.command.AbstractCommandHandler;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
@@ -34,7 +33,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	// public final static String ARG_DATASET_ROWS = "rows";
 
 	private final static String UPDATE_CRITERIASETS = "update criteriasets";
-	private final static String ARG_CRITERIASET_NAME = "name";
+	public static final String ARG_SETNAME = "setname";
 
 	private final static String UPDATE_DATASETS = "update datasets";
 	private final static String ARG_DATASET_NAME = "name";
@@ -52,6 +51,17 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
 	private final static String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 
+	// EXTERNAL
+	public static final String CRITERIA_MAPPER = "criteriamapper";
+	public static final String OPEN_CRITERIA_MAPPER = "open dialog";
+	public static final String DELETE_SET = "delete set";
+	public static final String APPLY_SET = "apply set";
+	public static final String ARG_NETWORK = "network";
+	public static final String ARG_MAP_TO = "mapto";
+	public static final String ARG_LABEL_LIST = "labellist";
+	public static final String ARG_EXP_LIST = "expressionlist";
+	public static final String ARG_COLOR_LIST = "colorlist";
+
 	public WorkspacesCommandHandler() {
 		super(CyCommandManager.reserveNamespace(NAMESPACE));
 
@@ -62,7 +72,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		addDescription(UPDATE_CRITERIASETS,
 				"Tell Workspaces to update the criteria set panel");
-		addArgument(UPDATE_CRITERIASETS, ARG_CRITERIASET_NAME);
+		addArgument(UPDATE_CRITERIASETS, ARG_SETNAME);
 
 		addDescription(UPDATE_DATASETS,
 				"Tell Workspaces to update the dataset panel");
@@ -70,7 +80,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		addArgument(UPDATE_DATASETS, ARG_DATASET_TYPE);
 		addArgument(UPDATE_DATASETS, ARG_DATASET_NODES);
 		addArgument(UPDATE_DATASETS, ARG_DATASET_ATTRS);
-
 
 	}
 
@@ -135,88 +144,45 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		//
 		// } else
 		if (UPDATE_CRITERIASETS.equals(command)) {
-			ActionPanel.showMessage( "Update criteriasets" );
-			
-			String setname;
-			Object s = getArg(command, ARG_CRITERIASET_NAME, args);
+			String setName;
+			Object s = getArg(command, ARG_SETNAME, args);
 			if (s instanceof String) {
-				setname = (String) s;
+				setName = (String) s;
 			} else
-			{
-				throw new CyCommandException(ARG_CRITERIASET_NAME
+				throw new CyCommandException(ARG_SETNAME
 						+ ": unknown type (try String!)");
-			}
-			// gather info on criteria from session props
-			// create the node attribute label for a given criteria inside the criteriaset
-			String[] cList = CyCriteria.getCriteria( setname );
-			if ( cList.length == 0 )
-			{
-				// no criteria in criteriaset, nothing to do
-				return result;
-			}
-			
-			// add item and create cycriteria
-			CyCriteria cyCriteria;
-			if (CyCriteria.criteriaNameMap.containsKey(setname)) {
-					cyCriteria = CyCriteria.criteriaNameMap.get(setname);
-					result.addMessage("Criteria " + setname
-						+ " already listed in Workspaces.");
-			} else {
-				cyCriteria = new CyCriteria(setname, cList.length );
-				GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().addItem(
-						setname, "croot");
-				result.addMessage("Criteria " + setname
-						+ " added to Workspaces.");
-			}
 
-			// we are trying to find which nodes are activated by the criteriaset
-			// a shortcut for doing so is to look for the mashed-up dummy criteria that combines all the criteria that is created anytime 
-			//   > 1 criteria exists in the set.
-			// This way we need only to check a single criteria for activation.
-			String[] split;
-			String nodeAttr = "";
-			int criteriaCount = cList.length;
-			for (String c : cList) {
-			    nodeAttr = nodeAttr + setname + "_" + c + ":";
+			/*
+			 * Three possibilities: (1) saving new set (2) saving or loading
+			 * existing set (3) deleting existing set
+			 */
+			String setParameters = CytoscapeInit.getProperties().getProperty(
+					NET_ATTR_SET_PREFIX + setName);
+			boolean isExistingSet = CyCriteriaset.criteriaNameMap
+					.containsKey(setName);
+			if (!isExistingSet && setParameters != null) {
+				// (1) saving new set
+				CyCriteriaset cyCriteria = new CyCriteriaset(setName,
+						setParameters);
+				// System.out.println("SAVE "+setName+":"+setParameters);
+				result.addMessage("Criteria " + setName + " added.");
+
+			} else if (isExistingSet && setParameters != null) {
+				// (2) saving or loading existing set
+				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
+						.get(setName);
+				cyCriteria.setCriteriaParams(setParameters);
+				cyCriteria.collectNetworkCounts();
+				// System.out.println("UPDATE "+setName+":"+setParameters);
+				result.addMessage("Criteria " + setName + " updated.");
+
+			} else if (isExistingSet && null == setParameters) {
+				// (3) deleting existing set
+				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
+						.get(setName);
+				cyCriteria.deleteCyCriteriaset();
+				result.addMessage("Criteria " + setName + " removed.");
 			}
-			nodeAttr = nodeAttr.substring(0, nodeAttr.length() - 1); // prune
-																	// final
-																	// ":"
-
-			ActionPanel.showMessage( "2:" + nodeAttr );
-			
-		    // collect node counts per network for given criteria set
-			CyAttributes ca = Cytoscape.getNodeAttributes();
-			Map<String, Integer> networkNodes = new HashMap<String, Integer>();
-			
-			for (CyNetwork net : Cytoscape.getNetworkSet()) {
-				ActionPanel.showMessage( "3:" + net.getIdentifier() );
-
-				int nodeCount = 0;
-				for (CyNode n : (List<CyNode>) net.nodesList()) {
-					if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
-						if (criteriaCount == 1) {
-							// only one criteria exists, so use it to judge activation
-							boolean b = ca.getBooleanAttribute(n.getIdentifier(), nodeAttr);
-                                        
-							if (b) {
-								nodeCount++;
-							}
-						} else if (criteriaCount > 1) {
-							// we are using the mashup criteria, which has an integer value
-							// the value is -1 if not active, >=0 if active ( it is used to tell which color in the list to display )
-							Integer i = ca.getIntegerAttribute(n.getIdentifier(), nodeAttr);
-							if (i >= 0) {
-								nodeCount++;
-							}
-						}
-					}
-				}
-				networkNodes.put(net.getIdentifier(), nodeCount);
-			}
-
-			// set criteria map'o'map
-			CyCriteria.criteriaNetworkNodesMap.put(setname, networkNodes);
 
 		} else if (UPDATE_DATASETS.equals(command)) {
 			String name;
@@ -249,7 +215,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				// escape the escape characters
 				dn = ((String) dn).replaceAll("\t", "\\\\t");
 				// remove brackets, if they are there
-				if (((String) dn).startsWith("[") && ((String) dn).endsWith("]"))
+				if (((String) dn).startsWith("[")
+						&& ((String) dn).endsWith("]"))
 					dn = ((String) dn).substring(1, ((String) dn).length() - 1);
 				// parse at comma delimiters
 				String[] list = ((String) dn).split(",");
@@ -279,7 +246,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				// parse at comma delimiters
 				String[] list = ((String) a).split(",");
 				for (String item : list) {
-					// remove all leading and trailing whitespace 
+					// remove all leading and trailing whitespace
 					item = item.replaceAll("^\\s+|\\s+$", "");
 					attrs.add(item);
 				}
@@ -348,6 +315,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		return CyCommandManager.execute(ns, sub, settings);
 	}
+
 	private static String parseInput(String input, Map<String, Object> settings) {
 
 		// Tokenize
@@ -371,23 +339,23 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			while ((i = st.nextToken()) != StreamTokenizer.TT_EOF) {
 				switch (i) {
-					case '=' :
-						// Get the next token
-						i = st.nextToken();
-						if (i == StreamTokenizer.TT_WORD || i == '"') {
-							tokenIndex--;
-							String key = tokenList.get(tokenIndex);
-							settings.put(key, st.sval);
-							tokenList.remove(tokenIndex);
-						}
-						break;
-					case '"' :
-					case StreamTokenizer.TT_WORD :
-						tokenList.add(st.sval);
-						tokenIndex++;
-						break;
-					default :
-						break;
+				case '=':
+					// Get the next token
+					i = st.nextToken();
+					if (i == StreamTokenizer.TT_WORD || i == '"') {
+						tokenIndex--;
+						String key = tokenList.get(tokenIndex);
+						settings.put(key, st.sval);
+						tokenList.remove(tokenIndex);
+					}
+					break;
+				case '"':
+				case StreamTokenizer.TT_WORD:
+					tokenList.add(st.sval);
+					tokenIndex++;
+					break;
+				default:
+					break;
 				}
 			}
 		} catch (Exception e) {
@@ -401,5 +369,99 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		// Now, the last token of the args goes with the first setting
 		return command.trim();
+	}
+
+	/**
+	 * @param setName
+	 */
+	public static void openCriteriaMapper(String setName) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_SETNAME, setName);
+
+		try {
+			CyCommandManager.execute(CRITERIA_MAPPER, OPEN_CRITERIA_MAPPER,
+					args);
+		} catch (CyCommandException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param setName
+	 */
+	public static void deleteCriteriaset(String setName) {
+
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_SETNAME, setName);
+		try {
+			CyCommandResult re = CyCommandManager.execute(CRITERIA_MAPPER,
+					DELETE_SET, args);
+			System.out.println(re.getErrors().get(0).toString());
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param cset
+	 * @param network
+	 */
+	public static void applyCriteriasetToNetwork(CyCriteriaset cset,
+			CyNetwork network) {
+
+		String mapto = new String();
+		List<String> explist = new ArrayList<String>();
+		List<String> colorlist = new ArrayList<String>();
+		List<String> labellist = new ArrayList<String>();
+
+		String[] setParams = cset.getCriteriaParams();
+		if (setParams.length > 0) {
+			mapto = setParams[0];
+		}
+		System.out.println(cset.getDisplayName() + ":"
+				+ network.getIdentifier() + ":" + mapto);
+		for (int i = 1; i < setParams.length; i++) {
+			String[] temp = setParams[i].split(":");
+			if (temp.length != 3) {
+				break;
+			}
+			System.out.println(temp[0] + ":" + temp[1] + ":" + temp[2]);
+			explist.add(temp[0]);
+			labellist.add(temp[1]);
+			colorlist.add(temp[2]);
+		}
+
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_SETNAME, cset.getDisplayName());
+		args.put(ARG_NETWORK, network);
+		args.put(ARG_MAP_TO, mapto);
+		args.put(ARG_COLOR_LIST, colorlist);
+		args.put(ARG_EXP_LIST, explist);
+		args.put(ARG_LABEL_LIST, labellist);
+
+		CyCommandResult result;
+		try {
+			result = CyCommandManager.execute(CRITERIA_MAPPER, APPLY_SET, args);
+			// System.out.println(result.getMessages());
+		} catch (CyCommandException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// then update counts
+		// TODO: broken!!
+		// cset.collectCounts();
+
 	}
 }

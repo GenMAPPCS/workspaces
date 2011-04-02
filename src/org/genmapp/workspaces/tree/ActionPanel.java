@@ -22,10 +22,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.objects.CyAction;
-import org.genmapp.workspaces.objects.CyCriteria;
+import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.ui.CyActionConfigDialog;
+import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.Cytoscape;
 import cytoscape.actions.ExportAsGraphicsAction;
@@ -35,10 +35,10 @@ import cytoscape.actions.WebServiceNetworkImportAction;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 
-public class ActionPanel extends JPanel
-		implements
-			ActionListener,
-			MouseListener {
+public class ActionPanel extends JPanel implements ActionListener,
+		MouseListener {
+
+	private static final long serialVersionUID = 7783752875541061715L;
 
 	public static JComboBox actionCombobox = new JComboBox();
 	private JButton goButton;
@@ -187,14 +187,15 @@ public class ActionPanel extends JPanel
 				.setRequirements("You must have an active network view selected");
 
 		// prepare full list of available actions
-		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
-				loadNetworkWeb, newNetworkTable, newDatasetFile,
-				newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
+		availableActionsList = new CyAction[] { openSessionFile,
+				openNetworkFile, loadNetworkWeb, newNetworkTable,
+				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
+				exportGraphics };
 
 		// prepare default list of actions and behavior
-		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
-				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
-				exportGraphics};
+		CyAction actions[] = { openSessionFile, openNetworkFile,
+				loadNetworkWeb, newDatasetFile, newCriteriaSet,
+				runClustermaker, runGoelite, exportGraphics };
 		workflowState = false;
 		loadActions(actions);
 	}
@@ -233,13 +234,7 @@ public class ActionPanel extends JPanel
 		}
 
 	}
-	public static void showMessage( String message )
-	{
-		JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
-				message, 
-				"", 
-				JOptionPane.ERROR_MESSAGE );
-	}
+
 	public void mouseClicked(MouseEvent e) {
 
 		if (e.getSource().equals(goButton) && goButton.isEnabled()) {
@@ -249,38 +244,28 @@ public class ActionPanel extends JPanel
 			System.out.println(action);
 
 			if (action.equals(OPEN_SESSION_FILE)) {
+				if (Cytoscape.getNetworkSet().size() == 0
+						&& CyDataset.datasetNameMap.size() > 0) {
+					// Show warning, in cases unique to GenMAPP-CS
+					final String warning = "Current session will be lost.\nDo you want to continue?";
+					final int result = JOptionPane.showConfirmDialog(Cytoscape
+							.getDesktop(), warning, "Caution!",
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.WARNING_MESSAGE, null);
+					if (result == JOptionPane.YES_OPTION) {
+						for (String dname: CyDataset.datasetNameMap.keySet()){
+							DatasetPanel dp = WorkspacesPanel.getDatasetTreePanel();
+							dp.removeItem(dname);
+							CyDataset.datasetNameMap.remove(dname);
+						}
+					} else {
+						return;
+					}
+				}
 				OpenSessionAction osa = new OpenSessionAction();
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
-				
-				GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible( true );
-				
-				// call Workspaces-specific code for handling the opening of sessions
-				// at this point, all the criteria-related mapping has taken been loaded up 
-				// only thing left to do is update the CriteriaPanel
-				
-				// get all the criteriaSets ourselves from the session-level properties
-				//   we don't trust the criteriamapper cycommand results b/c they are reported on a per-network basis
-				//   and thus don't include those not mapped to any network
-				String [] vCs = CyCriteria.getCriteriaSets();
-				for( String cs : vCs )
-				{
-					
-					Map< String, Object > args = new HashMap();
-					args.put( "name", cs );
-					
-					try
-					{
-					  CyCommandManager.execute( "workspaces", "update criteriasets", 
-							args );
-				    }
-					catch( CyCommandException ex )
-					{
-						showMessage( "error" );
-						showMessage( "error: " + ex.toString() );
-					}
-				}
-			
+
 			} else if (action.equals(OPEN_NETWORK_FILE)) {
 				ImportGraphFileAction igfa = new ImportGraphFileAction(
 						Cytoscape.getDesktop().getCyMenus());
@@ -431,7 +416,8 @@ class MyCellRenderer extends JLabel implements ListCellRenderer {
 		} else {
 			background = Color.WHITE;
 			foreground = Color.BLACK;
-		};
+		}
+		;
 
 		setBackground(background);
 		setForeground(foreground);
