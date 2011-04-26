@@ -12,8 +12,9 @@
 
 	<!--  The directory containing library jar files -->
 	<property name="cytoroot.dir" value=".." />
-	<property name="release.dir" value="../cytoscape2.7" />
-	<property name="lib.dir" value="../cytoscape2.7/lib" />
+	<property name="release.dir" value="c:/Program Files/Cytoscape_v2.8.1/" />
+	<property name="plugins.dir" value="c:/Program Files/Cytoscape_v2.8.1/plugins" />
+	<property name="lib.dir" value="c:/Users/Isaac/workspace/genmappcs2/goeliteplugin/lib" />
 
 	<!-- Temporary build directories -->
 	<property name="build.dir" value="build" />
@@ -75,8 +76,7 @@
 		</jar>
 		<echo message="${plugin.name}.jar is now complete.  It is located in build/ directory" />
 
-		<copy file="${build.dir}/${plugin.name}.jar" todir="../cytoscape2.7/plugins/core" />
-		<copy file="${build.dir}/${plugin.name}.jar" todir="/Applications/Cytoscape_v2.7.0/plugins" />
+		<copy file="${build.dir}/${plugin.name}.jar" todir="${plugins.dir}" />
 
 	</target>
 

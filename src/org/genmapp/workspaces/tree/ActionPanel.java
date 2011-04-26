@@ -22,7 +22,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
+import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.ui.CyActionConfigDialog;
 import org.genmapp.workspaces.utils.DatasetMapping;
@@ -234,6 +237,13 @@ public class ActionPanel extends JPanel implements ActionListener,
 		}
 
 	}
+	public static void showMessage( String message )
+	{
+		JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
+				message, 
+				"", 
+				JOptionPane.ERROR_MESSAGE );
+	}
 
 	public void mouseClicked(MouseEvent e) {
 
@@ -244,6 +254,7 @@ public class ActionPanel extends JPanel implements ActionListener,
 			System.out.println(action);
 
 			if (action.equals(OPEN_SESSION_FILE)) {
+				showMessage( "Isaac: 1") ;
 				if (Cytoscape.getNetworkSet().size() == 0
 						&& CyDataset.datasetNameMap.size() > 0) {
 					// Show warning, in cases unique to GenMAPP-CS
@@ -265,6 +276,37 @@ public class ActionPanel extends JPanel implements ActionListener,
 				OpenSessionAction osa = new OpenSessionAction();
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
+				
+				GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible( true );
+				showMessage( "Isaac: 2");
+				// call Workspaces-specific code for handling the opening of sessions
+				// at this point, all the criteria-related mapping has taken been loaded up 
+				// only thing left to do is update the CriteriaPanel
+				
+				// get all the criteriaSets ourselves from the session-level properties
+				//   we don't trust the criteriamapper cycommand results b/c they are reported on a per-network basis
+				//   and thus don't include those not mapped to any network
+				String [] vCs = CyCriteria.getCriteriaSets();
+				for( String cs : vCs )
+				{
+					
+					Map< String, Object > args = new HashMap();
+					args.put( WorkspacesCommandHandler.ARG_SETNAME, cs );
+					
+					try
+					{
+						showMessage( "Isaac: 3 + update criteriasets " + args + "[" + args.size() + "]"); 
+					  CyCommandManager.execute( "workspaces", "update criteriasets", 
+							args );
+				    }
+					catch( CyCommandException ex )
+					{
+						showMessage( "error" );
+						showMessage( "error: " + ex.toString() );
+					}
+				}
+				
+		
 
 			} else if (action.equals(OPEN_NETWORK_FILE)) {
 				ImportGraphFileAction igfa = new ImportGraphFileAction(

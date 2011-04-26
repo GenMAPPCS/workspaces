@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JOptionPane;
+
 import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -87,9 +89,17 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			throws CyCommandException {
 		return execute(command, createKVMap(args));
 	}
+	public static void showMessage( String message )
+	{
+		JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
+				message, 
+				"", 
+				JOptionPane.ERROR_MESSAGE );
+	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
 			throws CyCommandException {
+		showMessage( "WorkspacesCommandHandler:execute");
 		CyCommandResult result = new CyCommandResult();
 
 		for (String t : args.keySet()) {
@@ -146,28 +156,38 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (UPDATE_CRITERIASETS.equals(command)) {
 			String setName;
 			Object s = getArg(command, ARG_SETNAME, args);
+			showMessage( "args passed in: " + args );
+			showMessage( "args passed in count: " + args.size() );
+			
 			if (s instanceof String) {
 				setName = (String) s;
 			} else
+			{
 				throw new CyCommandException(ARG_SETNAME
 						+ ": unknown type (try String!)");
-
+			}
 			/*
 			 * Three possibilities: (1) saving new set (2) saving or loading
 			 * existing set (3) deleting existing set
 			 */
+			showMessage( "Update CriteriaSets: " + setName );
+
 			String setParameters = CytoscapeInit.getProperties().getProperty(
 					NET_ATTR_SET_PREFIX + setName);
 			boolean isExistingSet = CyCriteriaset.criteriaNameMap
 					.containsKey(setName);
 			if (!isExistingSet && setParameters != null) {
 				// (1) saving new set
+				showMessage( "Update CriteriaSets: save new set " + setName );
+
 				CyCriteriaset cyCriteria = new CyCriteriaset(setName,
 						setParameters);
 				// System.out.println("SAVE "+setName+":"+setParameters);
 				result.addMessage("Criteria " + setName + " added.");
 
 			} else if (isExistingSet && setParameters != null) {
+				showMessage( "Update CriteriaSets: save/load existing set " + setName );
+
 				// (2) saving or loading existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
 						.get(setName);
@@ -177,6 +197,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Criteria " + setName + " updated.");
 
 			} else if (isExistingSet && null == setParameters) {
+				showMessage( "Update CriteriaSets: delete existing set " + setName );
+
 				// (3) deleting existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
 						.get(setName);
