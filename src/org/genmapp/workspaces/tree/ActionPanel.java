@@ -239,10 +239,10 @@ public class ActionPanel extends JPanel implements ActionListener,
 	}
 	public static void showMessage( String message )
 	{
-		JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
+		/*JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
 				message, 
 				"", 
-				JOptionPane.ERROR_MESSAGE );
+				JOptionPane.ERROR_MESSAGE ); */
 	}
 
 	public void mouseClicked(MouseEvent e) {

@@ -91,10 +91,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	}
 	public static void showMessage( String message )
 	{
-		JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
+		/* JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
 				message, 
 				"", 
-				JOptionPane.ERROR_MESSAGE );
+				JOptionPane.ERROR_MESSAGE ); */
 	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
