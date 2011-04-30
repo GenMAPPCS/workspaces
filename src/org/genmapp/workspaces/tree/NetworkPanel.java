@@ -147,8 +147,8 @@ public class NetworkPanel extends JPanel
 		}
 
 		pcs = Cytoscape.getSwingPropertyChangeSupport(); // new
-															// SwingPropertyChangeSupport
-															// (this);
+		// SwingPropertyChangeSupport
+		// (this);
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
@@ -439,9 +439,14 @@ public class NetworkPanel extends JPanel
 				}
 				List<String> criteriasetList = Cytoscape.getNetworkAttributes()
 						.getListAttribute(net, CyCriteria.NET_ATTR_SETS);
-				if (null != criteriasetList){
-					CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(criteriasetList.get(0));
-					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset, Cytoscape.getNetwork(net));
+				//if there are any criteriasets defined and if they've been loaded
+				if (null != criteriasetList
+						&& CyCriteriaset.criteriaNameMap
+								.containsValue(criteriasetList.get(0))) {
+					CyCriteriaset cset = CyCriteriaset.criteriaNameMap
+							.get(criteriasetList.get(0));
+					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
+							Cytoscape.getNetwork(net));
 					CriteriasetPanel.getTreeTable().getTree().updateUI();
 				}
 			}
