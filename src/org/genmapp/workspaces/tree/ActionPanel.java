@@ -277,7 +277,7 @@ public class ActionPanel extends JPanel implements ActionListener,
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
 				
-				GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible( true );
+				//GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible( true );
 				showMessage( "Isaac: 2");
 				// call Workspaces-specific code for handling the opening of sessions
 				// at this point, all the criteria-related mapping has taken been loaded up 
