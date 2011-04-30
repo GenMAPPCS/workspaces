@@ -13,6 +13,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.util.swing.AbstractTreeTableModel;
+import cytoscape.util.swing.TreeTableModel;
 
 /**
  * Inner class that extends the AbstractTreeTableModel
@@ -97,7 +98,8 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 					.getID());
 			return "" + cyNetwork.getEdgeCount() + "("
 					+ cyNetwork.getSelectedEdges().size() + ")";
-		} else if (columnNames.get(column).equals(GenericColumnTypes.NETWORK_ICONS)) {
+		} else if (columnNames.get(column).equals(
+				GenericColumnTypes.NETWORK_ICONS)) {
 			return networkIcons.get(((GenericTreeNode) node).getID());
 		}
 		return "";
@@ -106,11 +108,20 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 	public void setValueAt(Object aValue, Object node, int column) {
 		if (columnNames.get(column).equals(GenericColumnTypes.NETWORK)) {
 			((DefaultMutableTreeNode) node).setUserObject(aValue);
-		} else if (columnNames.get(column).equals(GenericColumnTypes.NETWORK_ICONS)
+		} else if (columnNames.get(column).equals(
+				GenericColumnTypes.NETWORK_ICONS)
 				&& aValue instanceof Icon) {
-			networkIcons.put(((GenericTreeNode) node).getID(),
-					new ImageIcon(getClass().getResource(
-					"../images/network.png")));
+			networkIcons.put(((GenericTreeNode) node).getID(), new ImageIcon(
+					getClass().getResource("../images/network.png")));
 		}
+	}
+
+	/**
+	 * Overriding this method from AbstractTreeTableModel in order to prevent
+	 * NullPointerException occurring with every network selection. None of the
+	 * cells in this table are editable, so this is an easy fix.
+	 */
+	public boolean isCellEditable(Object node, int column) {
+		return false;
 	}
 }
