@@ -53,6 +53,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteria;
@@ -437,18 +438,25 @@ public class NetworkPanel extends JPanel
 					}
 					DatasetPanel.getTreeTable().getTree().updateUI();
 				}
-				List<String> criteriasetList = Cytoscape.getNetworkAttributes()
-						.getListAttribute(net, CyCriteria.NET_ATTR_SETS);
-				//if there are any criteriasets defined and if they've been loaded
-				if (null != criteriasetList
-						&& CyCriteriaset.criteriaNameMap
-								.containsValue(criteriasetList.get(0))) {
-					CyCriteriaset cset = CyCriteriaset.criteriaNameMap
-							.get(criteriasetList.get(0));
-					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
-							Cytoscape.getNetwork(net));
-					CriteriasetPanel.getTreeTable().getTree().updateUI();
-				}
+//				String cname = (String) Cytoscape.getNetworkAttributes().getAttribute(
+//						net, WorkspacesCommandHandler.NET_ATTR_APPLIED_SET);
+
+				// if there are any criteriasets defined...
+//				if (null != criteriasetList) {
+//					// get first in list, representing latest mapping choice
+//					String cname = criteriasetList.get(0);
+					// and if the set has been loaded, then update
+//					if (CyCriteriaset.criteriaNameMap.containsKey(cname)) {
+//						GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel()
+//								.focusNode(cname);
+//						CyCriteriaset cset = CyCriteriaset.criteriaNameMap
+//								.get(cname);
+//						System.out.println("TEST-NP " + cname);
+//						WorkspacesCommandHandler.applyCriteriasetToNetwork(
+//								cset, Cytoscape.getNetwork(net));
+						CriteriasetPanel.getTreeTable().getTree().updateUI();
+//					}
+//				}
 			}
 		}
 	}

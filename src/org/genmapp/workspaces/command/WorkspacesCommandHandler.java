@@ -48,8 +48,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ARG_GOELITE_TABLABEL = "tablabel";
 
 	// VERSIONING
-	private final static String NET_ATTR_SETS = "org.genmapp.criteriasets_1.0";
-	private final static String NET_ATTR_SET_PREFIX = "org.genmapp.criteriaset.";
+	public static final String PROPERTY_SETS = "org.genmapp.criteriasets_1.0";
+	public static final String PROPERTY_SET_PREFIX = "org.genmapp.criteriaset.";
+//	public static final String NET_ATTR_APPLIED_SET = "org.genmapp.criteriaset";
 	private final static String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
 	private final static String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 
@@ -173,11 +174,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			showMessage( "Update CriteriaSets: " + setName );
 
 			String setParameters = CytoscapeInit.getProperties().getProperty(
-					NET_ATTR_SET_PREFIX + setName);
+					PROPERTY_SET_PREFIX + setName);
 			boolean isExistingSet = CyCriteriaset.criteriaNameMap
 					.containsKey(setName);
 			if (!isExistingSet && setParameters != null) {
-				// (1) saving new set
+				// (1) saving new set or restoring session with saved sets
 				showMessage( "Update CriteriaSets: save new set " + setName );
 
 				CyCriteriaset cyCriteria = new CyCriteriaset(setName,
@@ -188,7 +189,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			} else if (isExistingSet && setParameters != null) {
 				showMessage( "Update CriteriaSets: save/load existing set " + setName );
 
-				// (2) saving or loading existing set
+				// (2) saving or loading an existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
 						.get(setName);
 				cyCriteria.setCriteriaParams(setParameters);
@@ -199,7 +200,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			} else if (isExistingSet && null == setParameters) {
 				showMessage( "Update CriteriaSets: delete existing set " + setName );
 
-				// (3) deleting existing set
+				// (3) deleting an existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
 						.get(setName);
 				cyCriteria.deleteCyCriteriaset();

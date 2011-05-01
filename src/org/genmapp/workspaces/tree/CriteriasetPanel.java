@@ -72,8 +72,11 @@ import cytoscape.view.cytopanels.BiModalJSplitPane;
 /**
  * GUI component for managing network list in current session.
  */
-public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
-		TreeSelectionListener, ChangeListener {
+public class CriteriasetPanel extends JPanel
+		implements
+			PropertyChangeListener,
+			TreeSelectionListener,
+			ChangeListener {
 
 	private static final long serialVersionUID = 3161161934074033023L;
 
@@ -262,8 +265,8 @@ public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
 			}
 
 			// apparently this doesn't fire valueChanged
-			treeTable.getTree().collapsePath(
-					new TreePath(new TreeNode[] { root }));
+			treeTable.getTree()
+					.collapsePath(new TreePath(new TreeNode[]{root}));
 
 			treeTable.getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
@@ -271,8 +274,15 @@ public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
 			treeTable.getTree().scrollPathToVisible(path);
 			treeTable.doLayout();
 
-			// this is necessary because valueChanged is not fired above
-			focusNode(id);
+			/*
+			 * This is necessary because valueChanged is not fired above. BUT,
+			 * if you focus, then you engage calculation and application of
+			 * criteriaset for selected network. This is not good when restoring
+			 * saved session and you incidentally override last loaded network
+			 * with last loaded criteriaset. SO, we just skip the table
+			 * selection upon tree adding.
+			 */
+			// focusNode(id);
 		}
 	}
 
@@ -283,7 +293,7 @@ public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
 	 *            DOCUMENT ME!
 	 */
 	public void focusNode(String id) {
-		// logger.info("NetworkPanel: focus network node");
+		// logger.info("CriteriasetPanel: focus criteriaset node");
 		DefaultMutableTreeNode node = getTreeNode(id);
 
 		if (node != null) {
@@ -330,8 +340,7 @@ public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
 		 * and the code below is run twice. Using "greenlight" hack to limit to
 		 * a single run. This is ugly and the efficiency gains are debatable...
 		 */
-		System.out.println("click on criteriaset: " + greenlight);
-
+		// System.out.println("click on criteriaset: " + greenlight);
 		if (greenlight) {
 
 			// block immediate redundant calls;
@@ -344,7 +353,7 @@ public class CriteriasetPanel extends JPanel implements PropertyChangeListener,
 			SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
 
 				public Boolean doInBackground() {
-					System.out.println("working");
+					// System.out.println("working");
 					try {
 						Thread.sleep(300);
 					} catch (InterruptedException e) {
