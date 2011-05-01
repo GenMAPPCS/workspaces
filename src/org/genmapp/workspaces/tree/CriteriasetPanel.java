@@ -343,7 +343,7 @@ public class CriteriasetPanel extends JPanel
 		 * and the code below is run twice. Using "greenlight" hack to limit to
 		 * a single run. This is ugly and the efficiency gains are debatable...
 		 */
-		 System.out.println("click on criteriaset: " + greenlight);
+		 //System.out.println("click on criteriaset: " + greenlight);
 		if (greenlight) {
 
 			// block immediate redundant calls;
@@ -356,7 +356,7 @@ public class CriteriasetPanel extends JPanel
 			SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
 
 				public Boolean doInBackground() {
-					 System.out.println("working");
+					 //System.out.println("working");
 					try {
 						Thread.sleep(300);
 					} catch (InterruptedException e) {
@@ -402,7 +402,6 @@ public class CriteriasetPanel extends JPanel
 			}
 		}
 		greenlight = true;
-		System.out.println("CHECK: "+greenlight);
 	}
 
 	/**
