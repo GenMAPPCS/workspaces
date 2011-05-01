@@ -424,7 +424,7 @@ public class NetworkPanel extends JPanel
 			Cytoscape.setSelectedNetworks(networkList);
 			Cytoscape.setSelectedNetworkViews(networkList);
 
-			// update dataset and criteriaset highlighting
+			// update dataset highlighting
 			for (String net : networkList) {
 				List<String> datasetList = Cytoscape
 						.getNetworkAttributes()
@@ -438,25 +438,17 @@ public class NetworkPanel extends JPanel
 					}
 					DatasetPanel.getTreeTable().getTree().updateUI();
 				}
-//				String cname = (String) Cytoscape.getNetworkAttributes().getAttribute(
-//						net, WorkspacesCommandHandler.NET_ATTR_APPLIED_SET);
 
-				// if there are any criteriasets defined...
-//				if (null != criteriasetList) {
-//					// get first in list, representing latest mapping choice
-//					String cname = criteriasetList.get(0);
-					// and if the set has been loaded, then update
-//					if (CyCriteriaset.criteriaNameMap.containsKey(cname)) {
-//						GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel()
-//								.focusNode(cname);
-//						CyCriteriaset cset = CyCriteriaset.criteriaNameMap
-//								.get(cname);
-//						System.out.println("TEST-NP " + cname);
-//						WorkspacesCommandHandler.applyCriteriasetToNetwork(
-//								cset, Cytoscape.getNetwork(net));
-						CriteriasetPanel.getTreeTable().getTree().updateUI();
-//					}
-//				}
+				// update criteriaset counts
+				CriteriasetPanel.getTreeTable().getTree().updateUI();
+
+				// and manually update network view / vizmapper
+				/*
+				 * Note: the native Cytoscape handling of view update appears to
+				 * ignore selections when the prior selection shares the same
+				 * visual style.
+				 */
+				Cytoscape.getNetworkView(net).redrawGraph(true, true);
 			}
 		}
 	}

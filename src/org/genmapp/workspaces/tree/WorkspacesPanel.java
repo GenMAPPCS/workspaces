@@ -43,7 +43,7 @@ import ding.view.DGraphView;
 public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 	private static final long serialVersionUID = 3500704003585438431L;
-	
+
 	private static final int DEF_DEVIDER_LOCATION = 280;
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
@@ -56,8 +56,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	// private ReportPanel reportTreePanel;
 
 	private JPanel navigatorPanel;
-//	BirdsEyeView bev;
-//	private BiModalJSplitPane split;
+	// BirdsEyeView bev;
+	// private BiModalJSplitPane split;
 	private final CytoscapeDesktop cytoscapeDesktop;
 
 	/**
@@ -89,8 +89,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		navigatorPanel.setMinimumSize(new Dimension(40, 40));
 		navigatorPanel.setMaximumSize(new Dimension(120, 120));
 		navigatorPanel.setPreferredSize(new Dimension(120, 120));
-		
-//		setNavigator(getBev());
+
+		// setNavigator(getBev());
 
 		JPanel main = new JPanel();
 		main.setLayout(new GridLayout(3, 1, 0, 0));
@@ -106,49 +106,51 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		// wsPanel.add(analysisTreePanel);
 		// wsPanel.add(reportTreePanel);
 
-//		split = new BiModalJSplitPane(cytoscapeDesktop,
-//				JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
-//				wsPanel, navigatorPanel);
-//		split.setResizeWeight(1);
-//		split.setDividerLocation(DEF_DEVIDER_LOCATION);
-//		add(split);
-		
+		// split = new BiModalJSplitPane(cytoscapeDesktop,
+		// JSplitPane.VERTICAL_SPLIT, BiModalJSplitPane.MODE_SHOW_SPLIT,
+		// wsPanel, navigatorPanel);
+		// split.setResizeWeight(1);
+		// split.setDividerLocation(DEF_DEVIDER_LOCATION);
+		// add(split);
+
 		add(wsPanel);
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
 	}
 
-//	/**
-//	 * DOCUMENT ME!
-//	 * 
-//	 * @param comp
-//	 *            DOCUMENT ME!
-//	 */
-//	public void setNavigator(final Component comp) {
-//		split.setRightComponent(comp);
-//		split.validate();
-//	}
-//	
-//	/**
-//	 * Creates a new BirdsEyeViewHandler object.
-//	 * @param desktopPane The JDesktopPane of the NetworkViewManager. Can be null.
-//	 */
-//	private BirdsEyeView getBev() {
-//		return bev = new BirdsEyeView((DGraphView) Cytoscape.getCurrentNetworkView()) {
-//				public Dimension getMinimumSize() {
-//					return new Dimension(180, 180);
-//				}
-//
-//				public Dimension getMaximumSize() {
-//					return new Dimension(180, 180);
-//				}
-//
-//				public Dimension getPreferredSize() {
-//					return new Dimension(180, 180);
-//				}
-//			};
-//	}
+	// /**
+	// * DOCUMENT ME!
+	// *
+	// * @param comp
+	// * DOCUMENT ME!
+	// */
+	// public void setNavigator(final Component comp) {
+	// split.setRightComponent(comp);
+	// split.validate();
+	// }
+	//	
+	// /**
+	// * Creates a new BirdsEyeViewHandler object.
+	// * @param desktopPane The JDesktopPane of the NetworkViewManager. Can be
+	// null.
+	// */
+	// private BirdsEyeView getBev() {
+	// return bev = new BirdsEyeView((DGraphView)
+	// Cytoscape.getCurrentNetworkView()) {
+	// public Dimension getMinimumSize() {
+	// return new Dimension(180, 180);
+	// }
+	//
+	// public Dimension getMaximumSize() {
+	// return new Dimension(180, 180);
+	// }
+	//
+	// public Dimension getPreferredSize() {
+	// return new Dimension(180, 180);
+	// }
+	// };
+	// }
 
 	/**
 	 * @return the networkTreePanel
@@ -177,7 +179,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 			// nothing
 
 		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
-			 // handle new sessions separately below
+			// handle new sessions separately below
 			if (evt.getNewValue() != null) {
 				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
 						.getNewValue())[0];
@@ -189,14 +191,19 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				}
 			}
 
-		} else if (prop.equals(Cytoscape.SESSION_LOADED)){
-			for (CyNetwork newNetwork : Cytoscape.getNetworkSet()){
-				NetworkMapping.performNetworkMappings(newNetwork);
-				for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
-						.values()) {
-					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
-							newNetwork);
-				}
+		} else if (prop.equals(Cytoscape.SESSION_LOADED)) {
+			for (CyNetwork network : Cytoscape.getNetworkSet()) {
+				/*
+				 * force each network to refresh is visual styles (including
+				 * criteriaset mappings) by simulating panel selection
+				 */
+				networkPanel.focusNetworkNode(network.getIdentifier());
+
+				/*
+				 * for backward compatibility, so folks can start using
+				 * GenMAPP-CS on previously generated session files
+				 */
+				NetworkMapping.performNetworkMappings(network);
 
 			}
 		}
