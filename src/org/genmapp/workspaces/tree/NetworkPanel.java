@@ -486,22 +486,8 @@ public class NetworkPanel extends JPanel
 		treeTable.getTree().updateUI();
 	}
 
-	private void updateVSMenu() {
-		applyVisualStyleMenu.removeAll();
 
-		final Set<String> vsNames = new TreeSet<String>(Cytoscape
-				.getVisualMappingManager().getCalculatorCatalog()
-				.getVisualStyleNames());
-		for (String name : vsNames) {
-			final JMenuItem styleMenu = new JMenuItem(name);
-			styleMenu.setAction(new ApplyVisualStyleAction(name));
-			applyVisualStyleMenu.add(styleMenu);
-		}
-	}
 
-	public void stateChanged(ChangeEvent e) {
-		// TODO ?
-	}
 
 	/**
 	 * DOCUMENT ME!
@@ -632,6 +618,23 @@ public class NetworkPanel extends JPanel
 			}
 		}
 	}
+	
+	public void stateChanged(ChangeEvent e) {		
+		updateVSMenu();
+	}
+	
+	private void updateVSMenu() {
+		applyVisualStyleMenu.removeAll();
+		
+		final Set<String> vsNames = new TreeSet<String>(Cytoscape.getVisualMappingManager().getCalculatorCatalog().getVisualStyleNames());
+		for (String name: vsNames) {
+			final JMenuItem styleMenu = new JMenuItem(name);
+			styleMenu.setAction(new ApplyVisualStyleAction(name));
+			applyVisualStyleMenu.add(styleMenu);
+		}
+	}
+	
+
 
 	/**
 	 * This class listens for actions from the popup menu, it is responsible for
