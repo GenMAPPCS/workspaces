@@ -11,7 +11,7 @@ public enum GenericColumnTypes {
 	EDGES("Edges", String.class),
 	DATASET("Dataset", TreeTableModel.class), 
 	DATASET_ICONS("Overview", Icon.class), 
-	ROWS("Criteria", String.class),
+	ROWS("Rows", String.class),
 	CRITERIA_SET_ICONS("Overview", Icon.class), 
 	CRITERIA_SET("Criteria Set", TreeTableModel.class), 
 	CRITERIA("Criteria", String.class);
