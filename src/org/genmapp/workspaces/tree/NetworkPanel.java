@@ -423,6 +423,10 @@ public class NetworkPanel extends JPanel
 		if (networkList.size() > 0) {
 			Cytoscape.setSelectedNetworks(networkList);
 			Cytoscape.setSelectedNetworkViews(networkList);
+		}
+		
+		//Only update and refresh when single network selected
+		if (networkList.size() == 1) {
 
 			// update dataset highlighting
 			for (String net : networkList) {
@@ -485,9 +489,6 @@ public class NetworkPanel extends JPanel
 		// and refresh
 		treeTable.getTree().updateUI();
 	}
-
-
-
 
 	/**
 	 * DOCUMENT ME!
@@ -618,23 +619,23 @@ public class NetworkPanel extends JPanel
 			}
 		}
 	}
-	
-	public void stateChanged(ChangeEvent e) {		
+
+	public void stateChanged(ChangeEvent e) {
 		updateVSMenu();
 	}
-	
+
 	private void updateVSMenu() {
 		applyVisualStyleMenu.removeAll();
-		
-		final Set<String> vsNames = new TreeSet<String>(Cytoscape.getVisualMappingManager().getCalculatorCatalog().getVisualStyleNames());
-		for (String name: vsNames) {
+
+		final Set<String> vsNames = new TreeSet<String>(Cytoscape
+				.getVisualMappingManager().getCalculatorCatalog()
+				.getVisualStyleNames());
+		for (String name : vsNames) {
 			final JMenuItem styleMenu = new JMenuItem(name);
 			styleMenu.setAction(new ApplyVisualStyleAction(name));
 			applyVisualStyleMenu.add(styleMenu);
 		}
 	}
-	
-
 
 	/**
 	 * This class listens for actions from the popup menu, it is responsible for
