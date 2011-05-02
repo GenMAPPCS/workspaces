@@ -461,10 +461,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			labellist.add(temp[1]);
 			colorlist.add(temp[2]);
 		}
-
+		
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_SETNAME, cset.getDisplayName());
-		args.put(ARG_NETWORK, network);
+		args.put(ARG_NETWORK, network.getIdentifier());
 		args.put(ARG_MAP_TO, mapto);
 		args.put(ARG_COLOR_LIST, colorlist);
 		args.put(ARG_EXP_LIST, explist);
