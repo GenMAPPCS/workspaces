@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +58,11 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 
-public class SpeciesPanel extends JPanel implements ActionListener,
-		PropertyChangeListener, MouseListener {
+public class SpeciesPanel extends JPanel
+		implements
+			ActionListener,
+			PropertyChangeListener,
+			MouseListener {
 
 	private static final long serialVersionUID = 3824505202304808596L;
 
@@ -71,6 +75,8 @@ public class SpeciesPanel extends JPanel implements ActionListener,
 	private String derbyState = null;
 	private String latestLocalState = null;
 	String downloadFile = null;
+	private static List<String> speciesList = new ArrayList<String>();
+	private static String initSpecies = null;
 	static JComboBox speciesBox;
 	private JButton configButton;
 	private JButton downloadButton;
@@ -100,14 +106,13 @@ public class SpeciesPanel extends JPanel implements ActionListener,
 		/*
 		 * Species Selection Panel
 		 */
-		speciesBox = new JComboBox();
-
 		// Make sure default species is in list right away
 		// and selected by default
-		String defaultSpecies = CytoscapeInit.getProperties().getProperty(
+		initSpecies = CytoscapeInit.getProperties().getProperty(
 				"defaultSpeciesName");
-		this.speciesState = defaultSpecies;
-		speciesBox.addItem(defaultSpecies);
+		this.speciesState = initSpecies;
+		speciesBox = new JComboBox();
+		speciesBox.setEnabled(false);
 		speciesBox.addActionListener(this);
 		speciesBox.setToolTipText("Select a species-specific database");
 
@@ -304,25 +309,30 @@ public class SpeciesPanel extends JPanel implements ActionListener,
 					String filename = children[i];
 					String twoletter = filename.substring(0, 2);
 					// add unique list of twoletter codes
-					if (!supportedSpecies.containsKey(twoletter))
-						speciesBox.addItem(twoletter);
-					supportedSpecies.put(twoletter, new String[] { twoletter,
-							twoletter });
+					if (!supportedSpecies.containsKey(twoletter)) {
+						speciesList.add(twoletter);
+						supportedSpecies.put(twoletter, new String[]{twoletter,
+								twoletter});
+					}
 
 				}
-				speciesBox.removeItemAt(0);
-
 			}
 
 		} else {
 			for (String line : lines) {
 				String[] s = line.split("\t");
 				// format: genus \t species \t common \t two-letter
-				supportedSpecies.put(s[0] + " " + s[1], new String[] { s[2],
-						s[3] });
-				speciesBox.addItem(s[0] + " " + s[1]);
+				supportedSpecies.put(s[0] + " " + s[1],
+						new String[]{s[2], s[3]});
+				speciesList.add(s[0] + " " + s[1]);
 			}
 		}
+		Collections.sort(speciesList);
+		for (String s : speciesList) {
+			speciesBox.addItem(s);
+		}
+		speciesBox.setSelectedItem(initSpecies);
+		speciesBox.setEnabled(true);
 	}
 
 	/**
