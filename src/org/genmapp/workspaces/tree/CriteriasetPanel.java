@@ -24,11 +24,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
@@ -61,10 +59,8 @@ import cytoscape.CyEdge;
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
-import cytoscape.command.CyCommandException;
-import cytoscape.command.CyCommandManager;
-import cytoscape.command.CyCommandResult;
 import cytoscape.data.SelectEvent;
+import cytoscape.ding.DingNetworkView;
 import cytoscape.logger.CyLogger;
 import cytoscape.util.swing.JTreeTable;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
@@ -99,6 +95,7 @@ public class CriteriasetPanel extends JPanel
 	private JMenuItem editCriteriaItem;
 	private JMenuItem applyCriteriaItem;
 	private JMenuItem createNetworkItem;
+	private JMenuItem selectNodesItem;
 
 	private BiModalJSplitPane split;
 
@@ -170,16 +167,19 @@ public class CriteriasetPanel extends JPanel
 		editCriteriaItem = new JMenuItem(PopupActionListener.EDIT_CRITERIA);
 		applyCriteriaItem = new JMenuItem(PopupActionListener.APPLY_CRITERIA);
 		createNetworkItem = new JMenuItem(PopupActionListener.CREATE_NETWORK);
+		selectNodesItem = new JMenuItem(PopupActionListener.SELECT_NODES);
 		popupActionListener = new PopupActionListener();
 		destroyCriteriaItem.addActionListener(popupActionListener);
 		editCriteriaItem.addActionListener(popupActionListener);
 		applyCriteriaItem.addActionListener(popupActionListener);
 		createNetworkItem.addActionListener(popupActionListener);
+		selectNodesItem.addActionListener(popupActionListener);
 		popup.add(applyCriteriaItem);
 		popup.add(editCriteriaItem);
 		popup.add(destroyCriteriaItem);
 		popup.addSeparator();
 		popup.add(createNetworkItem);
+		popup.add(selectNodesItem);
 	}
 
 	public void resetTable() {
@@ -502,6 +502,7 @@ public class CriteriasetPanel extends JPanel
 		public static final String EDIT_CRITERIA = "Edit Criteria";
 		public static final String DESTROY_CRITERIA = "Destroy Criteria";
 		public static final String CREATE_NETWORK = "Create Network";
+		public static final String SELECT_NODES = "Select Nodes in Network";
 
 		/**
 		 * This is the network which originated the mouse-click event (more
@@ -533,13 +534,18 @@ public class CriteriasetPanel extends JPanel
 				CyCriteriaset.criteriaNameMap.remove(node.getID());
 				// TODO: CyCriteriaset should have a method to remove it's name
 				// the NameMap and from all network and session attributes
-				// TODO: Also needs to reset display to a remaining criteriaset
-				// or if none, then just plain white.
+				// TODO: Also needs to reset display to the "base" visual style.
 			} else if (CREATE_NETWORK.equals(label)) {
-				// TODO: create sub menu items for ID type: dataset keytype
-				// (e.g., Affy) or secKeyType (e.g., Ensembl)
 				System.out.println("create network");
-				createNetworkFromCriteria(node.getID(), "Ensembl?"); // TODO
+				createNetworkFromCriteria(node.getID()); // TODO
+			} else if (SELECT_NODES.equals(label)) {
+				System.out.println("select ndoes");
+				CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(node.getID());
+				List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape
+						.getCyNodesList());
+				Cytoscape.getCurrentNetwork().unselectAllNodes();
+				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList, true);
+				Cytoscape.getCurrentNetworkView().updateView();
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
 			}
@@ -550,8 +556,7 @@ public class CriteriasetPanel extends JPanel
 	 * @param set
 	 * @param keyType
 	 */
-	private void createNetworkFromCriteria(String criteriasetName,
-			String keyType) {
+	private void createNetworkFromCriteria(String criteriasetName) {
 
 		CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(criteriasetName);
 		List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape
