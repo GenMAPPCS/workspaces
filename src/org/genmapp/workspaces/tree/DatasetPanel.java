@@ -51,6 +51,7 @@ import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.utils.DatasetMapping;
+import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
@@ -483,8 +484,6 @@ public class DatasetPanel extends JPanel implements
 				// TODO: should also remove all dataset nodes if not part of
 				// other datasets. Hint: check the dataset tag attribute!
 			} else if (CREATE_NETWORK.equals(label)) {
-				// TODO: collect nodes and create network
-				// Warn user if list is too large!
 				int[] edges = new int[0];
 				List<Integer> nodesL = ds.getNodes();
 				int[] nodes = new int[nodesL.size()];
@@ -506,6 +505,9 @@ public class DatasetPanel extends JPanel implements
 				if (goForIt) {
 					CyNetwork newNetwork = Cytoscape.createNetwork(nodes,
 							edges, ds.getDisplayName());
+					//set Network attributes to notify NetworkMapping that job is already done
+					Cytoscape.getNetworkAttributes().setAttribute(newNetwork.getIdentifier(), NetworkMapping.CODE, ds.getKeyType());
+					//fire NETWORK_LOADED
 					Object[] new_value = new Object[2];
 					new_value[0] = newNetwork;
 					new_value[1] = newNetwork.getIdentifier();
