@@ -67,6 +67,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ADD_NODE_TO_METANODE = "add node";
 	public static final String SETDEFAULTAGG = "set default aggregation";
 	public static final String SETAGGOVERRIDE = "set default overrides";
+	public static final String SETDEFAULTAPP = "set default appearance";
+	public static final String MODIFYAPP = "modify appearance";
 	public static final String EXPAND_ALL = "expand all";
 	public static final String COLLAPSE_ALL = "collapse all";
 	public static final String ARG_METANODE_NAME = "metanode";
@@ -80,6 +82,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_ATTR_STRING = "string";
 	public static final String ARG_AGGREGATION = "aggregation";
 	public static final String ARG_ATTRIBUTE = "attribute";
+	public static final String ARG_OPACITY = "opacity";
+	public static final String ARG_USENESTEDNETWORKS = "usenestednetworks";
+	public static final String ARG_CHARTATTR = "chartattribute";
+	public static final String ARG_NODECHART = "nodechart";
 	public static final String ARG_NETWORKID = "networkview";
 
 	public WorkspacesCommandHandler() {
@@ -588,6 +594,57 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
 					SETAGGOVERRIDE, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param usenestednetworks
+	 * @param opacity
+	 * @param nodechart
+	 * @param chartattr
+	 */
+	public static void setDefaultMetanodeAppearance(Boolean usenestednetworks, Double opacity, String nodechart, String chartattr) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());
+		args.put(ARG_OPACITY, opacity);
+		args.put(ARG_NODECHART, nodechart);
+		args.put(ARG_CHARTATTR, chartattr);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					SETDEFAULTAPP, args);
+			System.out.println("RE: "+re.getErrors().toString()+re.getMessages().toString());
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param metanode
+	 * @param usenestednetworks
+	 * @param opacity
+	 * @param nodechart
+	 * @param chartattr
+	 */
+	public static void setMetanodeAppearance(String metanode, Boolean usenestednetworks, Double opacity, String nodechart, String chartattr) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_METANODE_NAME, metanode);
+		args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());
+		args.put(ARG_OPACITY, opacity);
+		args.put(ARG_NODECHART, nodechart);
+		args.put(ARG_CHARTATTR, chartattr);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					MODIFYAPP, args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
