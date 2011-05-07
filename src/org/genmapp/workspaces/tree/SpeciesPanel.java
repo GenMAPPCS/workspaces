@@ -112,7 +112,8 @@ public class SpeciesPanel extends JPanel
 				"defaultSpeciesName");
 		this.speciesState = initSpecies;
 		speciesBox = new JComboBox();
-		speciesBox.setEnabled(false);
+		speciesBox.addItem(initSpecies);
+		//speciesBox.setEnabled(false);
 		speciesBox.addActionListener(this);
 		speciesBox.setToolTipText("Select a species-specific database");
 
@@ -331,8 +332,8 @@ public class SpeciesPanel extends JPanel
 		for (String s : speciesList) {
 			speciesBox.addItem(s);
 		}
-		speciesBox.setSelectedItem(initSpecies);
-		speciesBox.setEnabled(true);
+		//speciesBox.setSelectedItem(initSpecies);
+		//speciesBox.setEnabled(true);
 	}
 
 	/**
