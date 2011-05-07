@@ -1,5 +1,6 @@
 package org.genmapp.workspaces.utils;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -16,6 +18,9 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
+import cytoscape.groups.CyGroup;
+import cytoscape.groups.CyGroupManager;
+import cytoscape.view.CyNetworkView;
 
 public abstract class DatasetMapping {
 
@@ -44,14 +49,14 @@ public abstract class DatasetMapping {
 			boolean isNew) {
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
-		System.out.println("Dataset primary key ("+dnKeyType+") and secondary key ("+secKeyType+")");
+		System.out.println("Dataset primary key (" + dnKeyType
+				+ ") and secondary key (" + secKeyType + ")");
 		/*
 		 * Don't do the following, because it will skip the manual annotation of
 		 * Ensembl ID columns, e.g., in the case of Yeast ORFs
 		 */
 		// if (dnKeyType.equals(secKeyType))
 		// return;
-
 		List<Integer> datanodeIndices = d.getNodes();
 		List<String> nodeIds = new ArrayList<String>();
 		for (Integer dni : datanodeIndices) {
@@ -70,6 +75,9 @@ public abstract class DatasetMapping {
 
 		List<String> attrs = d.getAttrs();
 		List<CyNetwork> mappedToNetworks = new ArrayList<CyNetwork>();
+		
+		//confirm metanode settings before creating groups
+		metanodeSettings();
 
 		/*
 		 * For every node in dataset...
@@ -110,11 +118,13 @@ public abstract class DatasetMapping {
 					/*
 					 * First, check if datanode == existing network node
 					 */
-					if (dn == cn) {
+					if (dn.getIdentifier() == cn.getIdentifier()) {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
-						System.out.println(network.getIdentifier()+":"+dn.getIdentifier()+" - mapped naturally");
+						System.out.println(network.getIdentifier() + ":"
+								+ dn.getIdentifier() + " - mapped naturally");
+						continue;
 					}
 
 					/*
@@ -126,9 +136,13 @@ public abstract class DatasetMapping {
 							.getStringAttribute(nodeKey, CODE);
 					if (pk != null && pkt != null) {
 						if (pkt.equals(dnKeyType) && pk.equals(dnKey)) {
-							mapAttributes(dn, dnKeyType, attrs, cn);
+							relateNodes(dn, cn, network);
+							// mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
-							System.out.println(network.getIdentifier()+":"+dn.getIdentifier()+" - mapped via ID/CODE");
+							System.out.println(network.getIdentifier() + ":"
+									+ dn.getIdentifier()
+									+ " - mapped via ID/CODE");
+							continue;
 						}
 					}
 
@@ -141,9 +155,13 @@ public abstract class DatasetMapping {
 							 * Check network node ids
 							 */
 							if (nodeKey.equals(secondaryKey)) {
-								mapAttributes(dn, dnKeyType, attrs, cn);
+								relateNodes(dn, cn, network);
+								// mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
-								System.out.println(network.getIdentifier()+" - mapped via dataset secondary key: "+secondaryKey);
+								System.out
+										.println(network.getIdentifier()
+												+ " - mapped via dataset secondary key: "
+												+ secondaryKey);
 								break; // skip remaining secondary keys
 							}
 
@@ -156,9 +174,15 @@ public abstract class DatasetMapping {
 							if (sk != null) {
 								if (sk.size() > 0) {
 									if (sk.contains(secondaryKey)) {
-										mapAttributes(dn, dnKeyType, attrs, cn);
+										relateNodes(dn, cn, network);
+										// mapAttributes(dn, dnKeyType, attrs,
+										// cn);
 										mappedToNetworks.add(network);
-										System.out.println(network.getIdentifier()+" - mapped via network-dataset secondary key: "+secondaryKey);
+										System.out
+												.println(network
+														.getIdentifier()
+														+ " - mapped via network-dataset secondary key: "
+														+ secondaryKey);
 										break; // skip remaining secondary keys
 									}
 								}
@@ -166,6 +190,9 @@ public abstract class DatasetMapping {
 						}
 					}
 				}
+				// metanode state per network
+				collapseAllMetanodes(network);
+
 			} // end for each network
 
 		} // end for each node in dataset
@@ -192,6 +219,90 @@ public abstract class DatasetMapping {
 					NET_ATTR_DATASET_PREFIX + datasetName, attrs);
 		}
 
+	}
+
+	/**
+	 * Declare network node to be a group node and add dataset nodes as
+	 * children. Attribute mapping (up to parent) will be handled globally by
+	 * metanode settings in manageMetanodes().
+	 * 
+	 * @param dn
+	 *            dataset CyNode
+	 * @param cn
+	 *            network CyNode
+	 * @param network
+	 *            CyNetwork
+	 * @return
+	 */
+	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network) {
+		CyGroup gn;
+
+		/*
+		 * We have to create dn views on relevant network centered on or around
+		 * cn location in order to inform final group node position
+		 */
+		network.addNode(dn);
+		CyNetworkView cnv = Cytoscape.getNetworkView(network.getIdentifier());
+		Point2D o = cnv.getNodeView(cn).getOffset();
+		cnv.getNodeView(dn).setOffset(o.getX(), o.getY());
+
+		// check if group node already exists
+		if (CyGroupManager.isaGroup(cn)) {
+			gn = CyGroupManager.getCyGroup(cn);
+			gn.addNode(dn);
+
+			/*
+			 * We have to expand (int=1) in order to "recapture" added nodes.
+			 * this is basically functioning as the first half of
+			 * MetaNode.recollapse().
+			 */
+			gn.setState(1);
+
+		} else {
+			// else, then create group node and add dn as "nodelist"
+			List<CyNode> nodelist = new ArrayList<CyNode>();
+			nodelist.add(dn);
+
+			gn = CyGroupManager.createGroup(cn, nodelist, "metaNode", network);
+
+			// System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier()
+			// + "=");
+			// if (null != gn) {
+			// System.out.println(gn.getGroupName());
+			// } else {
+			// System.out.println("null");
+			// }
+		}
+		return true;
+	}
+
+	/**
+	 * Sets metanode settings and and all metanode states per network.
+	 * 
+	 * @param network
+	 */
+	private static void metanodeSettings() {
+
+		// WorkspacesCommandHandler.setMetanodeAggregation("true");
+		WorkspacesCommandHandler.setMetanodeAggregation("true",
+				WorkspacesCommandHandler.ARG_ATTR_STRING, "csv");
+		WorkspacesCommandHandler.setMetanodeAggregation("true",
+				WorkspacesCommandHandler.ARG_ATTR_INTEGER, "median");
+		WorkspacesCommandHandler.setMetanodeAggregation("true",
+				WorkspacesCommandHandler.ARG_ATTR_DOUBLE, "median");
+
+	}
+
+	/**
+	 * Collapses all metanodes in a given network by calling CyCommand. This is
+	 * basically functioning as the second half of MetaNode.recollapse().
+	 * 
+	 * @param network
+	 */
+	private static void collapseAllMetanodes(CyNetwork network) {
+		String netId = network.getIdentifier();
+		WorkspacesCommandHandler.allMetanodes(netId,
+				WorkspacesCommandHandler.COLLAPSE_ALL);
 	}
 
 	/**
@@ -251,77 +362,77 @@ public abstract class DatasetMapping {
 			final Object entry, final Byte type, final Object listsample) {
 
 		switch (type) {
-		case CyAttributes.TYPE_BOOLEAN:
+			case CyAttributes.TYPE_BOOLEAN :
 
-			Boolean newBool;
+				Boolean newBool;
 
-			try {
-				newBool = (Boolean) entry;
-				nodeAttrs.setAttribute(key, name, newBool);
-			} catch (Exception e) {
+				try {
+					newBool = (Boolean) entry;
+					nodeAttrs.setAttribute(key, name, newBool);
+				} catch (Exception e) {
+					invalid.put(key, entry);
+				}
+
+				break;
+
+			case CyAttributes.TYPE_INTEGER :
+
+				Integer newInt;
+
+				try {
+					newInt = (Integer) entry;
+					nodeAttrs.setAttribute(key, name, newInt);
+				} catch (Exception e) {
+					invalid.put(key, entry);
+				}
+
+				break;
+
+			case CyAttributes.TYPE_FLOATING :
+
+				Double newDouble;
+
+				try {
+					newDouble = (Double) entry;
+					nodeAttrs.setAttribute(key, name, newDouble);
+				} catch (Exception e) {
+					invalid.put(key, entry);
+				}
+
+				break;
+
+			case CyAttributes.TYPE_STRING :
+				String newString;
+				try {
+					newString = (String) entry;
+					nodeAttrs.setAttribute(key, name, newString);
+				} catch (Exception e) {
+					invalid.put(key, entry);
+				}
+
+				break;
+
+			case CyAttributes.TYPE_SIMPLE_LIST :
+				List newList;
+				if (listsample instanceof Boolean)
+					newList = (List<Boolean>) entry;
+				else if (listsample instanceof Integer)
+					newList = (List<Integer>) entry;
+				else if (listsample instanceof Double)
+					newList = (List<Double>) entry;
+				else
+					newList = (List<String>) entry;
+
+				try {
+					nodeAttrs.setListAttribute(key, name, newList);
+				} catch (Exception e) {
+					invalid.put(key, entry);
+				}
+
+				break;
+
+			default :
 				invalid.put(key, entry);
-			}
-
-			break;
-
-		case CyAttributes.TYPE_INTEGER:
-
-			Integer newInt;
-
-			try {
-				newInt = (Integer) entry;
-				nodeAttrs.setAttribute(key, name, newInt);
-			} catch (Exception e) {
-				invalid.put(key, entry);
-			}
-
-			break;
-
-		case CyAttributes.TYPE_FLOATING:
-
-			Double newDouble;
-
-			try {
-				newDouble = (Double) entry;
-				nodeAttrs.setAttribute(key, name, newDouble);
-			} catch (Exception e) {
-				invalid.put(key, entry);
-			}
-
-			break;
-
-		case CyAttributes.TYPE_STRING:
-			String newString;
-			try {
-				newString = (String) entry;
-				nodeAttrs.setAttribute(key, name, newString);
-			} catch (Exception e) {
-				invalid.put(key, entry);
-			}
-
-			break;
-
-		case CyAttributes.TYPE_SIMPLE_LIST:
-			List newList;
-			if (listsample instanceof Boolean)
-				newList = (List<Boolean>) entry;
-			else if (listsample instanceof Integer)
-				newList = (List<Integer>) entry;
-			else if (listsample instanceof Double)
-				newList = (List<Double>) entry;
-			else
-				newList = (List<String>) entry;
-
-			try {
-				nodeAttrs.setListAttribute(key, name, newList);
-			} catch (Exception e) {
-				invalid.put(key, entry);
-			}
-
-			break;
-
-		default:
-			invalid.put(key, entry);
 
 		}
 	}
@@ -343,28 +454,28 @@ public abstract class DatasetMapping {
 
 		for (String listItem : parts) {
 			switch (dataType) {
-			case CyAttributes.TYPE_BOOLEAN:
-				listAttr.add(Boolean.parseBoolean(listItem.trim()));
+				case CyAttributes.TYPE_BOOLEAN :
+					listAttr.add(Boolean.parseBoolean(listItem.trim()));
 
-				break;
+					break;
 
-			case CyAttributes.TYPE_INTEGER:
-				listAttr.add(Integer.parseInt(listItem.trim()));
+				case CyAttributes.TYPE_INTEGER :
+					listAttr.add(Integer.parseInt(listItem.trim()));
 
-				break;
+					break;
 
-			case CyAttributes.TYPE_FLOATING:
-				listAttr.add(Double.parseDouble(listItem.trim()));
+				case CyAttributes.TYPE_FLOATING :
+					listAttr.add(Double.parseDouble(listItem.trim()));
 
-				break;
+					break;
 
-			case CyAttributes.TYPE_STRING:
-				listAttr.add(listItem.trim());
+				case CyAttributes.TYPE_STRING :
+					listAttr.add(listItem.trim());
 
-				break;
+					break;
 
-			default:
-				break;
+				default :
+					break;
 			}
 		}
 
@@ -419,7 +530,7 @@ public abstract class DatasetMapping {
 			Set<String> idTypes = (Set<String>) result.getResult();
 			for (String t : idTypes) {
 				if (t.contains("Ensembl"))
-					//System.out.println("Hits: "+t);
+					// System.out.println("Hits: "+t);
 					type = t;
 			}
 		}
