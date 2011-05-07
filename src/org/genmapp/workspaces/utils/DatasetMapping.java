@@ -290,6 +290,7 @@ public abstract class DatasetMapping {
 				WorkspacesCommandHandler.ARG_ATTR_INTEGER, "median");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
 				WorkspacesCommandHandler.ARG_ATTR_DOUBLE, "median");
+		WorkspacesCommandHandler.setDefaultMetanodeAppearance(false, 100.0, "none", null);
 
 	}
 
@@ -501,9 +502,13 @@ public abstract class DatasetMapping {
 					if (!sourcelist.contains(title)) {
 						netList.add(network);
 					}
+				} else if (Cytoscape.getNetworkAttributes().hasAttribute(netid, "parent_nodes")) {
+					// also exclude metanode-generated nested networks
 				} else {
+				
 					netList.add(network);
 				}
+			
 			}
 		}
 		return netList;
