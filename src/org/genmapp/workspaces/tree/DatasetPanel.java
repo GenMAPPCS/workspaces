@@ -491,7 +491,7 @@ public class DatasetPanel extends JPanel implements
 					nodes[i] = (int) nodesL.get(i);
 				}
 				boolean goForIt = false;
-				if (nodes.length > 2000) {
+				if (nodes.length > 20000) {
 					int n = JOptionPane.showConfirmDialog(Cytoscape
 							.getDesktop(),
 							"You are about to create a network of "
