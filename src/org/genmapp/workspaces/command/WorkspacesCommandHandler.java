@@ -1,6 +1,5 @@
 package org.genmapp.workspaces.command;
 
-import java.awt.Color;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -9,22 +8,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JOptionPane;
-
-import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
-import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
 import cytoscape.command.AbstractCommandHandler;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
-import cytoscape.data.CyAttributes;
+import cytoscape.groups.CyGroup;
 import cytoscape.layout.Tunable;
+import cytoscape.view.CyNetworkView;
 
 public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String NAMESPACE = "workspaces";
@@ -50,7 +46,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	// VERSIONING
 	public static final String PROPERTY_SETS = "org.genmapp.criteriasets_1.0";
 	public static final String PROPERTY_SET_PREFIX = "org.genmapp.criteriaset.";
-//	public static final String NET_ATTR_APPLIED_SET = "org.genmapp.criteriaset";
+	// public static final String NET_ATTR_APPLIED_SET =
+	// "org.genmapp.criteriaset";
 	private final static String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
 	private final static String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 
@@ -64,6 +61,26 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_LABEL_LIST = "labellist";
 	public static final String ARG_EXP_LIST = "expressionlist";
 	public static final String ARG_COLOR_LIST = "colorlist";
+
+	public static final String METANODE_PLUGIN = "metanode";
+	public static final String CREATE_METANODE = "create";
+	public static final String ADD_NODE_TO_METANODE = "add node";
+	public static final String SETDEFAULTAGG = "set default aggregation";
+	public static final String SETAGGOVERRIDE = "set default overrides";
+	public static final String EXPAND_ALL = "expand all";
+	public static final String COLLAPSE_ALL = "collapse all";
+	public static final String ARG_METANODE_NAME = "metanode";
+	public static final String ARG_NODE = "node";
+	public static final String ARG_NODE_LIST = "nodelist";
+	public static final String ARG_ENABLED = "enabled";
+	public static final String ARG_ATTR_BOOLEAN = "boolean";
+	public static final String ARG_ATTR_DOUBLE = "double";
+	public static final String ARG_ATTR_INTEGER = "integer";
+	public static final String ARG_ATTR_LIST = "list";
+	public static final String ARG_ATTR_STRING = "string";
+	public static final String ARG_AGGREGATION = "aggregation";
+	public static final String ARG_ATTRIBUTE = "attribute";
+	public static final String ARG_NETWORKID = "networkview";
 
 	public WorkspacesCommandHandler() {
 		super(CyCommandManager.reserveNamespace(NAMESPACE));
@@ -90,17 +107,16 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			throws CyCommandException {
 		return execute(command, createKVMap(args));
 	}
-	public static void showMessage( String message )
-	{
-		/* JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
-				message, 
-				"", 
-				JOptionPane.ERROR_MESSAGE ); */
+	public static void showMessage(String message) {
+		/*
+		 * JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
+		 * JOptionPane.ERROR_MESSAGE );
+		 */
 	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
 			throws CyCommandException {
-		showMessage( "WorkspacesCommandHandler:execute");
+		showMessage("WorkspacesCommandHandler:execute");
 		CyCommandResult result = new CyCommandResult();
 
 		for (String t : args.keySet()) {
@@ -157,13 +173,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (UPDATE_CRITERIASETS.equals(command)) {
 			String setName;
 			Object s = getArg(command, ARG_SETNAME, args);
-			showMessage( "args passed in: " + args );
-			showMessage( "args passed in count: " + args.size() );
-			
+			showMessage("args passed in: " + args);
+			showMessage("args passed in count: " + args.size());
+
 			if (s instanceof String) {
 				setName = (String) s;
-			} else
-			{
+			} else {
 				throw new CyCommandException(ARG_SETNAME
 						+ ": unknown type (try String!)");
 			}
@@ -171,7 +186,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			 * Three possibilities: (1) saving new set (2) saving or loading
 			 * existing set (3) deleting existing set
 			 */
-			showMessage( "Update CriteriaSets: " + setName );
+			showMessage("Update CriteriaSets: " + setName);
 
 			String setParameters = CytoscapeInit.getProperties().getProperty(
 					PROPERTY_SET_PREFIX + setName);
@@ -179,7 +194,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 					.containsKey(setName);
 			if (!isExistingSet && setParameters != null) {
 				// (1) saving new set or restoring session with saved sets
-				showMessage( "Update CriteriaSets: save new set " + setName );
+				showMessage("Update CriteriaSets: save new set " + setName);
 
 				CyCriteriaset cyCriteria = new CyCriteriaset(setName,
 						setParameters);
@@ -187,7 +202,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Criteria " + setName + " added.");
 
 			} else if (isExistingSet && setParameters != null) {
-				showMessage( "Update CriteriaSets: save/load existing set " + setName );
+				showMessage("Update CriteriaSets: save/load existing set "
+						+ setName);
 
 				// (2) saving or loading an existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
@@ -198,7 +214,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Criteria " + setName + " updated.");
 
 			} else if (isExistingSet && null == setParameters) {
-				showMessage( "Update CriteriaSets: delete existing set " + setName );
+				showMessage("Update CriteriaSets: delete existing set "
+						+ setName);
 
 				// (3) deleting an existing set
 				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
@@ -362,23 +379,23 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			while ((i = st.nextToken()) != StreamTokenizer.TT_EOF) {
 				switch (i) {
-				case '=':
-					// Get the next token
-					i = st.nextToken();
-					if (i == StreamTokenizer.TT_WORD || i == '"') {
-						tokenIndex--;
-						String key = tokenList.get(tokenIndex);
-						settings.put(key, st.sval);
-						tokenList.remove(tokenIndex);
-					}
-					break;
-				case '"':
-				case StreamTokenizer.TT_WORD:
-					tokenList.add(st.sval);
-					tokenIndex++;
-					break;
-				default:
-					break;
+					case '=' :
+						// Get the next token
+						i = st.nextToken();
+						if (i == StreamTokenizer.TT_WORD || i == '"') {
+							tokenIndex--;
+							String key = tokenList.get(tokenIndex);
+							settings.put(key, st.sval);
+							tokenList.remove(tokenIndex);
+						}
+						break;
+					case '"' :
+					case StreamTokenizer.TT_WORD :
+						tokenList.add(st.sval);
+						tokenIndex++;
+						break;
+					default :
+						break;
 				}
 			}
 		} catch (Exception e) {
@@ -423,7 +440,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			CyCommandResult re = CyCommandManager.execute(CRITERIA_MAPPER,
 					DELETE_SET, args);
-			System.out.println(re.getErrors().get(0).toString());
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -461,7 +477,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			labellist.add(temp[1]);
 			colorlist.add(temp[2]);
 		}
-		
+
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_SETNAME, cset.getDisplayName());
 		args.put(ARG_NETWORK, network.getIdentifier());
@@ -487,4 +503,113 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		// cset.collectCounts();
 
 	}
+
+	public static void createMetanode(String mnodeName, CyNetwork network,
+			List<CyNode> nodelist) {
+
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_METANODE_NAME, mnodeName);
+		args.put(ARG_NETWORK, network);
+		args.put(ARG_NODE_LIST, nodelist);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					CREATE_METANODE, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * Use this constructor to enable or disable attribute aggregation for
+	 * metanodes.
+	 * 
+	 * @param b
+	 *            boolean control of 'enabled' setting
+	 */
+	public static void setMetanodeAggregation(String b) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_ENABLED, b);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					SETDEFAULTAGG, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	/**
+	 * Use this constructor to pass individual default settings.
+	 * 
+	 * @param b
+	 *            boolean control of 'enabled' setting
+	 * @param type
+	 *            one of the ARG_ATTR_x types available to be set
+	 * @param value
+	 *            one of the available aggregation operations per type (see
+	 *            MetaNodeCommandHandler argument strings)
+	 */
+	public static void setMetanodeAggregation(String b, String type,
+			String value) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_ENABLED, b);
+		args.put(type, value);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					SETDEFAULTAGG, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * Use this constructor to set attribute-specific overrides.
+	 * 
+	 * @param attr
+	 *            attribute name
+	 * @param value
+	 *            one of the available aggregation operations (see
+	 *            MetaNodeCommandHandler argument strings)
+	 */
+	public static void setMetanodeAggregation(String attr, String value) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_ATTRIBUTE, attr);
+		args.put(ARG_AGGREGATION, value);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					SETAGGOVERRIDE, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	public static void allMetanodes(String id, String function) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_NETWORKID, id);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					function, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
 }
