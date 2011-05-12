@@ -37,7 +37,14 @@ public class CyDataset {
 	 * @param nl
 	 * @param al
 	 */
-	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
+	public CyDataset( String n, String t, List<Integer> nl, List<String> al )
+	{
+		this( n, t, nl, al, true );
+	}
+	
+	
+	public CyDataset(String n, String t, List<Integer> nl, List<String> al, boolean performDatasetMapping ) 
+	{
 		this.displayName = n;
 		this.keyType = t;
 		this.nodes = nl;
@@ -51,39 +58,14 @@ public class CyDataset {
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
 
 		// perform dataset mapping
-		DatasetMapping.performDatasetMapping(this, null, true);
-
+		if ( performDatasetMapping )
+		{
+			DatasetMapping.performDatasetMapping(this, null, true);
+		}
 		// set color of entry in panel
 		setCurrentHighlight();
 	}
 
-	/**
-	 * Called when loading session file containing datasets.
-	 * 
-	 * @param n
-	 * @param al
-	 */
-	public CyDataset(String n, List<String> al) {
-		this.displayName = n;
-		this.attrs = al;
-
-		datasetNameMap.put(n, this);
-
-		/*
-		 * Once all nodes are loaded from xGMML, then scan all nodes to collect
-		 * this.keyType and this.nodes based on nodeAtts. Don't need to run
-		 * performDatasetMapping.
-		 */
-
-		this.rows = this.nodes.size();
-
-		// add to dataset panel
-		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
-
-		// set color of entry in panel
-		setCurrentHighlight();
-
-	}
 
 	/**
 	 * 
@@ -184,7 +166,18 @@ public class CyDataset {
 		}
 		return attrStr.substring(0, attrStr.length() - 2);
 	}
-
+	public static List< String > attrStringToAttrList( String attrString )
+	{
+		List< String > l = new ArrayList< String >();
+		
+		String[] sArray = attrString.split( ", " );
+		for( String a : sArray )
+		{
+			l.add( a );
+		}
+		return( l );
+		
+	}
 	/**
 	 * @return the commandString
 	 */
