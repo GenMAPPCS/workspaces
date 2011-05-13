@@ -75,9 +75,12 @@ public abstract class DatasetMapping {
 
 		List<String> attrs = d.getAttrs();
 		List<CyNetwork> mappedToNetworks = new ArrayList<CyNetwork>();
-		
-		//confirm metanode settings before creating groups
-		metanodeSettings();
+
+		/*
+		 * Set metanode attr overrides and appearance settings per dataset
+		 * before creating any groups
+		 */
+		metanodeSettings(d);
 
 		/*
 		 * For every node in dataset...
@@ -277,23 +280,62 @@ public abstract class DatasetMapping {
 	}
 
 	/**
-	 * Sets metanode settings and and all metanode states per network.
+	 * Sets metanode settings and and all metanode states. Go through each attr
+	 * being loaded from dataset and make a custom aggregation override. This is
+	 * preferred over default aggregation in order to preserve the attrs of the
+	 * original network node when it is transformed into a group, e.g., the
+	 * width and height attrs for GPML nodes.
 	 * 
-	 * @param network
+	 * @param d
+	 *            CyDataset being loaded
 	 */
-	private static void metanodeSettings() {
+	private static void metanodeSettings(CyDataset d) {
 
-		// WorkspacesCommandHandler.setMetanodeAggregation("true");
+		// Aggregation Overrides
+		WorkspacesCommandHandler.setMetanodeAggregation("true");
+//		List<String> attrs = d.getAttrs();
+//		for (String attr : attrs) {
+//			Byte aType = Cytoscape.getNodeAttributes().getType(attr);
+//			switch (aType) {
+//				case CyAttributes.TYPE_STRING :
+//					WorkspacesCommandHandler
+//							.setAggregationOverride(attr, "csv");
+//					break;
+//				case CyAttributes.TYPE_INTEGER :
+//					WorkspacesCommandHandler.setAggregationOverride(attr,
+//							"median");
+//					break;
+//				case CyAttributes.TYPE_FLOATING :
+//					WorkspacesCommandHandler.setAggregationOverride(attr,
+//							"median");
+//					break;
+//				case CyAttributes.TYPE_BOOLEAN :
+//					WorkspacesCommandHandler.setAggregationOverride(attr, "or");
+//					break;
+//				case CyAttributes.TYPE_SIMPLE_LIST :
+//					WorkspacesCommandHandler.setAggregationOverride(attr,
+//							"concatenate");
+//					break;
+//			}
+//		}
+
+		// And set all defaults to none to prevent overwriting cn attrs
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
 				WorkspacesCommandHandler.ARG_ATTR_STRING, "csv");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
 				WorkspacesCommandHandler.ARG_ATTR_INTEGER, "median");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
 				WorkspacesCommandHandler.ARG_ATTR_DOUBLE, "median");
-		WorkspacesCommandHandler.setDefaultMetanodeAppearance(false, 100.0, "none", null);
+		WorkspacesCommandHandler.setMetanodeAggregation("true",
+				WorkspacesCommandHandler.ARG_ATTR_BOOLEAN, "or");
+		WorkspacesCommandHandler.setMetanodeAggregation("true",
+				WorkspacesCommandHandler.ARG_ATTR_LIST, "concatenate");
+
+		// Appearance
+		WorkspacesCommandHandler.setDefaultMetanodeAppearance(false, 100.0,
+				"none", null);
 
 	}
-
 	/**
 	 * Collapses all metanodes in a given network by calling CyCommand. This is
 	 * basically functioning as the second half of MetaNode.recollapse().
@@ -502,13 +544,14 @@ public abstract class DatasetMapping {
 					if (!sourcelist.contains(title)) {
 						netList.add(network);
 					}
-				} else if (Cytoscape.getNetworkAttributes().hasAttribute(netid, "parent_nodes")) {
+				} else if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
+						"parent_nodes")) {
 					// also exclude metanode-generated nested networks
 				} else {
-				
+
 					netList.add(network);
 				}
-			
+
 			}
 		}
 		return netList;

@@ -654,6 +654,22 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	public static void setAggregationOverride(String attr, String aggtype) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_ATTRIBUTE, attr);
+		args.put(ARG_AGGREGATION, aggtype);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					SETAGGOVERRIDE, args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
 	public static void allMetanodes(String id, String function) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_NETWORKID, id);
