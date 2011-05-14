@@ -201,7 +201,6 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				    && (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
 				clearAllDatasets();
 				clearAllCriteriasets();
-				System.out.println("RESET!");
 			}
 		}
 
