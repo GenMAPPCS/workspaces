@@ -22,19 +22,16 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
-import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
-import org.genmapp.workspaces.objects.CyCriteria;
-import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.ui.CyActionConfigDialog;
-import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.Cytoscape;
 import cytoscape.actions.ExportAsGraphicsAction;
 import cytoscape.actions.ImportGraphFileAction;
 import cytoscape.actions.OpenSessionAction;
+import cytoscape.actions.SaveSessionAction;
+import cytoscape.actions.SaveSessionAsAction;
 import cytoscape.actions.WebServiceNetworkImportAction;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
@@ -62,6 +59,8 @@ public class ActionPanel extends JPanel
 	public final static String RUN_CLUSTERMAKER = "Run clusterMaker...";
 	public final static String RUN_GOELITE = "Run GO-Elite...";
 	public final static String EXPORT_GRAPHICS = "Export image...";
+	public final static String SAVE_SESSION_FILE = "Save session...";
+	public final static String SAVE_SESSION_AS_FILE = "Save session as...";
 
 	public static CyAction[] currentActionsList;
 	public static CyAction[] availableActionsList;
@@ -115,9 +114,9 @@ public class ActionPanel extends JPanel
 
 		this.setLayout(layout);
 
-		this.setMinimumSize(new Dimension(320, 58));
-		this.setPreferredSize(new Dimension(320, 58));
-		this.setMaximumSize(new Dimension(400, 58));
+		this.setMinimumSize(new Dimension(320, 80));
+		this.setPreferredSize(new Dimension(320, 100));
+		this.setMaximumSize(new Dimension(400, 200));
 
 		Border etchedBdr = BorderFactory.createEtchedBorder();
 		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr,
@@ -192,15 +191,26 @@ public class ActionPanel extends JPanel
 		exportGraphics
 				.setRequirements("You must have an active network view selected");
 
+		CyAction saveSessionFile = new CyAction(SAVE_SESSION_FILE);
+		saveSessionFile.setDoable(true);
+		saveSessionFile.setDescription("Save session");
+		saveSessionFile.setRequirements("");
+
+		CyAction saveSessionAsFile = new CyAction(SAVE_SESSION_AS_FILE);
+		saveSessionAsFile.setDoable(true);
+		saveSessionAsFile.setDescription("Save session as new CYS file");
+		saveSessionAsFile.setRequirements("");
+
 		// prepare full list of available actions
 		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
 				loadNetworkWeb, newNetworkTable, newDatasetFile,
-				newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
+				newCriteriaSet, runClustermaker, runGoelite, exportGraphics,
+				saveSessionFile, saveSessionAsFile};
 
 		// prepare default list of actions and behavior
 		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
 				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
-				exportGraphics};
+				exportGraphics, saveSessionFile, saveSessionAsFile};
 		workflowState = false;
 		loadActions(actions);
 	}
@@ -342,6 +352,16 @@ public class ActionPanel extends JPanel
 			} else if (action.equals(EXPORT_GRAPHICS)) {
 				ExportAsGraphicsAction eaga = new ExportAsGraphicsAction();
 				eaga.actionPerformed(new ActionEvent(eaga,
+						ActionEvent.ACTION_PERFORMED, action));
+
+			} else if (action.equals(SAVE_SESSION_FILE)) {
+				SaveSessionAction ssa = new SaveSessionAction();
+				ssa.actionPerformed(new ActionEvent(ssa,
+						ActionEvent.ACTION_PERFORMED, action));
+
+			} else if (action.equals(SAVE_SESSION_AS_FILE)) {
+				SaveSessionAsAction ssaa = new SaveSessionAsAction();
+				ssaa.actionPerformed(new ActionEvent(ssaa,
 						ActionEvent.ACTION_PERFORMED, action));
 			}
 
