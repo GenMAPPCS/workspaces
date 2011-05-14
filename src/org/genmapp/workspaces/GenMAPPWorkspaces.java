@@ -20,8 +20,12 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 import cytoscape.CyNode;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
+import org.genmapp.workspaces.objects.CyCriteria;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
+
+import cytoscape.command.CyCommandException;
+import cytoscape.command.CyCommandManager;
 import cytoscape.data.CyAttributes;
 import java.io.FileWriter;
 import cytoscape.Cytoscape;
@@ -160,6 +164,36 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		{
 			showMessage( "Exception: " + e );
 		}
+		
+		//Load Criteriasets
+		showMessage( "Isaac: 2");
+		// call Workspaces-specific code for handling the opening of sessions
+		// at this point, all the criteria-related mapping has taken been loaded up 
+		// only thing left to do is update the CriteriaPanel
+		
+		// get all the criteriaSets ourselves from the session-level properties
+		//   we don't trust the criteriamapper cycommand results b/c they are reported on a per-network basis
+		//   and thus don't include those not mapped to any network
+		String [] vCs = CyCriteria.getCriteriaSets();
+		for( String cs : vCs )
+		{
+			
+			Map< String, Object > args = new HashMap();
+			args.put( WorkspacesCommandHandler.ARG_SETNAME, cs );
+			
+			try
+			{
+				showMessage( "Isaac: 3 + update criteriasets " + args + "[" + args.size() + "]"); 
+			  CyCommandManager.execute( "workspaces", "update criteriasets", 
+					args );
+		    }
+			catch( CyCommandException ex )
+			{
+				showMessage( "error" );
+				showMessage( "error: " + ex.toString() );
+			}
+		}
+		
 		
 	}
 	public void saveSessionStateFiles( List< File > fileList )

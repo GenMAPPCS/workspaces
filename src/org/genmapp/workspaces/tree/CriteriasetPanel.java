@@ -529,12 +529,7 @@ public class CriteriasetPanel extends JPanel
 			} else if (EDIT_CRITERIA.equals(label)) {
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
 			} else if (DESTROY_CRITERIA.equals(label)) {
-				WorkspacesCommandHandler.deleteCriteriaset(node.getID());
-				removeItem(node.getID());
-				CyCriteriaset.criteriaNameMap.remove(node.getID());
-				// TODO: CyCriteriaset should have a method to remove it's name
-				// the NameMap and from all network and session attributes
-				// TODO: Also needs to reset display to the "base" visual style.
+				CyCriteriaset.criteriaNameMap.get(node.getID()).deleteCyCriteriaset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				System.out.println("create network");
 				createNetworkFromCriteria(node.getID()); // TODO

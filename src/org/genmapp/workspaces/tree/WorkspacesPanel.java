@@ -28,6 +28,7 @@ import javax.swing.JSplitPane;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
+import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
@@ -117,40 +118,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
+		Cytoscape.getSwingPropertyChangeSupport().addPropertyChangeListener(this);
 	}
-
-	// /**
-	// * DOCUMENT ME!
-	// *
-	// * @param comp
-	// * DOCUMENT ME!
-	// */
-	// public void setNavigator(final Component comp) {
-	// split.setRightComponent(comp);
-	// split.validate();
-	// }
-	//	
-	// /**
-	// * Creates a new BirdsEyeViewHandler object.
-	// * @param desktopPane The JDesktopPane of the NetworkViewManager. Can be
-	// null.
-	// */
-	// private BirdsEyeView getBev() {
-	// return bev = new BirdsEyeView((DGraphView)
-	// Cytoscape.getCurrentNetworkView()) {
-	// public Dimension getMinimumSize() {
-	// return new Dimension(180, 180);
-	// }
-	//
-	// public Dimension getMaximumSize() {
-	// return new Dimension(180, 180);
-	// }
-	//
-	// public Dimension getPreferredSize() {
-	// return new Dimension(180, 180);
-	// }
-	// };
-	// }
 
 	/**
 	 * @return the networkTreePanel
@@ -171,6 +140,25 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	 */
 	public static CriteriasetPanel getCriteriaTreePanel() {
 		return criteriaPanel;
+	}
+
+	protected static void clearAllDatasets() {
+		// clear out datasets
+		for (String dname : CyDataset.datasetNameMap.keySet()) {
+			// TODO: add method to CyDataset to delete self and
+			// accoutrements; then replace below with single call
+			DatasetPanel dp = WorkspacesPanel.getDatasetTreePanel();
+			dp.removeItem(dname);
+			CyDataset.datasetNameMap.remove(dname);
+		}
+
+	}
+
+	protected static void clearAllCriteriasets() {
+		// clear out criteriasets
+		for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
+			cset.deleteCyCriteriaset();
+		}
 	}
 
 	public void propertyChange(PropertyChangeEvent evt) {
@@ -205,6 +193,15 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 */
 				NetworkMapping.performNetworkMappings(network);
 
+			}
+		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {
+			// listen for last network destroyed and check session state in
+			// order to determine if new session is being loaded... awkward!
+			if ((Cytoscape.getNetworkSet().size() <= 1)
+				    && (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
+				clearAllDatasets();
+				clearAllCriteriasets();
+				System.out.println("RESET!");
 			}
 		}
 

@@ -26,6 +26,7 @@ import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteria;
+import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.ui.CyActionConfigDialog;
 import org.genmapp.workspaces.utils.DatasetMapping;
@@ -38,8 +39,10 @@ import cytoscape.actions.WebServiceNetworkImportAction;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 
-public class ActionPanel extends JPanel implements ActionListener,
-		MouseListener {
+public class ActionPanel extends JPanel
+		implements
+			ActionListener,
+			MouseListener {
 
 	private static final long serialVersionUID = 7783752875541061715L;
 
@@ -190,15 +193,14 @@ public class ActionPanel extends JPanel implements ActionListener,
 				.setRequirements("You must have an active network view selected");
 
 		// prepare full list of available actions
-		availableActionsList = new CyAction[] { openSessionFile,
-				openNetworkFile, loadNetworkWeb, newNetworkTable,
-				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
-				exportGraphics };
+		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
+				loadNetworkWeb, newNetworkTable, newDatasetFile,
+				newCriteriaSet, runClustermaker, runGoelite, exportGraphics};
 
 		// prepare default list of actions and behavior
-		CyAction actions[] = { openSessionFile, openNetworkFile,
-				loadNetworkWeb, newDatasetFile, newCriteriaSet,
-				runClustermaker, runGoelite, exportGraphics };
+		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
+				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
+				exportGraphics};
 		workflowState = false;
 		loadActions(actions);
 	}
@@ -237,12 +239,11 @@ public class ActionPanel extends JPanel implements ActionListener,
 		}
 
 	}
-	public static void showMessage( String message )
-	{
-		/*JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
-				message, 
-				"", 
-				JOptionPane.ERROR_MESSAGE ); */
+	public static void showMessage(String message) {
+		/*
+		 * JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
+		 * JOptionPane.ERROR_MESSAGE );
+		 */
 	}
 
 	public void mouseClicked(MouseEvent e) {
@@ -254,7 +255,7 @@ public class ActionPanel extends JPanel implements ActionListener,
 			System.out.println(action);
 
 			if (action.equals(OPEN_SESSION_FILE)) {
-				showMessage( "Isaac: 1") ;
+				showMessage("Isaac: 1");
 				if (Cytoscape.getNetworkSet().size() == 0
 						&& CyDataset.datasetNameMap.size() > 0) {
 					// Show warning, in cases unique to GenMAPP-CS
@@ -263,50 +264,18 @@ public class ActionPanel extends JPanel implements ActionListener,
 							.getDesktop(), warning, "Caution!",
 							JOptionPane.YES_NO_OPTION,
 							JOptionPane.WARNING_MESSAGE, null);
-					if (result == JOptionPane.YES_OPTION) {
-						for (String dname: CyDataset.datasetNameMap.keySet()){
-							DatasetPanel dp = WorkspacesPanel.getDatasetTreePanel();
-							dp.removeItem(dname);
-							CyDataset.datasetNameMap.remove(dname);
-						}
-					} else {
+					if (result == JOptionPane.NO_OPTION) {
 						return;
 					}
 				}
+
+				// now, open the new session file
 				OpenSessionAction osa = new OpenSessionAction();
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
-				
-				//GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible( true );
-				showMessage( "Isaac: 2");
-				// call Workspaces-specific code for handling the opening of sessions
-				// at this point, all the criteria-related mapping has taken been loaded up 
-				// only thing left to do is update the CriteriaPanel
-				
-				// get all the criteriaSets ourselves from the session-level properties
-				//   we don't trust the criteriamapper cycommand results b/c they are reported on a per-network basis
-				//   and thus don't include those not mapped to any network
-				String [] vCs = CyCriteria.getCriteriaSets();
-				for( String cs : vCs )
-				{
-					
-					Map< String, Object > args = new HashMap();
-					args.put( WorkspacesCommandHandler.ARG_SETNAME, cs );
-					
-					try
-					{
-						showMessage( "Isaac: 3 + update criteriasets " + args + "[" + args.size() + "]"); 
-					  CyCommandManager.execute( "workspaces", "update criteriasets", 
-							args );
-				    }
-					catch( CyCommandException ex )
-					{
-						showMessage( "error" );
-						showMessage( "error: " + ex.toString() );
-					}
-				}
-				
-		
+
+				// GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible(
+				// true );
 
 			} else if (action.equals(OPEN_NETWORK_FILE)) {
 				ImportGraphFileAction igfa = new ImportGraphFileAction(
@@ -458,8 +427,7 @@ class MyCellRenderer extends JLabel implements ListCellRenderer {
 		} else {
 			background = Color.WHITE;
 			foreground = Color.BLACK;
-		}
-		;
+		};
 
 		setBackground(background);
 		setForeground(foreground);
