@@ -4,18 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.tree.CriteriasetPanel;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.data.CyAttributes;
+import cytoscape.view.CyNetworkView;
+import cytoscape.visual.CalculatorCatalog;
+import cytoscape.visual.VisualMappingManager;
 
 public class CyCriteriaset {
-
-
 
 	private String setname;
 	private String[] criteriaParams;
@@ -36,7 +41,7 @@ public class CyCriteriaset {
 		this.setname = s;
 		this.setCriteriaParams(params);
 
-		criteriaNameMap.put(s, this);		
+		criteriaNameMap.put(s, this);
 		collectNetworkCounts();
 
 		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().addItem(s, "croot");
@@ -82,7 +87,7 @@ public class CyCriteriaset {
 
 		this.rows = paramArray.length - 1; // don't count mapTo
 		criteriaRowsMap.put(this.getDisplayName(), this.rows);
-		System.out.println("SET: "+ this.setname+":"+paramArray[1]);
+		System.out.println("SET: " + this.setname + ":" + paramArray[1]);
 	}
 
 	public String[] getCriteriaParams() {
@@ -101,11 +106,55 @@ public class CyCriteriaset {
 	 * Cleans up HashMaps and tree panel
 	 */
 	public void deleteCyCriteriaset() {
+		// remove from cytoprefs
+		String setList = CytoscapeInit.getProperties().getProperty(
+				WorkspacesCommandHandler.PROPERTY_SETS);
+		if (null != setList) {
+			// trim leading and trailing brackets
+			setList = setList.replace("[" + this.getDisplayName() + "]", "");
+			if (setList.length() > 1)
+				CytoscapeInit.getProperties().setProperty(
+						WorkspacesCommandHandler.PROPERTY_SETS, setList);
+			else
+				CytoscapeInit.getProperties().remove(
+						WorkspacesCommandHandler.PROPERTY_SETS);
+		}
+		CytoscapeInit.getProperties().remove(
+				WorkspacesCommandHandler.PROPERTY_SET_PREFIX
+						+ this.getDisplayName());
+
+		// remove from panel
+		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().removeItem(
+				this.getDisplayName());
+
+		// remove associated visual styles and reset displays to "base" style
+		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
+		CalculatorCatalog catalog = vmm.getCalculatorCatalog();
+		Set<String> vsNames = catalog.getVisualStyleNames();
+		HashMap<String, String> removeAndSwitch = new HashMap<String, String>();
+		for (String vsName : vsNames) {
+			if (StringUtils.endsWith(vsName, "__" + this.getDisplayName())) {
+				String vsSwitch = vsName.substring(0, vsName.indexOf("__"+this.getDisplayName()));
+				removeAndSwitch.put(vsName, vsSwitch);
+			}
+		}
+		for (CyNetwork cn : Cytoscape.getNetworkSet()){
+			CyNetworkView cnv = Cytoscape.getNetworkView(cn.getIdentifier());
+			String cnvVs = cnv.getVisualStyle().getName();
+			if (removeAndSwitch.containsKey(cnvVs)){
+				vmm.setNetworkView(cnv);
+				vmm.setVisualStyle(removeAndSwitch.get(cnvVs));
+				vmm.applyAppearances();
+				catalog.removeVisualStyle(cnvVs);
+			}
+			
+		}
+
+		// remove internal representation
 		criteriaNameMap.remove(this.getDisplayName());
 		criteriaRowsMap.remove(this.getDisplayName());
 		criteriaNetworkNodesMap.remove(this.getDisplayName());
-		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().removeItem(
-				this.getDisplayName());
+
 	}
 
 	public String getNodeAttribute() {
@@ -127,7 +176,7 @@ public class CyCriteriaset {
 		String nodeAttr = getNodeAttribute();
 		List<CyNode> hitList = new ArrayList<CyNode>();
 		CyAttributes ca = Cytoscape.getNodeAttributes();
-		
+
 		for (CyNode n : nodeList) {
 			if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
 				if (rows == 1) {
