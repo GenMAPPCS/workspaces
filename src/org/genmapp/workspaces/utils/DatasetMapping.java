@@ -28,7 +28,7 @@ public abstract class DatasetMapping {
 	private static CyAttributes nodeAttrs = Cytoscape.getNodeAttributes();
 
 	public static final String NET_ATTR_DATASETS = "org.genmapp.datasets_1.0";
-	private static final String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
+	public static final String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 	public static final String ID = "GeneID";
 	public static final String CODE = "SystemCode";
 

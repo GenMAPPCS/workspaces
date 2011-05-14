@@ -103,9 +103,45 @@ public class CyCriteriaset {
 	}
 
 	/**
-	 * Cleans up HashMaps and tree panel
+	 * Clears all criteriaset data, including Cytoscape properties, Workspaces
+	 * panel, and internal HashMaps. Also resets visual styles to "base" style
+	 * and removes it from the catalog.
 	 */
 	public void deleteCyCriteriaset() {
+
+		/*
+		 * If called during a session reset (i.e. new session or open session),
+		 * then some of these functions are redudant with Cytoscape's
+		 * network-level cleanup and can be skipped.
+		 */
+		if (Cytoscape.getSessionstate() != Cytoscape.SESSION_OPENED) {
+			// remove associated visual styles and reset displays to "base"
+			// style
+			VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
+			CalculatorCatalog catalog = vmm.getCalculatorCatalog();
+			Set<String> vsNames = catalog.getVisualStyleNames();
+			HashMap<String, String> removeAndSwitch = new HashMap<String, String>();
+			for (String vsName : vsNames) {
+				if (StringUtils.endsWith(vsName, "__" + this.getDisplayName())) {
+					String vsSwitch = vsName.substring(0, vsName.indexOf("__"
+							+ this.getDisplayName()));
+					removeAndSwitch.put(vsName, vsSwitch);
+				}
+			}
+			for (CyNetwork cn : Cytoscape.getNetworkSet()) {
+				CyNetworkView cnv = Cytoscape
+						.getNetworkView(cn.getIdentifier());
+				String cnvVs = cnv.getVisualStyle().getName();
+				if (removeAndSwitch.containsKey(cnvVs)) {
+					vmm.setNetworkView(cnv);
+					vmm.setVisualStyle(removeAndSwitch.get(cnvVs));
+					vmm.applyAppearances();
+					catalog.removeVisualStyle(cnvVs);
+				}
+
+			}
+		}
+
 		// remove from cytoprefs
 		String setList = CytoscapeInit.getProperties().getProperty(
 				WorkspacesCommandHandler.PROPERTY_SETS);
@@ -126,30 +162,6 @@ public class CyCriteriaset {
 		// remove from panel
 		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().removeItem(
 				this.getDisplayName());
-
-		// remove associated visual styles and reset displays to "base" style
-		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
-		CalculatorCatalog catalog = vmm.getCalculatorCatalog();
-		Set<String> vsNames = catalog.getVisualStyleNames();
-		HashMap<String, String> removeAndSwitch = new HashMap<String, String>();
-		for (String vsName : vsNames) {
-			if (StringUtils.endsWith(vsName, "__" + this.getDisplayName())) {
-				String vsSwitch = vsName.substring(0, vsName.indexOf("__"+this.getDisplayName()));
-				removeAndSwitch.put(vsName, vsSwitch);
-			}
-		}
-		for (CyNetwork cn : Cytoscape.getNetworkSet()){
-			CyNetworkView cnv = Cytoscape.getNetworkView(cn.getIdentifier());
-			String cnvVs = cnv.getVisualStyle().getName();
-			if (removeAndSwitch.containsKey(cnvVs)){
-				vmm.setNetworkView(cnv);
-				vmm.setVisualStyle(removeAndSwitch.get(cnvVs));
-				vmm.applyAppearances();
-				catalog.removeVisualStyle(cnvVs);
-			}
-			
-		}
-
 		// remove internal representation
 		criteriaNameMap.remove(this.getDisplayName());
 		criteriaRowsMap.remove(this.getDisplayName());

@@ -8,10 +8,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.tree.DatasetPanel;
 import org.genmapp.workspaces.utils.DatasetMapping;
 
+import cytoscape.CyNetwork;
+import cytoscape.CyNode;
 import cytoscape.Cytoscape;
+import cytoscape.groups.CyGroup;
+import cytoscape.groups.CyGroupManager;
 
 public class CyDataset {
 
@@ -26,7 +31,7 @@ public class CyDataset {
 	private int rows;
 
 	public static Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
-//	public static List<String> selectedDatasets = new ArrayList<String>();
+	// public static List<String> selectedDatasets = new ArrayList<String>();
 
 	/**
 	 * Analogous to CyNetwork, this is the base class of all dataset objects in
@@ -37,14 +42,12 @@ public class CyDataset {
 	 * @param nl
 	 * @param al
 	 */
-	public CyDataset( String n, String t, List<Integer> nl, List<String> al )
-	{
-		this( n, t, nl, al, true );
+	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
+		this(n, t, nl, al, true);
 	}
-	
-	
-	public CyDataset(String n, String t, List<Integer> nl, List<String> al, boolean performDatasetMapping ) 
-	{
+
+	public CyDataset(String n, String t, List<Integer> nl, List<String> al,
+			boolean performDatasetMapping) {
 		this.displayName = n;
 		this.keyType = t;
 		this.nodes = nl;
@@ -58,14 +61,12 @@ public class CyDataset {
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(n, "droot");
 
 		// perform dataset mapping
-		if ( performDatasetMapping )
-		{
+		if (performDatasetMapping) {
 			DatasetMapping.performDatasetMapping(this, null, true);
 		}
 		// set color of entry in panel
 		setCurrentHighlight();
 	}
-
 
 	/**
 	 * 
@@ -106,20 +107,20 @@ public class CyDataset {
 		this.rows = Integer.decode(s);
 	}
 
-//	/**
-//	 * @return the selectedDatasets
-//	 */
-//	public static List<String> getSelectedDatasets() {
-//		return selectedDatasets;
-//	}
+	// /**
+	// * @return the selectedDatasets
+	// */
+	// public static List<String> getSelectedDatasets() {
+	// return selectedDatasets;
+	// }
 
-//	/**
-//	 * @param selectedDatasets
-//	 *            the selectedDatasets to set
-//	 */
-//	public static void setSelectedDataset(List<String> selectedDatasets) {
-//		CyDataset.selectedDatasets = selectedDatasets;
-//	}
+	// /**
+	// * @param selectedDatasets
+	// * the selectedDatasets to set
+	// */
+	// public static void setSelectedDataset(List<String> selectedDatasets) {
+	// CyDataset.selectedDatasets = selectedDatasets;
+	// }
 
 	/**
 	 * @return
@@ -166,17 +167,15 @@ public class CyDataset {
 		}
 		return attrStr.substring(0, attrStr.length() - 2);
 	}
-	public static List< String > attrStringToAttrList( String attrString )
-	{
-		List< String > l = new ArrayList< String >();
-		
-		String[] sArray = attrString.split( ", " );
-		for( String a : sArray )
-		{
-			l.add( a );
+	public static List<String> attrStringToAttrList(String attrString) {
+		List<String> l = new ArrayList<String>();
+
+		String[] sArray = attrString.split(", ");
+		for (String a : sArray) {
+			l.add(a);
 		}
-		return( l );
-		
+		return (l);
+
 	}
 	/**
 	 * @return the commandString
@@ -190,5 +189,89 @@ public class CyDataset {
 	 */
 	public String getSource() {
 		return this.source;
+	}
+
+	/**
+	 * Clears all dataset info, including dataset-specific nodes and attributes,
+	 * network attributes, Workspaces panel and internal HashMap.
+	 * 
+	 */
+	public void deleteCyDataset() {
+		String dname = this.getDisplayName();
+
+		/*
+		 * If called during a session reset (i.e. new session or open session),
+		 * then some of these functions are redundant with Cytoscape's
+		 * network-level cleanup and can be skipped.
+		 */
+		if (Cytoscape.getSessionstate() != Cytoscape.SESSION_OPENED) {
+
+			// remove dataset-specific nodes and group associations
+			for (CyNode cn : (List<CyNode>) Cytoscape.getCyNodesList()) {
+				if (null == cn.getIdentifier())
+					continue;
+				//System.out.println("NODE: " + cn.getIdentifier());
+				List<String> attr = Cytoscape.getNodeAttributes()
+						.getListAttribute(cn.getIdentifier(),
+								DatasetMapping.NET_ATTR_DATASETS);
+				if (null == attr)
+					continue;
+				if (attr.contains(dname)) {
+					attr.remove(dname);
+				}
+				//System.out.println("SIZE: " + attr.size());
+				if (attr.size() <= 0) {
+
+					List<CyGroup> gnList = CyGroupManager.getGroup(cn);
+					if (null != gnList) {
+						for (CyGroup gn : gnList) {
+							// TODO: hmm, this appears to delete group node when
+							// last child is removed... and CyNode
+							gn.removeNode(cn);
+							// woops! this actually deletes the CyNode as well.
+							// Not good.
+							// if (gn.getNodes().size() <= 0) {
+							// CyGroupManager.removeGroup(gn);
+							// }
+						}
+					}
+
+					Cytoscape.getRootGraph().removeNode(cn.getRootGraphIndex());
+				}
+
+			}
+
+			// remove from network attrs
+			for (CyNetwork cnet : Cytoscape.getNetworkSet()) {
+				List<String> dlist = Cytoscape.getNetworkAttributes()
+						.getListAttribute(cnet.getIdentifier(),
+								DatasetMapping.NET_ATTR_DATASETS);
+				//System.out.println("NET: " + dlist.toString());
+				if (null == dlist)
+					continue;
+				if (dlist.contains(dname)) {
+					dlist.remove(dname);
+					Cytoscape.getNetworkAttributes().deleteAttribute(
+							cnet.getIdentifier(),
+							DatasetMapping.NET_ATTR_DATASET_PREFIX + dname);
+				}
+				String netId = cnet.getIdentifier();
+				WorkspacesCommandHandler.allMetanodes(netId,
+						WorkspacesCommandHandler.EXPAND_ALL);
+				WorkspacesCommandHandler.allMetanodes(netId,
+						WorkspacesCommandHandler.COLLAPSE_ALL);
+			}
+
+			// TODO: remove empty attrs and assess dependent criteriasets
+
+		}
+
+		// remove from panel
+		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().removeItem(
+				this.getDisplayName());
+
+		// remove internal representation
+		datasetNameMap.remove(this.getDisplayName());
+
 	}
 }
