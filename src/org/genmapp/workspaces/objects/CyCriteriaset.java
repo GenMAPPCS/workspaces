@@ -190,6 +190,8 @@ public class CyCriteriaset {
 		CyAttributes ca = Cytoscape.getNodeAttributes();
 
 		for (CyNode n : nodeList) {
+//			if (n.isaGroup())
+//				continue;
 			if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
 				if (rows == 1) {
 
