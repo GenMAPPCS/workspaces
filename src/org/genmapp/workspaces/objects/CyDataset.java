@@ -2,6 +2,7 @@ package org.genmapp.workspaces.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -148,6 +149,25 @@ public class CyDataset {
 	 */
 	public List<Integer> getNodes() {
 		return nodes;
+	}
+
+	/**
+	 * Returns a list of node indexes representing all imported dataset nodes.
+	 * 
+	 * @return
+	 */
+	public static int[] getAllDatasetNodes() {
+		List<Integer> temp = new ArrayList<Integer>();
+		for (CyDataset dset : datasetNameMap.values()) {
+			temp.addAll(dset.getNodes());
+		}
+		int[] dsetNodes = new int[temp.size()];
+	    Iterator<Integer> iterator = temp.iterator();
+	    for (int i = 0; i < dsetNodes.length; i++)
+	    {
+	    	dsetNodes[i] = iterator.next().intValue();
+	    }
+	    return dsetNodes;
 	}
 
 	/**

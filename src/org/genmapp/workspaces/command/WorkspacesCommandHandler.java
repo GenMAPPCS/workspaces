@@ -39,9 +39,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ARG_DATASET_NODES = "nodes";
 	private final static String ARG_DATASET_ATTRS = "attrs";
 
-	private final static String ADD_GOELITE_JOB = "add job";
-	private final static String ARG_GOELITE_JOB = "jobid";
-	private final static String ARG_GOELITE_TABLABEL = "tablabel";
+	private final static String GET_ALL_DATASET_NODES = "get all dataset nodes";
 
 	// VERSIONING
 	public static final String PROPERTY_SETS = "org.genmapp.criteriasets_1.0";
@@ -88,6 +86,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_NODECHART = "nodechart";
 	public static final String ARG_NETWORKID = "networkview";
 
+	private final static String ADD_GOELITE_JOB = "add job";
+	private final static String ARG_GOELITE_JOB = "jobid";
+	private final static String ARG_GOELITE_TABLABEL = "tablabel";
+
 	public WorkspacesCommandHandler() {
 		super(CyCommandManager.reserveNamespace(NAMESPACE));
 
@@ -106,6 +108,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		addArgument(UPDATE_DATASETS, ARG_DATASET_TYPE);
 		addArgument(UPDATE_DATASETS, ARG_DATASET_NODES);
 		addArgument(UPDATE_DATASETS, ARG_DATASET_ATTRS);
+
+		addDescription(GET_ALL_DATASET_NODES,
+				"Ask Workspaces for array of dataset node indicies");
+		addArgument(GET_ALL_DATASET_NODES);
 
 	}
 
@@ -128,54 +134,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		for (String t : args.keySet()) {
 			result.addMessage("Arg: " + t + " = " + args.get(t));
 		}
-		// if (ADD_DATASET.equals(command)) {
-		// URL url = null;
-		// String displayName;
-		// int rows = 0;
-		//
-		// Object u = getArg(command, ARG_DATASET_URL, args);
-		// if (u instanceof URL) {
-		// url = (URL) u;
-		// } else if (u instanceof String) {
-		// try {
-		// url = new URL((String) u);
-		// } catch (MalformedURLException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// } else
-		// throw new CyCommandException(
-		// "url object type is not recognized, try URL or String");
-		//
-		// Object n = getArg(command, ARG_DATASET_NAME, args);
-		// if (n instanceof String) {
-		// displayName = (String) n;
-		// } else
-		// throw new CyCommandException(
-		// "name object type is not recognized, try String");
-		//
-		// Object r = getArg(command, ARG_DATASET_ROWS, args);
-		// if (r instanceof Integer) {
-		// rows = (Integer) r;
-		// } else if (r instanceof String) {
-		// if (((String) r).matches("\\d+")) {
-		// rows = new Integer((String) r);
-		// }
-		// } else {
-		// rows = 0;
-		// }
-		//
-		// // do it
-		// if (CyDataset.datasetUrlMap.containsKey(displayName)) {
-		// result.addMessage("Dataset already listed in Workspaces.");
-		// } else {
-		// CyDataset d = new CyDataset(displayName, url, rows);
-		// GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().addItem(
-		// displayName, "droot");
-		// result.addMessage("Dataset added to Workspaces.");
-		// }
-		//
-		// } else
+
 		if (UPDATE_CRITERIASETS.equals(command)) {
 			String setName;
 			Object s = getArg(command, ARG_SETNAME, args);
@@ -307,6 +266,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				CyDataset dataset = new CyDataset(name, type, nodes, attrs);
 				result.addMessage("Dataset " + name + " added to Workspaces.");
 			}
+
+		} else if (GET_ALL_DATASET_NODES.equals(command)) {
+			result.addResult(CyDataset.getAllDatasetNodes());
 
 		} else {
 
@@ -609,7 +571,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	 * @param nodechart
 	 * @param chartattr
 	 */
-	public static void setDefaultMetanodeAppearance(Boolean usenestednetworks, Double opacity, String nodechart, String chartattr) {
+	public static void setDefaultMetanodeAppearance(Boolean usenestednetworks,
+			Double opacity, String nodechart, String chartattr) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());
 		args.put(ARG_OPACITY, opacity);
@@ -618,7 +581,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
 					SETDEFAULTAPP, args);
-			System.out.println("RE: "+re.getErrors().toString()+re.getMessages().toString());
+			System.out.println("RE: " + re.getErrors().toString()
+					+ re.getMessages().toString());
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -635,7 +599,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	 * @param nodechart
 	 * @param chartattr
 	 */
-	public static void setMetanodeAppearance(String metanode, Boolean usenestednetworks, Double opacity, String nodechart, String chartattr) {
+	public static void setMetanodeAppearance(String metanode,
+			Boolean usenestednetworks, Double opacity, String nodechart,
+			String chartattr) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_METANODE_NAME, metanode);
 		args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());

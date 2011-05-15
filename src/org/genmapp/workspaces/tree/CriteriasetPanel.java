@@ -557,16 +557,7 @@ public class CriteriasetPanel extends JPanel
 	private void createNetworkFromCriteria(String criteriasetName) {
 
 		// collect node list assembled from all CyDatasets
-		List<Integer> temp = new ArrayList<Integer>();
-		for (CyDataset dset : CyDataset.datasetNameMap.values()) {
-			temp.addAll(dset.getNodes());
-		}
-		int[] dsetNodes = new int[temp.size()];
-	    Iterator<Integer> iterator = temp.iterator();
-	    for (int i = 0; i < dsetNodes.length; i++)
-	    {
-	    	dsetNodes[i] = iterator.next().intValue();
-	    }
+		int[] dsetNodes = CyDataset.getAllDatasetNodes();
 		
 		CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(criteriasetName);
 		List<CyNode> hitList = set.collectCriteriaNodes(dsetNodes);
