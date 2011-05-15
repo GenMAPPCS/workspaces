@@ -117,6 +117,8 @@ public abstract class DatasetMapping {
 			 */
 			for (CyNetwork network : networkList) {
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
+					// flag to track whe
+					boolean group = false;
 					String nodeKey = cn.getIdentifier();
 					/*
 					 * First, check if datanode == existing network node
@@ -139,7 +141,7 @@ public abstract class DatasetMapping {
 							.getStringAttribute(nodeKey, CODE);
 					if (pk != null && pkt != null) {
 						if (pkt.equals(dnKeyType) && pk.equals(dnKey)) {
-							relateNodes(dn, cn, network);
+							mapData(d, dn, dnKeyType, attrs, cn, network);
 							// mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
 							System.out.println(network.getIdentifier() + ":"
@@ -158,7 +160,7 @@ public abstract class DatasetMapping {
 							 * Check network node ids
 							 */
 							if (nodeKey.equals(secondaryKey)) {
-								relateNodes(dn, cn, network);
+								mapData(d, dn, dnKeyType, attrs, cn, network);
 								// mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
 								System.out
@@ -177,7 +179,8 @@ public abstract class DatasetMapping {
 							if (sk != null) {
 								if (sk.size() > 0) {
 									if (sk.contains(secondaryKey)) {
-										relateNodes(dn, cn, network);
+										mapData(d, dn, dnKeyType, attrs, cn,
+												network);
 										// mapAttributes(dn, dnKeyType, attrs,
 										// cn);
 										mappedToNetworks.add(network);
@@ -193,8 +196,6 @@ public abstract class DatasetMapping {
 						}
 					}
 				}
-				// metanode state per network
-				collapseAllMetanodes(network);
 
 			} // end for each network
 
@@ -225,6 +226,70 @@ public abstract class DatasetMapping {
 	}
 
 	/**
+	 * Check to see if the cn has already been mapped-to for this dataset. If
+	 * so, then we need grouping strategy. If not, then a simple attribute copy
+	 * will do.
+	 * 
+	 * Note: if someone loads multiple datasets with overlapping attribute
+	 * names, these will be overwritten and not handled by groups. Groups are
+	 * only formed when two or more dn from a single dataset map to a given cn.
+	 */
+	@SuppressWarnings("unchecked")
+	private static boolean mapData(CyDataset d, CyNode dn, String dnType,
+			List<String> attrs, CyNode cn, CyNetwork network) {
+		String dnid = dn.getIdentifier();
+		String cnid = cn.getIdentifier();
+
+		// If cn is a gn, then we know to continue with grouping strategy
+		if (cn.isaGroup()) {
+			System.out.println("GROUP1");
+			return relateNodes(dn, cn, network);
+		}
+
+		// Node attr will tell us if this cn has already been mapped-to from
+		// this dataset
+		List<String> attr = (List<String>) Cytoscape.getNodeAttributes()
+				.getListAttribute(cn.getIdentifier(),
+						DatasetMapping.NET_ATTR_DATASETS);
+		//System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier());
+		if (null == attr || attr.size() == 0) {
+			//System.out.println("MAP1");
+			return mapAttributes(d, dn, dnType, attrs, cn);
+		}
+		if (attr.contains(d.getDisplayName())) {
+			/*
+			 * This is the first time switching to group strategy, so we need to
+			 * retrieve prior mapped dn from this dataset and process both the
+			 * prior and the new dn as a group.
+			 * 
+			 * Note: if prior === new, then we just skip it (and report it!).
+			 * This is a case where user is loading multiple values per dnid,
+			 * which is not supported.
+			 */
+			attr = (List<String>) Cytoscape.getNodeAttributes()
+					.getListAttribute(
+							cnid,
+							DatasetMapping.NET_ATTR_DATASET_PREFIX
+									+ d.getDisplayName());
+			for (String priordnid : attr) {
+				if (priordnid.equals(dnid))
+					return false; // TODO: report: skipped due to duplicate key
+				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
+				if (d.getNodes().contains(priordn.getRootGraphIndex())) {
+					//System.out.println("GROUP2a: " + priordnid);
+					relateNodes(priordn, cn, network);
+				}
+			}
+			//System.out.println("GROUP2b: " + dnid);
+			return relateNodes(dn, cn, network);
+		} else {
+			//System.out.println("MAP2");
+			return mapAttributes(d, dn, dnType, attrs, cn);
+		}
+
+	}
+
+	/**
 	 * Declare network node to be a group node and add dataset nodes as
 	 * children. Attribute mapping (up to parent) will be handled globally by
 	 * metanode settings in manageMetanodes().
@@ -239,7 +304,6 @@ public abstract class DatasetMapping {
 	 */
 	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network) {
 		CyGroup gn;
-
 		/*
 		 * We have to create dn views on relevant network centered on or around
 		 * cn location in order to inform final group node position
@@ -276,9 +340,15 @@ public abstract class DatasetMapping {
 			// System.out.println("null");
 			// }
 		}
+		/*
+		 * This is the second half of MetaNode.recollapse(). Without this,
+		 * CyNodeViews on new group nodes go to 'null' and the next attempt to
+		 * add a child crashes with NPE.
+		 */
+		collapseAllMetanodes(network);
+
 		return true;
 	}
-
 	/**
 	 * Sets metanode settings and and all metanode states. Go through each attr
 	 * being loaded from dataset and make a custom aggregation override. This is
@@ -293,31 +363,31 @@ public abstract class DatasetMapping {
 
 		// Aggregation Overrides
 		WorkspacesCommandHandler.setMetanodeAggregation("true");
-//		List<String> attrs = d.getAttrs();
-//		for (String attr : attrs) {
-//			Byte aType = Cytoscape.getNodeAttributes().getType(attr);
-//			switch (aType) {
-//				case CyAttributes.TYPE_STRING :
-//					WorkspacesCommandHandler
-//							.setAggregationOverride(attr, "csv");
-//					break;
-//				case CyAttributes.TYPE_INTEGER :
-//					WorkspacesCommandHandler.setAggregationOverride(attr,
-//							"median");
-//					break;
-//				case CyAttributes.TYPE_FLOATING :
-//					WorkspacesCommandHandler.setAggregationOverride(attr,
-//							"median");
-//					break;
-//				case CyAttributes.TYPE_BOOLEAN :
-//					WorkspacesCommandHandler.setAggregationOverride(attr, "or");
-//					break;
-//				case CyAttributes.TYPE_SIMPLE_LIST :
-//					WorkspacesCommandHandler.setAggregationOverride(attr,
-//							"concatenate");
-//					break;
-//			}
-//		}
+		// List<String> attrs = d.getAttrs();
+		// for (String attr : attrs) {
+		// Byte aType = Cytoscape.getNodeAttributes().getType(attr);
+		// switch (aType) {
+		// case CyAttributes.TYPE_STRING :
+		// WorkspacesCommandHandler
+		// .setAggregationOverride(attr, "csv");
+		// break;
+		// case CyAttributes.TYPE_INTEGER :
+		// WorkspacesCommandHandler.setAggregationOverride(attr,
+		// "median");
+		// break;
+		// case CyAttributes.TYPE_FLOATING :
+		// WorkspacesCommandHandler.setAggregationOverride(attr,
+		// "median");
+		// break;
+		// case CyAttributes.TYPE_BOOLEAN :
+		// WorkspacesCommandHandler.setAggregationOverride(attr, "or");
+		// break;
+		// case CyAttributes.TYPE_SIMPLE_LIST :
+		// WorkspacesCommandHandler.setAggregationOverride(attr,
+		// "concatenate");
+		// break;
+		// }
+		// }
 
 		// And set all defaults to none to prevent overwriting cn attrs
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
@@ -357,36 +427,66 @@ public abstract class DatasetMapping {
 	 * @param parts
 	 * @return
 	 */
-	private static boolean mapAttributes(CyNode dn, String dnType,
+	private static boolean mapAttributes(CyDataset d, CyNode dn, String dnType,
 			List<String> attrs, CyNode cn) {
-		String dnKey = dn.getIdentifier();
-		String nKey = cn.getIdentifier();
+		String dnid = dn.getIdentifier();
+		String cnid = cn.getIdentifier();
 		Object listsample = null;
 
 		// gather attribute info for copy action
 		for (String attr : attrs) {
-			Object entry = nodeAttrs.getAttribute(dnKey, attr);
+			Object entry = nodeAttrs.getAttribute(dnid, attr);
 			Byte type = nodeAttrs.getType(attr);
 			if (type == CyAttributes.TYPE_SIMPLE_LIST) {
-				List l = nodeAttrs.getListAttribute(dnKey, attr);
+				List l = nodeAttrs.getListAttribute(dnid, attr);
 				listsample = l.get(0);
 			}
-			mapAttribute(nKey, attr, entry, type, listsample);
+			mapAttribute(cnid, attr, entry, type, listsample);
 		}
 
-		// add datanode key to list attribute
-		List<String> plist = (List<String>) Cytoscape.getNodeAttributes()
-				.getListAttribute(nKey, "__" + dnType);
-		if (null == plist) {
-			plist = new ArrayList<String>();
+		// // add datanode key to list attribute
+		// List<String> plist = (List<String>) Cytoscape.getNodeAttributes()
+		// .getListAttribute(cnid, "__" + dnType);
+		// if (null == plist) {
+		// plist = new ArrayList<String>();
+		// }
+		// if (!plist.contains(dnid)) {
+		// plist.add(dnid);
+		// }
+		// try {
+		// nodeAttrs.setListAttribute(cnid, "__" + dnType, plist);
+		// } catch (Exception e) {
+		// invalid.put(cnid, plist);
+		// }
+
+		// add dataset to cynode attribute
+		List<String> attr = (List<String>) Cytoscape.getNodeAttributes()
+				.getListAttribute(cnid, DatasetMapping.NET_ATTR_DATASETS);
+
+		if (null == attr) {
+			attr = new ArrayList<String>();
 		}
-		if (!plist.contains(dnKey)) {
-			plist.add(dnKey);
+		if (!attr.contains(d.getDisplayName())) {
+			attr.add(d.getDisplayName());
+			Cytoscape.getNodeAttributes().setListAttribute(cnid,
+					DatasetMapping.NET_ATTR_DATASETS, attr);
 		}
-		try {
-			nodeAttrs.setListAttribute(nKey, "__" + dnType, plist);
-		} catch (Exception e) {
-			invalid.put(nKey, plist);
+
+		// add dnid to cynode attribute
+		attr = (List<String>) Cytoscape.getNodeAttributes().getListAttribute(
+				cnid,
+				DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getDisplayName());
+
+		if (null == attr) {
+			attr = new ArrayList<String>();
+		}
+		if (!attr.contains(dnid)) {
+			attr.add(dnid);
+			Cytoscape.getNodeAttributes()
+					.setListAttribute(
+							cnid,
+							DatasetMapping.NET_ATTR_DATASET_PREFIX
+									+ d.getDisplayName(), attr);
 		}
 
 		return true;

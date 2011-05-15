@@ -184,14 +184,15 @@ public class CyCriteriaset {
 
 	}
 
-	public List<CyNode> collectCriteriaNodes(List<CyNode> nodeList) {
+	public List<CyNode> collectCriteriaNodes(int[] nodeList) {
 		String nodeAttr = getNodeAttribute();
 		List<CyNode> hitList = new ArrayList<CyNode>();
 		CyAttributes ca = Cytoscape.getNodeAttributes();
 
-		for (CyNode n : nodeList) {
-//			if (n.isaGroup())
-//				continue;
+		for (int ni : nodeList) {
+			CyNode n = (CyNode) Cytoscape.getRootGraph().getNode(ni);
+			// if (n.isaGroup())
+			// continue;
 			if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
 				if (rows == 1) {
 
@@ -221,7 +222,8 @@ public class CyCriteriaset {
 	public void collectNetworkCounts() {
 		Map<String, Integer> networkNodes = new HashMap<String, Integer>();
 		for (CyNetwork net : Cytoscape.getNetworkSet()) {
-			List<CyNode> hitList = collectCriteriaNodes(net.nodesList());
+			List<CyNode> hitList = collectCriteriaNodes(net
+					.getNodeIndicesArray());
 			networkNodes.put(net.getIdentifier(), hitList.size());
 		}
 

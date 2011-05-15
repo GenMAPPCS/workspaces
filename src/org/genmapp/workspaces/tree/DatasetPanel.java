@@ -159,7 +159,7 @@ public class DatasetPanel extends JPanel implements
 		remapDataset.addActionListener(popupActionListener);
 		createNetwork.addActionListener(popupActionListener);
 		popup.add(remapDataset);
-		popup.add(destroyDatasetItem);
+//		popup.add(destroyDatasetItem);
 		popup.addSeparator();
 		popup.add(createNetwork);
 	}
@@ -477,12 +477,7 @@ public class DatasetPanel extends JPanel implements
 			CyDataset ds = CyDataset.datasetNameMap.get(node.getID());
 
 			if (DESTROY_DATASET.equals(label)) {
-				removeItem(node.getID());
-				CyDataset.datasetNameMap.remove(node.getID());
-				// TODO: CyDataset should have a method to remove it's name the
-				// NameMap and from all network and session attributes as well
-				// TODO: should also remove all dataset nodes if not part of
-				// other datasets. Hint: check the dataset tag attribute!
+				CyDataset.datasetNameMap.get(node.getID()).deleteCyDataset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				int[] edges = new int[0];
 				List<Integer> nodesL = ds.getNodes();

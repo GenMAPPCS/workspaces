@@ -54,6 +54,7 @@ import javax.swing.tree.TreePath;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
+import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyEdge;
 import cytoscape.CyNetwork;
@@ -178,8 +179,8 @@ public class CriteriasetPanel extends JPanel
 		popup.add(editCriteriaItem);
 		popup.add(destroyCriteriaItem);
 		popup.addSeparator();
-		popup.add(createNetworkItem);
 		popup.add(selectNodesItem);
+		popup.add(createNetworkItem);
 	}
 
 	public void resetTable() {
@@ -283,8 +284,7 @@ public class CriteriasetPanel extends JPanel
 			 * selection upon tree adding.
 			 */
 			// focusNode(id);
-			
-			//need to reset greenlight for criteria panel selections
+			// need to reset greenlight for criteria panel selections
 			greenlight = true;
 		}
 	}
@@ -343,7 +343,7 @@ public class CriteriasetPanel extends JPanel
 		 * and the code below is run twice. Using "greenlight" hack to limit to
 		 * a single run. This is ugly and the efficiency gains are debatable...
 		 */
-		 //System.out.println("click on criteriaset: " + greenlight);
+		// System.out.println("click on criteriaset: " + greenlight);
 		if (greenlight) {
 
 			// block immediate redundant calls;
@@ -356,7 +356,7 @@ public class CriteriasetPanel extends JPanel
 			SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
 
 				public Boolean doInBackground() {
-					 //System.out.println("working");
+					// System.out.println("working");
 					try {
 						Thread.sleep(300);
 					} catch (InterruptedException e) {
@@ -501,8 +501,8 @@ public class CriteriasetPanel extends JPanel
 		public static final String APPLY_CRITERIA = "Apply to All Networks";
 		public static final String EDIT_CRITERIA = "Edit Criteria";
 		public static final String DESTROY_CRITERIA = "Destroy Criteria";
-		public static final String CREATE_NETWORK = "Create Network";
 		public static final String SELECT_NODES = "Select Nodes in Network";
+		public static final String CREATE_NETWORK = "Create Network from All";
 
 		/**
 		 * This is the network which originated the mouse-click event (more
@@ -529,17 +529,20 @@ public class CriteriasetPanel extends JPanel
 			} else if (EDIT_CRITERIA.equals(label)) {
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
 			} else if (DESTROY_CRITERIA.equals(label)) {
-				CyCriteriaset.criteriaNameMap.get(node.getID()).deleteCyCriteriaset();
+				CyCriteriaset.criteriaNameMap.get(node.getID())
+						.deleteCyCriteriaset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				System.out.println("create network");
 				createNetworkFromCriteria(node.getID()); // TODO
 			} else if (SELECT_NODES.equals(label)) {
 				System.out.println("select ndoes");
-				CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(node.getID());
+				CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(node
+						.getID());
 				List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape
-						.getCyNodesList());
+						.getRootGraph().getNodeIndicesArray());
 				Cytoscape.getCurrentNetwork().unselectAllNodes();
-				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList, true);
+				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList,
+						true);
 				Cytoscape.getCurrentNetworkView().updateView();
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
@@ -553,9 +556,20 @@ public class CriteriasetPanel extends JPanel
 	 */
 	private void createNetworkFromCriteria(String criteriasetName) {
 
+		// collect node list assembled from all CyDatasets
+		List<Integer> temp = new ArrayList<Integer>();
+		for (CyDataset dset : CyDataset.datasetNameMap.values()) {
+			temp.addAll(dset.getNodes());
+		}
+		int[] dsetNodes = new int[temp.size()];
+	    Iterator<Integer> iterator = temp.iterator();
+	    for (int i = 0; i < dsetNodes.length; i++)
+	    {
+	    	dsetNodes[i] = iterator.next().intValue();
+	    }
+		
 		CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(criteriasetName);
-		List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape
-				.getCyNodesList());
+		List<CyNode> hitList = set.collectCriteriaNodes(dsetNodes);
 		List<CyEdge> edges = new ArrayList<CyEdge>();
 		System.out.println("HITS: " + hitList.size());
 		boolean goForIt = false;
@@ -582,6 +596,17 @@ public class CriteriasetPanel extends JPanel
 			Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null,
 					new_value);
 		}
+	}
+
+	public static int[] convertIntegers(List<Integer> integers)
+	{
+	    int[] ret = new int[integers.size()];
+	    Iterator<Integer> iterator = integers.iterator();
+	    for (int i = 0; i < ret.length; i++)
+	    {
+	        ret[i] = iterator.next().intValue();
+	    }
+	    return ret;
 	}
 
 	/**

@@ -207,38 +207,23 @@ public class CyDataset {
 		if (Cytoscape.getSessionstate() != Cytoscape.SESSION_OPENED) {
 
 			// remove dataset-specific nodes and group associations
-			for (CyNode cn : (List<CyNode>) Cytoscape.getCyNodesList()) {
-				if (null == cn.getIdentifier())
-					continue;
-				//System.out.println("NODE: " + cn.getIdentifier());
-				List<String> attr = Cytoscape.getNodeAttributes()
-						.getListAttribute(cn.getIdentifier(),
-								DatasetMapping.NET_ATTR_DATASETS);
-				if (null == attr)
-					continue;
-				if (attr.contains(dname)) {
-					attr.remove(dname);
-				}
-				//System.out.println("SIZE: " + attr.size());
-				if (attr.size() <= 0) {
-
-					List<CyGroup> gnList = CyGroupManager.getGroup(cn);
-					if (null != gnList) {
-						for (CyGroup gn : gnList) {
-							// TODO: hmm, this appears to delete group node when
-							// last child is removed... and CyNode
-							gn.removeNode(cn);
-							// woops! this actually deletes the CyNode as well.
-							// Not good.
-							// if (gn.getNodes().size() <= 0) {
-							// CyGroupManager.removeGroup(gn);
-							// }
-						}
+			for (int ni : nodes) {
+				CyNode cn = (CyNode) Cytoscape.getRootGraph().getNode(ni);
+				// System.out.println("NODE: " + cn.getIdentifier());
+				List<CyGroup> gnList = CyGroupManager.getGroup(cn);
+				if (null != gnList) {
+					for (CyGroup gn : gnList) {
+						// TODO: hmm, this appears to delete group node when
+						// last child is removed... and CyNode
+						gn.removeNode(cn);
+						// woops! this actually deletes the CyNode as well.
+						// Not good.
+						// if (gn.getNodes().size() <= 0) {
+						// CyGroupManager.removeGroup(gn);
+						// }
 					}
-
-					Cytoscape.getRootGraph().removeNode(cn.getRootGraphIndex());
 				}
-
+				Cytoscape.getRootGraph().removeNode(ni);
 			}
 
 			// remove from network attrs
@@ -246,7 +231,7 @@ public class CyDataset {
 				List<String> dlist = Cytoscape.getNetworkAttributes()
 						.getListAttribute(cnet.getIdentifier(),
 								DatasetMapping.NET_ATTR_DATASETS);
-				//System.out.println("NET: " + dlist.toString());
+				// System.out.println("NET: " + dlist.toString());
 				if (null == dlist)
 					continue;
 				if (dlist.contains(dname)) {
