@@ -82,7 +82,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		// reportTreePanel = new ReportPanel();
 
 		// set default viz
-		networkPanel.setVisible(false);
+		networkPanel.setVisible(true);
 		datasetPanel.setVisible(false);
 		criteriaPanel.setVisible(false);
 
