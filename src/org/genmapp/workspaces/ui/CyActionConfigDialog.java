@@ -37,19 +37,29 @@ package org.genmapp.workspaces.ui;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.AbstractListModel;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.tree.ActionPanel;
@@ -58,19 +68,20 @@ import org.genmapp.workspaces.tree.ActionPanel;
  * 
  * @author gjj
  */
-public class CyActionConfigDialog extends javax.swing.JDialog {
+public class CyActionConfigDialog extends JDialog {
 
 	private static final long serialVersionUID = 5106703609005644456L;
 	
 	// Variables declaration - do not modify//GEN-BEGIN:variables
-	private javax.swing.JButton okBtn;
-	private javax.swing.JButton saveBtn;
-	private javax.swing.JButton cancelBtn;
-	private javax.swing.JButton leftButton;
-	private javax.swing.JButton rightButton;
-	private javax.swing.JList selectedActionsList;
+	private JButton okBtn;
+	private JButton loadBtn;
+	private JButton saveBtn;
+	private JButton cancelBtn;
+	private JButton leftButton;
+	private JButton rightButton;
+	private JList selectedActionsList;
 	private OrderedActionsListModel selectedActionsData = new OrderedActionsListModel();
-	private javax.swing.JList availableActionsList;
+	private JList availableActionsList;
 	private SortedActionsListModel availableActionsData = new SortedActionsListModel();
 	private JCheckBox workflowBox = new JCheckBox();
 	private JLabel description;
@@ -109,44 +120,53 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		selectedActionsList = new JList(selectedActionsData);
 
 		// gui
-		javax.swing.JPanel OKPanel = new javax.swing.JPanel();
-		okBtn = new javax.swing.JButton();
-		saveBtn = new javax.swing.JButton();
-		cancelBtn = new javax.swing.JButton();
-		javax.swing.JPanel selectActionsPanel = new javax.swing.JPanel();
-		javax.swing.JScrollPane availableActionsScrollPane = new javax.swing.JScrollPane();
-		javax.swing.JScrollPane selectedActionsScrollPane = new javax.swing.JScrollPane();
-		javax.swing.JPanel lrButtonPanel = new javax.swing.JPanel();
-		rightButton = new javax.swing.JButton();
-		leftButton = new javax.swing.JButton();
+		JPanel OKPanel = new JPanel();
+		okBtn = new JButton();
+		loadBtn = new JButton();
+		saveBtn = new JButton();
+		cancelBtn = new JButton();
+		JPanel selectActionsPanel = new JPanel();
+		JScrollPane availableActionsScrollPane = new JScrollPane();
+		JScrollPane selectedActionsScrollPane = new JScrollPane();
+		JPanel lrButtonPanel = new JPanel();
+		rightButton = new JButton();
+		leftButton = new JButton();
 		JPanel workflowPanel = new JPanel();
 		description = new JLabel(" ");
 		requirements = new JLabel(" ");
 
-		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setTitle("Configure Action List");
 		getContentPane().setLayout(new java.awt.GridBagLayout());
 
 		okBtn.setText("   OK   ");
 		okBtn.setEnabled(false);
-		okBtn.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		okBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				OKBtnActionPerformed(evt);
 			}
 		});
 		OKPanel.add(okBtn);
 
+		loadBtn.setText("Load");
+		loadBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				loadBtnActionPerformed(evt);
+			}
+		});
+		OKPanel.add(loadBtn);
+
 		saveBtn.setText("Save");
-		saveBtn.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		saveBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				saveBtnActionPerformed(evt);
 			}
 		});
 		OKPanel.add(saveBtn);
 
 		cancelBtn.setText("Cancel");
-		cancelBtn.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		cancelBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				cancelBtnActionPerformed(evt);
 			}
 		});
@@ -159,7 +179,7 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
 		getContentPane().add(OKPanel, gridBagConstraints);
 
-		selectActionsPanel.setBorder(javax.swing.BorderFactory
+		selectActionsPanel.setBorder(BorderFactory
 				.createTitledBorder("Select actions"));
 		selectActionsPanel.setMinimumSize(new java.awt.Dimension(700, 350));
 		selectActionsPanel.setPreferredSize(new java.awt.Dimension(700, 350));
@@ -168,7 +188,7 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		availableActionsScrollPane.setPreferredSize(new java.awt.Dimension(300,
 				150));
 
-		availableActionsList.setBorder(javax.swing.BorderFactory
+		availableActionsList.setBorder(BorderFactory
 				.createTitledBorder("Availabe actions"));
 
 		availableActionsList.setCellRenderer(new ListCellRenderer() {
@@ -185,9 +205,9 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		});
 
 		availableActionsList
-				.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+				.addListSelectionListener(new ListSelectionListener() {
 					public void valueChanged(
-							javax.swing.event.ListSelectionEvent evt) {
+							ListSelectionEvent evt) {
 						int index = availableActionsList.getMinSelectionIndex();
 						if (index > -1) {
 							selectedActionsList.getSelectionModel()
@@ -218,8 +238,8 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		workflowPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		workflowBox.setText("Automatically step through actions");
 		workflowBox.setSelected(ActionPanel.workflowState);
-		workflowBox.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		workflowBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				checkboxActionPerformed(evt);
 			}
 		});
@@ -232,11 +252,11 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 
 		lrButtonPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
 
-		rightButton.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+		rightButton.setIcon(new ImageIcon(getClass().getResource(
 				"../images/right.png")));
 		rightButton.setEnabled(false);
-		rightButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		rightButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				int[] indices = availableActionsList.getSelectedIndices();
 				if (indices == null || indices.length == 0) {
 					return;
@@ -267,11 +287,11 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 		});
 		lrButtonPanel.add(rightButton);
 
-		leftButton.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+		leftButton.setIcon(new ImageIcon(getClass().getResource(
 				"../images/left.png")));
 		leftButton.setEnabled(false);
-		leftButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+		leftButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
 				int[] indices = selectedActionsList.getSelectedIndices();
 				if (indices == null || indices.length == 0) {
 					return;
@@ -313,7 +333,7 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 
 		selectedActionsList
 				.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-		selectedActionsList.setBorder(javax.swing.BorderFactory
+		selectedActionsList.setBorder(BorderFactory
 				.createTitledBorder("Selected actions"));
 
 		selectedActionsList.setCellRenderer(new ListCellRenderer() {
@@ -329,9 +349,9 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 			}
 		});
 		selectedActionsList
-				.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+				.addListSelectionListener(new ListSelectionListener() {
 					public void valueChanged(
-							javax.swing.event.ListSelectionEvent evt) {
+							ListSelectionEvent evt) {
 						int index = selectedActionsList.getMinSelectionIndex();
 						if (index > -1) {
 							availableActionsList.getSelectionModel()
@@ -378,22 +398,26 @@ public class CyActionConfigDialog extends javax.swing.JDialog {
 
 		pack();
 	}
-	private void checkboxActionPerformed(java.awt.event.ActionEvent evt) {
+	private void checkboxActionPerformed(ActionEvent evt) {
 		// toggle values
 		ActionPanel.workflowState = !ActionPanel.workflowState;
 		workflowBox.setSelected(ActionPanel.workflowState);
 	}
 
-	private void cancelBtnActionPerformed(java.awt.event.ActionEvent evt) {
+	private void cancelBtnActionPerformed(ActionEvent evt) {
 		setVisible(false);
 		dispose();
 	}
 
-	private void saveBtnActionPerformed(java.awt.event.ActionEvent evt) {
+	private void loadBtnActionPerformed(ActionEvent evt) {
+		// TODO
+	}
+	
+	private void saveBtnActionPerformed(ActionEvent evt) {
 		// TODO
 	}
 
-	private void OKBtnActionPerformed(java.awt.event.ActionEvent evt) {
+	private void OKBtnActionPerformed(ActionEvent evt) {
 
 		CyAction actions[] = selectedActionsData.getActions();
 		ActionPanel.loadActions(actions);

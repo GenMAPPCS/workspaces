@@ -22,7 +22,7 @@ public class CyAttributesWriter {
     	fw.close();
 		for( String aName : attrib.getAttributeNames() )
 		{
-			if ( aName.equals( "hiddenLabel" ) ) { continue; }
+			//if ( aName.equals( "hiddenLabel" ) ) { continue; }
 	    	// for some reason the cyattributewriter closes the file at the end of each write operation so we must reopen each time
 			// write for append
 			fw = new PrintWriter( new FileWriter( attribFile, true ) );

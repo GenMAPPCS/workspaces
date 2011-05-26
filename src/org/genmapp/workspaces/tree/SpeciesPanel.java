@@ -85,6 +85,7 @@ public class SpeciesPanel extends JPanel
 	private static JLabel db2Connection;
 	private Color green = new Color(20, 150, 20);
 	private Color red = new Color(200, 50, 50);
+	private Color orange = new Color(200, 150, 50);
 	private Color blue = new Color(50, 50, 180);
 	private Color grey = new Color(230, 230, 230);
 
@@ -459,6 +460,7 @@ public class SpeciesPanel extends JPanel
 				String remotename = remote.substring(0, remote.indexOf("."));
 				if (!currentname.equals(remotename)) {
 					// updated database available
+					dbConnection.setForeground(red);
 					if (!latestlocalname.equals(currentname)) {
 						// already got it locally
 						downloadButton
@@ -559,7 +561,7 @@ public class SpeciesPanel extends JPanel
 					String url = re.substring(re.indexOf("http"));
 					dbConnection.setText(url);
 					dbConnection.setToolTipText(re);
-					dbConnection.setForeground(green);
+					dbConnection.setForeground(red);
 					this.connState = re;
 					this.derbyState = null;
 				} else if (re.startsWith("idmapper-pgdb")) {

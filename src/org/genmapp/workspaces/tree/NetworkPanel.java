@@ -302,6 +302,7 @@ public class NetworkPanel extends JPanel
 		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER)
 				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.LAYOUT_FORCE_DIRECTED2).setDoable(true);
 		// prompt next action
 		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
 			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap

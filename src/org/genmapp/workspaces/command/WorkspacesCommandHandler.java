@@ -16,11 +16,10 @@ import cytoscape.CyNode;
 import cytoscape.CytoscapeInit;
 import cytoscape.command.AbstractCommandHandler;
 import cytoscape.command.CyCommandException;
+import cytoscape.command.CyCommandHandler;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
-import cytoscape.groups.CyGroup;
 import cytoscape.layout.Tunable;
-import cytoscape.view.CyNetworkView;
 
 public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String NAMESPACE = "workspaces";
@@ -651,4 +650,66 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	public static void clearCombinedCriteria() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("file",
+				"/Applications/Cytoscape_v2.8.1/nodecharts-demo-CLEAR-run.txt");
+		try {
+			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+					args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	public static void pieCriteria() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("file",
+				"/Applications/Cytoscape_v2.8.1/nodecharts-pie-demo-run.txt");
+		try {
+			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+					args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	public static void stripeCriteria() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args
+				.put("file",
+						"/Applications/Cytoscape_v2.8.1/nodecharts-stripe-demo-run.txt");
+		try {
+			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+					args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	public static void selectedCircleLayout() {
+		CyCommandHandler handler = CyCommandManager.getCommand("layout",
+				"circular");
+		Map<String, Tunable> layoutTunables = handler.getTunables("circular");
+//		Tunable t = layoutTunables.get("selected_only");
+//		t.setValue(false);
+		Collection<Tunable> ts = new ArrayList<Tunable>();
+//		ts.add(t);
+		try {
+			CyCommandResult layoutResult = handler.execute("circular", ts);
+		} catch (CyCommandException e) {
+		}
+	}
 }

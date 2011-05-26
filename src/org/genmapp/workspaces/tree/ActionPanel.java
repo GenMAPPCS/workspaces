@@ -35,6 +35,10 @@ import cytoscape.actions.SaveSessionAsAction;
 import cytoscape.actions.WebServiceNetworkImportAction;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
+import cytoscape.layout.CyLayouts;
+import cytoscape.layout.LayoutTask;
+import cytoscape.task.util.TaskManager;
+import cytoscape.view.CyNetworkView;
 
 public class ActionPanel extends JPanel
 		implements
@@ -53,6 +57,7 @@ public class ActionPanel extends JPanel
 	public final static String OPEN_SESSION_FILE = "Open session file...";
 	public final static String OPEN_NETWORK_FILE = "Open network file...";
 	public final static String LOAD_NETWORK_WEB = "Load network from web...";
+	public final static String LAYOUT_FORCE_DIRECTED2 = "Layout force-directed...";
 	public final static String NEW_NETWORK_TABLE = "Import network from table...";
 	public final static String NEW_DATASET_TABLE = "Import dataset from table...";
 	public final static String NEW_CRITERIA_SET = "Create new criteria set...";
@@ -152,6 +157,12 @@ public class ActionPanel extends JPanel
 				.setDescription("Search and browse content from WikiPathways, Pathway Commons and other web services");
 		loadNetworkWeb.setRequirements("You must be connected to the internet");
 
+		CyAction layoutForceDirected = new CyAction(LAYOUT_FORCE_DIRECTED2);
+		layoutForceDirected.setDoable(false);
+		layoutForceDirected
+				.setDescription("Layout selected network using force-directed");
+		layoutForceDirected.setRequirements("You must have a network loaded");
+
 		CyAction newNetworkTable = new CyAction(NEW_NETWORK_TABLE);
 		newNetworkTable.setDoable(true);
 		newNetworkTable
@@ -203,15 +214,15 @@ public class ActionPanel extends JPanel
 
 		// prepare full list of available actions
 		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
-				loadNetworkWeb, newNetworkTable, newDatasetFile,
-				newCriteriaSet, runClustermaker, runGoelite, exportGraphics,
-				saveSessionFile, saveSessionAsFile};
-
-		// prepare default list of actions and behavior
-		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
+				loadNetworkWeb, layoutForceDirected, newNetworkTable,
 				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
 				exportGraphics, saveSessionFile, saveSessionAsFile};
-		workflowState = false;
+
+		// prepare default list of actions and behavior
+		CyAction actions[] = {openNetworkFile, layoutForceDirected,
+				newDatasetFile, newCriteriaSet, openSessionFile, runGoelite,
+				loadNetworkWeb, saveSessionFile, saveSessionAsFile};
+		workflowState = true;
 		loadActions(actions);
 	}
 
@@ -296,6 +307,14 @@ public class ActionPanel extends JPanel
 				WebServiceNetworkImportAction wsnia = new WebServiceNetworkImportAction();
 				wsnia.actionPerformed(new ActionEvent(wsnia,
 						ActionEvent.ACTION_PERFORMED, action));
+			} else if (action.equals(LAYOUT_FORCE_DIRECTED2)) {
+				CyNetworkView cnv = Cytoscape.getCurrentNetworkView();
+				if (null == cnv)
+					return;
+				System.out.println("CNV: "+cnv.getIdentifier());
+				TaskManager.executeTask(new LayoutTask(CyLayouts
+						.getLayout("force-directed"), cnv), LayoutTask
+						.getDefaultTaskConfig());
 			} else if (action.equals(NEW_NETWORK_TABLE)) {
 				// TODO
 				System.out.println("coming soon...");

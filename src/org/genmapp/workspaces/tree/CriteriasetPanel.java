@@ -31,6 +31,7 @@ import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -61,7 +62,6 @@ import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.data.SelectEvent;
-import cytoscape.ding.DingNetworkView;
 import cytoscape.logger.CyLogger;
 import cytoscape.util.swing.JTreeTable;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
@@ -93,10 +93,14 @@ public class CriteriasetPanel extends JPanel
 	private PopupActionListener popupActionListener;
 
 	private JMenuItem destroyCriteriaItem;
-	private JMenuItem editCriteriaItem;
+	private JMenuItem clearCombinedCriteriaItem;
 	private JMenuItem applyCriteriaItem;
 	private JMenuItem createNetworkItem;
 	private JMenuItem selectNodesItem;
+	private JMenu combineMenu;
+	private JMenuItem editCriteriaItem;
+	private JMenuItem pieCriteriaItem;
+	private JMenuItem stripeCriteriaItem;
 
 	private BiModalJSplitPane split;
 
@@ -162,6 +166,7 @@ public class CriteriasetPanel extends JPanel
 		treeTable.addMouseListener(new PopupListener());
 
 		// create and populate the popup window
+		combineMenu = new JMenu("Combine Criteria");
 		popup = new JPopupMenu();
 		destroyCriteriaItem = new JMenuItem(
 				PopupActionListener.DESTROY_CRITERIA);
@@ -169,14 +174,25 @@ public class CriteriasetPanel extends JPanel
 		applyCriteriaItem = new JMenuItem(PopupActionListener.APPLY_CRITERIA);
 		createNetworkItem = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		selectNodesItem = new JMenuItem(PopupActionListener.SELECT_NODES);
+		pieCriteriaItem = new JMenuItem(PopupActionListener.PIE_CRITERIA);
+		stripeCriteriaItem = new JMenuItem(PopupActionListener.STRIPE_CRITERIA);
+		clearCombinedCriteriaItem = new JMenuItem(
+				PopupActionListener.CLEAR_COMBINED_CRITERIA);
 		popupActionListener = new PopupActionListener();
 		destroyCriteriaItem.addActionListener(popupActionListener);
 		editCriteriaItem.addActionListener(popupActionListener);
 		applyCriteriaItem.addActionListener(popupActionListener);
 		createNetworkItem.addActionListener(popupActionListener);
 		selectNodesItem.addActionListener(popupActionListener);
+		pieCriteriaItem.addActionListener(popupActionListener);
+		stripeCriteriaItem.addActionListener(popupActionListener);
+		clearCombinedCriteriaItem.addActionListener(popupActionListener);
+		combineMenu.add(pieCriteriaItem);
+		combineMenu.add(stripeCriteriaItem);
+		combineMenu.add(clearCombinedCriteriaItem);
 		popup.add(applyCriteriaItem);
 		popup.add(editCriteriaItem);
+		popup.add(combineMenu);
 		popup.add(destroyCriteriaItem);
 		popup.addSeparator();
 		popup.add(selectNodesItem);
@@ -500,6 +516,9 @@ public class CriteriasetPanel extends JPanel
 
 		public static final String APPLY_CRITERIA = "Apply to All Networks";
 		public static final String EDIT_CRITERIA = "Edit Criteria";
+		public static final String PIE_CRITERIA = "Pie Criteria";
+		public static final String STRIPE_CRITERIA = "Stripe Criteria";
+		public static final String CLEAR_COMBINED_CRITERIA = "Clear Combined Criteria";
 		public static final String DESTROY_CRITERIA = "Destroy Criteria";
 		public static final String SELECT_NODES = "Select Nodes in Network";
 		public static final String CREATE_NETWORK = "Create Network from All";
@@ -544,6 +563,15 @@ public class CriteriasetPanel extends JPanel
 				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList,
 						true);
 				Cytoscape.getCurrentNetworkView().updateView();
+			} else if (PIE_CRITERIA.equals(label)) {
+				// pie
+				WorkspacesCommandHandler.pieCriteria();
+			} else if (STRIPE_CRITERIA.equals(label)) {
+				// stripe
+				WorkspacesCommandHandler.stripeCriteria();
+			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
+				// clear
+				WorkspacesCommandHandler.clearCombinedCriteria();
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
 			}
@@ -558,7 +586,7 @@ public class CriteriasetPanel extends JPanel
 
 		// collect node list assembled from all CyDatasets
 		int[] dsetNodes = CyDataset.getAllDatasetNodes();
-		
+
 		CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(criteriasetName);
 		List<CyNode> hitList = set.collectCriteriaNodes(dsetNodes);
 		List<CyEdge> edges = new ArrayList<CyEdge>();
@@ -589,15 +617,13 @@ public class CriteriasetPanel extends JPanel
 		}
 	}
 
-	public static int[] convertIntegers(List<Integer> integers)
-	{
-	    int[] ret = new int[integers.size()];
-	    Iterator<Integer> iterator = integers.iterator();
-	    for (int i = 0; i < ret.length; i++)
-	    {
-	        ret[i] = iterator.next().intValue();
-	    }
-	    return ret;
+	public static int[] convertIntegers(List<Integer> integers) {
+		int[] ret = new int[integers.size()];
+		Iterator<Integer> iterator = integers.iterator();
+		for (int i = 0; i < ret.length; i++) {
+			ret[i] = iterator.next().intValue();
+		}
+		return ret;
 	}
 
 	/**

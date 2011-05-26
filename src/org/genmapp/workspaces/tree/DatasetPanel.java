@@ -66,7 +66,9 @@ import cytoscape.view.cytopanels.BiModalJSplitPane;
  */
 public class DatasetPanel extends JPanel implements
 // PropertyChangeListener,
-		TreeSelectionListener, SelectEventListener, ChangeListener {
+			TreeSelectionListener,
+			SelectEventListener,
+			ChangeListener {
 
 	private static final long serialVersionUID = -5545819433715802144L;
 
@@ -83,6 +85,7 @@ public class DatasetPanel extends JPanel implements
 
 	private JMenuItem remapDataset;
 	private JMenuItem destroyDatasetItem;
+	private JMenuItem selectAttributes;
 	private JMenuItem createNetwork;
 
 	private BiModalJSplitPane split;
@@ -152,15 +155,18 @@ public class DatasetPanel extends JPanel implements
 		popup = new JPopupMenu();
 		destroyDatasetItem = new JMenuItem(PopupActionListener.DESTROY_DATASET);
 		remapDataset = new JMenuItem(PopupActionListener.REMAP_DATA);
+		selectAttributes = new JMenuItem(PopupActionListener.SELECT_ATTRIBUTES);
 		createNetwork = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		// action listener which performs the tasks associated with the popup
 		popupActionListener = new PopupActionListener();
 		destroyDatasetItem.addActionListener(popupActionListener);
 		remapDataset.addActionListener(popupActionListener);
+		selectAttributes.addActionListener(popupActionListener);
 		createNetwork.addActionListener(popupActionListener);
 		popup.add(remapDataset);
-//		popup.add(destroyDatasetItem);
+		popup.add(destroyDatasetItem);
 		popup.addSeparator();
+		popup.add(selectAttributes);
 		popup.add(createNetwork);
 	}
 
@@ -250,8 +256,8 @@ public class DatasetPanel extends JPanel implements
 			}
 
 			// apparently this doesn't fire valueChanged
-			treeTable.getTree().collapsePath(
-					new TreePath(new TreeNode[] { root }));
+			treeTable.getTree()
+					.collapsePath(new TreePath(new TreeNode[]{root}));
 
 			treeTable.getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
@@ -452,6 +458,7 @@ public class DatasetPanel extends JPanel implements
 
 		public static final String REMAP_DATA = "Retry Data Mapping";
 		public static final String DESTROY_DATASET = "Destroy Dataset";
+		public static final String SELECT_ATTRIBUTES = "Select Attributes";
 		public static final String CREATE_NETWORK = "Create Network";
 
 		/**
@@ -474,10 +481,12 @@ public class DatasetPanel extends JPanel implements
 			if (node == null || node.getUserObject() == null)
 				return;
 
-			CyDataset ds = CyDataset.datasetNameMap.get(node.getID());
+			String dsname = node.getID();
+			CyDataset ds = CyDataset.datasetNameMap.get(dsname);
 
 			if (DESTROY_DATASET.equals(label)) {
-				CyDataset.datasetNameMap.get(node.getID()).deleteCyDataset();
+				//TODO
+				//CyDataset.datasetNameMap.get(dsname).deleteCyDataset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				int[] edges = new int[0];
 				List<Integer> nodesL = ds.getNodes();
@@ -500,18 +509,51 @@ public class DatasetPanel extends JPanel implements
 				if (goForIt) {
 					CyNetwork newNetwork = Cytoscape.createNetwork(nodes,
 							edges, ds.getDisplayName());
-					//set Network attributes to notify NetworkMapping that job is already done
-					Cytoscape.getNetworkAttributes().setAttribute(newNetwork.getIdentifier(), NetworkMapping.CODE, ds.getKeyType());
-					//fire NETWORK_LOADED
+					// set Network attributes to notify NetworkMapping that job
+					// is already done
+					Cytoscape.getNetworkAttributes().setAttribute(
+							newNetwork.getIdentifier(), NetworkMapping.CODE,
+							ds.getKeyType());
+
+					// and tag new network
+					String netid = newNetwork.getIdentifier();
+					List<String> sourcelist = new ArrayList<String>();
+					if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
+							DatasetMapping.NET_ATTR_DATASETS)) {
+						sourcelist = (List<String>) Cytoscape
+								.getNetworkAttributes().getListAttribute(netid,
+										DatasetMapping.NET_ATTR_DATASETS);
+						if (!sourcelist.contains(dsname)) {
+							sourcelist.add(dsname);
+							Cytoscape.getNetworkAttributes().setListAttribute(
+									netid, DatasetMapping.NET_ATTR_DATASETS,
+									sourcelist);
+						}
+					} else {
+						sourcelist.add(dsname);
+						Cytoscape.getNetworkAttributes().setListAttribute(
+								netid, DatasetMapping.NET_ATTR_DATASETS,
+								sourcelist);
+					}
+					Cytoscape.getNetworkAttributes().setListAttribute(netid,
+							DatasetMapping.NET_ATTR_DATASET_PREFIX + dsname,
+							ds.getAttrs());
+					
+					// fire NETWORK_LOADED
 					Object[] new_value = new Object[2];
 					new_value[0] = newNetwork;
 					new_value[1] = newNetwork.getIdentifier();
 					Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
 							null, new_value);
+					
+					// force update of highlight
+					ds.setCurrentHighlight();
 				}
 
 			} else if (REMAP_DATA.equals(label)) {
 				DatasetMapping.performDatasetMapping(ds, null, false);
+			} else if (SELECT_ATTRIBUTES.equals(label)) {
+				// TODO
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
 			}

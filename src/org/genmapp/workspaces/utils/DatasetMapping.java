@@ -20,6 +20,9 @@ import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
 import cytoscape.groups.CyGroup;
 import cytoscape.groups.CyGroupManager;
+import cytoscape.layout.CyLayouts;
+import cytoscape.layout.LayoutTask;
+import cytoscape.task.util.TaskManager;
 import cytoscape.view.CyNetworkView;
 
 public abstract class DatasetMapping {
@@ -251,9 +254,9 @@ public abstract class DatasetMapping {
 		List<String> attr = (List<String>) Cytoscape.getNodeAttributes()
 				.getListAttribute(cn.getIdentifier(),
 						DatasetMapping.NET_ATTR_DATASETS);
-		//System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier());
+		// System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier());
 		if (null == attr || attr.size() == 0) {
-			//System.out.println("MAP1");
+			// System.out.println("MAP1");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
 		if (attr.contains(d.getDisplayName())) {
@@ -276,14 +279,14 @@ public abstract class DatasetMapping {
 					return false; // TODO: report: skipped due to duplicate key
 				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
 				if (d.getNodes().contains(priordn.getRootGraphIndex())) {
-					//System.out.println("GROUP2a: " + priordnid);
+					// System.out.println("GROUP2a: " + priordnid);
 					relateNodes(priordn, cn, network);
 				}
 			}
-			//System.out.println("GROUP2b: " + dnid);
+			// System.out.println("GROUP2b: " + dnid);
 			return relateNodes(dn, cn, network);
 		} else {
-			//System.out.println("MAP2");
+			// System.out.println("MAP2");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
 
@@ -346,6 +349,30 @@ public abstract class DatasetMapping {
 		 * add a child crashes with NPE.
 		 */
 		collapseAllMetanodes(network);
+		
+		// Position children nodes in nested network view
+//		network.unselectAllNodes();
+//		network.setSelectedNodeState(gn.getNodes(), true);
+//		AlignVerticalAction ava = new AlignVerticalAction(cnv);
+//		ava.actionPerformed(new ActionEvent(ava,
+//				ActionEvent.ACTION_PERFORMED, "Vertical"));
+		
+		//TODO: do this separate from mapping
+//		CyNetwork gnet = (CyNetwork)  gn.getGroupNode().getNestedNetwork();
+//		System.out.println("GN: "+gnet.getIdentifier());
+//		CyNetworkView gnv = Cytoscape.getNetworkView(gnet.getIdentifier());
+//		System.out.println("GNV: "+gnv.getIdentifier());
+//		Cytoscape.setCurrentNetworkView(gnv.getIdentifier());
+		
+		
+//		TaskManager.executeTask(new LayoutTask(CyLayouts
+//				.getLayout("circular"), gnv), LayoutTask
+//				.getDefaultTaskConfig());
+		
+		//TODO: what we really want is vertical stack
+//		WorkspacesCommandHandler.selectedCircleLayout();
+		
+//		network.unselectAllNodes();
 
 		return true;
 	}
@@ -363,43 +390,44 @@ public abstract class DatasetMapping {
 
 		// Aggregation Overrides
 		WorkspacesCommandHandler.setMetanodeAggregation("true");
-		// List<String> attrs = d.getAttrs();
-		// for (String attr : attrs) {
-		// Byte aType = Cytoscape.getNodeAttributes().getType(attr);
-		// switch (aType) {
-		// case CyAttributes.TYPE_STRING :
-		// WorkspacesCommandHandler
-		// .setAggregationOverride(attr, "csv");
-		// break;
-		// case CyAttributes.TYPE_INTEGER :
-		// WorkspacesCommandHandler.setAggregationOverride(attr,
-		// "median");
-		// break;
-		// case CyAttributes.TYPE_FLOATING :
-		// WorkspacesCommandHandler.setAggregationOverride(attr,
-		// "median");
-		// break;
-		// case CyAttributes.TYPE_BOOLEAN :
-		// WorkspacesCommandHandler.setAggregationOverride(attr, "or");
-		// break;
-		// case CyAttributes.TYPE_SIMPLE_LIST :
-		// WorkspacesCommandHandler.setAggregationOverride(attr,
-		// "concatenate");
-		// break;
-		// }
-		// }
+		List<String> attrs = d.getAttrs();
+		for (String attr : attrs) {
+			System.out.println("OVERRIDE: "+attr);
+			Byte aType = Cytoscape.getNodeAttributes().getType(attr);
+			switch (aType) {
+				case CyAttributes.TYPE_STRING :
+					WorkspacesCommandHandler
+							.setAggregationOverride(attr, "csv");
+					break;
+				case CyAttributes.TYPE_INTEGER :
+					WorkspacesCommandHandler.setAggregationOverride(attr,
+							"median");
+					break;
+				case CyAttributes.TYPE_FLOATING :
+					WorkspacesCommandHandler.setAggregationOverride(attr,
+							"median");
+					break;
+				case CyAttributes.TYPE_BOOLEAN :
+					WorkspacesCommandHandler.setAggregationOverride(attr, "or");
+					break;
+				case CyAttributes.TYPE_SIMPLE_LIST :
+					WorkspacesCommandHandler.setAggregationOverride(attr,
+							"concatenate");
+					break;
+			}
+		}
 
 		// And set all defaults to none to prevent overwriting cn attrs
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
-				WorkspacesCommandHandler.ARG_ATTR_STRING, "csv");
+				WorkspacesCommandHandler.ARG_ATTR_STRING, "none");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
-				WorkspacesCommandHandler.ARG_ATTR_INTEGER, "median");
+				WorkspacesCommandHandler.ARG_ATTR_INTEGER, "none");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
-				WorkspacesCommandHandler.ARG_ATTR_DOUBLE, "median");
+				WorkspacesCommandHandler.ARG_ATTR_DOUBLE, "none");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
-				WorkspacesCommandHandler.ARG_ATTR_BOOLEAN, "or");
+				WorkspacesCommandHandler.ARG_ATTR_BOOLEAN, "none");
 		WorkspacesCommandHandler.setMetanodeAggregation("true",
-				WorkspacesCommandHandler.ARG_ATTR_LIST, "concatenate");
+				WorkspacesCommandHandler.ARG_ATTR_LIST, "none");
 
 		// Appearance
 		WorkspacesCommandHandler.setDefaultMetanodeAppearance(false, 100.0,
