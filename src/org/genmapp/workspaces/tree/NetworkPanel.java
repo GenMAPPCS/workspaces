@@ -54,6 +54,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.genmapp.workspaces.objects.CyAction;
+import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.utils.DatasetMapping;
 
@@ -296,7 +297,8 @@ public class NetworkPanel extends JPanel
 		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER)
 				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
-		CyAction.actionNameMap.get(ActionPanel.LAYOUT_FORCE_DIRECTED2).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.LAYOUT_FORCE_DIRECTED2)
+				.setDoable(true);
 		// prompt next action
 		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
 			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
@@ -419,39 +421,44 @@ public class NetworkPanel extends JPanel
 			Cytoscape.setSelectedNetworks(networkList);
 			Cytoscape.setSelectedNetworkViews(networkList);
 		}
-		
-		//Only update and refresh when single network selected
+
+		// Only update and refresh when single network selected
 		if (networkList.size() == 1) {
-
+			String net = networkList.get(0);
 			// update dataset highlighting
-			for (String net : networkList) {
-				List<String> datasetList = Cytoscape
-						.getNetworkAttributes()
-						.getListAttribute(net, DatasetMapping.NET_ATTR_DATASETS);
-				if (null != datasetList) {
-					for (String dataset : CyDataset.datasetNameMap.keySet()) {
-						if (datasetList.contains(dataset))
-							CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = true;
-						else
-							CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = false;
-					}
-					DatasetPanel.getTreeTable().getTree().updateUI();
+			List<String> datasetList = Cytoscape.getNetworkAttributes()
+					.getListAttribute(net, DatasetMapping.NET_ATTR_DATASETS);
+			if (null != datasetList) {
+				for (String dataset : CyDataset.datasetNameMap.keySet()) {
+					if (datasetList.contains(dataset))
+						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = true;
+					else
+						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = false;
 				}
-
-				// update criteriaset counts
-				CriteriasetPanel.getTreeTable().getTree().updateUI();
-
-				// and manually update network view / vizmapper
-				/*
-				 * Note: the native Cytoscape handling of view update appears to
-				 * ignore selections when the prior selection shares the same
-				 * visual style.
-				 */
-				Cytoscape.getNetworkView(net).redrawGraph(true, true);
+				DatasetPanel.getTreeTable().getTree().updateUI();
 			}
+
+			// update criteriaset counts and selection
+			CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(Cytoscape
+					.getNetwork(net));
+			if (null != cset) {
+				WorkspacesPanel.getCriteriaTreePanel()
+						.focusNode(cset.getName());
+			}
+			CriteriasetPanel.getTreeTable().getTree().updateUI();
+
+			// and manually update network view / vizmapper
+			/*
+			 * Note: the native Cytoscape handling of view update appears to
+			 * ignore selections when the prior selection shares the same visual
+			 * style.
+			 */
+			Cytoscape.getNetworkView(net).redrawGraph(true, true);
+
+		} else {
+			// do nothing... or maybe deselect datasets and criteriaset?
 		}
 	}
-
 	/**
 	 * DOCUMENT ME!
 	 * 
