@@ -42,6 +42,7 @@ import org.pathvisio.model.Pathway;
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.data.CyAttributes;
@@ -107,11 +108,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 						// and let the world know...
 						// the Object[2] is Cytoscape convention
-//						Object[] new_value = new Object[2];
-//						new_value[0] = net;
-//						new_value[1] = net.getIdentifier();
-//						Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
-//								null, new_value);
+						// Object[] new_value = new Object[2];
+						// new_value[0] = net;
+						// new_value[1] = net.getIdentifier();
+						//Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
+						// null, new_value);
 
 					} catch (ConverterException e) {
 						e.printStackTrace();
@@ -316,6 +317,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				"images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);
 		cytoPanel.setSelectedIndex(0);
 		// cytoPanel.remove(1);
+
+		// set properties
+		// set view thresholds to handle "overview" xGMMLs
+		CytoscapeInit.getProperties().setProperty("viewThreshold", "100000");
+		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold", "120000");
 
 		// cycommands
 		new WorkspacesCommandHandler();
