@@ -16,7 +16,6 @@
 package org.genmapp.workspaces.tree;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.beans.PropertyChangeEvent;
@@ -24,7 +23,6 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
@@ -34,9 +32,6 @@ import org.genmapp.workspaces.utils.NetworkMapping;
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.view.CytoscapeDesktop;
-import cytoscape.view.cytopanels.BiModalJSplitPane;
-import ding.view.BirdsEyeView;
-import ding.view.DGraphView;
 
 /**
  * GUI component for managing network list in current session.

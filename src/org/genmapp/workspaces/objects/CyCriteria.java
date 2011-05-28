@@ -2,11 +2,7 @@ package org.genmapp.workspaces.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JTextArea;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 

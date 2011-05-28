@@ -346,6 +346,7 @@ public class DatasetPanel extends JPanel implements
 		CyDataset ds = CyDataset.datasetNameMap.get(node.getID());
 
 		// TODO: set Attribute Browser to display this dataset's columns
+		
 
 	}
 
@@ -552,6 +553,9 @@ public class DatasetPanel extends JPanel implements
 
 			} else if (REMAP_DATA.equals(label)) {
 				DatasetMapping.performDatasetMapping(ds, null, false);
+				
+				// force update of highlight
+				ds.setCurrentHighlight();
 			} else if (SELECT_ATTRIBUTES.equals(label)) {
 				// TODO
 			} else {

@@ -33,12 +33,12 @@ package org.genmapp.workspaces.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URLDecoder;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import cytoscape.Cytoscape;
@@ -47,12 +47,6 @@ import cytoscape.data.attr.MultiHashMapDefinition;
 import cytoscape.data.readers.EqnAttrTracker;
 import cytoscape.data.writers.CyAttributesWriter;
 import cytoscape.logger.CyLogger;
-
-import org.cytoscape.equations.EqnCompiler;
-import org.cytoscape.equations.Equation;
-
-import java.net.URLDecoder;
-import java.text.MessageFormat;
 
 
 public class CyAttributesReader {

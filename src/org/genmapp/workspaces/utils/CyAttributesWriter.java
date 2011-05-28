@@ -1,11 +1,11 @@
 package org.genmapp.workspaces.utils;
 
-import java.io.FileWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 
 import cytoscape.data.CyAttributes;
-import java.io.IOException;
 
 // we wrap the core library of the same name to do the dirty work
 public class CyAttributesWriter {

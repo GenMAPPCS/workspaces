@@ -11,8 +11,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.genmapp.workspaces.objects.CyDataset;
 
-import cytoscape.CyNetwork;
-import cytoscape.Cytoscape;
 import cytoscape.util.swing.AbstractTreeTableModel;
 
 /**

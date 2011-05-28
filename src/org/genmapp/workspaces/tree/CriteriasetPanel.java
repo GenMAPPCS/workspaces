@@ -118,7 +118,8 @@ public class CriteriasetPanel extends JPanel
 		criteriaTreeTableModel = new CriteriasetTreeTableModel(root);
 
 		treeTable = new JTreeTable(criteriaTreeTableModel);
-		treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		treeTable
+				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		initialize();
 
@@ -365,27 +366,33 @@ public class CriteriasetPanel extends JPanel
 			// block immediate redundant calls;
 			greenlight = false;
 
-			/*
-			 * Start a thread to delay reset of this code by ~300 msec, so that
-			 * it's only run once.
-			 */
-			SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
+			JTree mtree = treeTable.getTree();
 
-				public Boolean doInBackground() {
-					// System.out.println("working");
-					try {
-						Thread.sleep(300);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+			// Only if single criteria selected...
+			if (mtree.getSelectionCount() == 1) {
+
+				/*
+				 * Start a thread to delay reset of this code by ~300 msec, so
+				 * that it's only run once.
+				 */
+				SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
+
+					public Boolean doInBackground() {
+						// System.out.println("working");
+						try {
+							Thread.sleep(300);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						Set<CyNetwork> networks = new HashSet<CyNetwork>(
+								Cytoscape.getSelectedNetworks());
+						applyCriteriaToNetworks(networks);
+						return true;
 					}
-					Set<CyNetwork> networks = new HashSet<CyNetwork>(Cytoscape
-							.getSelectedNetworks());
-					applyCriteriaToNetworks(networks);
-					return true;
-				}
-			};
-			workerA.execute();
+				};
+				workerA.execute();
 
+			}
 		}
 	}
 
@@ -415,6 +422,8 @@ public class CriteriasetPanel extends JPanel
 				Cytoscape.setCurrentNetworkView(network.getIdentifier());
 				WorkspacesCommandHandler.applyCriteriasetToNetwork(
 						selectedCriteriaset, network);
+				//update counts and color highlight
+				selectedCriteriaset.collectNetworkCounts();
 			}
 		}
 		greenlight = true;

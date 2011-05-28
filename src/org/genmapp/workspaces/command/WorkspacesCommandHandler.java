@@ -146,47 +146,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				throw new CyCommandException(ARG_SETNAME
 						+ ": unknown type (try String!)");
 			}
-			/*
-			 * Three possibilities: (1) saving new set (2) saving or loading
-			 * existing set (3) deleting existing set
-			 */
-			showMessage("Update CriteriaSets: " + setName);
-
-			String setParameters = CytoscapeInit.getProperties().getProperty(
-					PROPERTY_SET_PREFIX + setName);
-			boolean isExistingSet = CyCriteriaset.criteriaNameMap
-					.containsKey(setName);
-			if (!isExistingSet && setParameters != null) {
-				// (1) saving new set or restoring session with saved sets
-				showMessage("Update CriteriaSets: save new set " + setName);
-
-				CyCriteriaset cyCriteria = new CyCriteriaset(setName,
-						setParameters);
-				// System.out.println("SAVE "+setName+":"+setParameters);
-				result.addMessage("Criteria " + setName + " added.");
-
-			} else if (isExistingSet && setParameters != null) {
-				showMessage("Update CriteriaSets: save/load existing set "
-						+ setName);
-
-				// (2) saving or loading an existing set
-				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
-						.get(setName);
-				cyCriteria.setCriteriaParams(setParameters);
-				cyCriteria.collectNetworkCounts();
-				// System.out.println("UPDATE "+setName+":"+setParameters);
-				result.addMessage("Criteria " + setName + " updated.");
-
-			} else if (isExistingSet && null == setParameters) {
-				showMessage("Update CriteriaSets: delete existing set "
-						+ setName);
-
-				// (3) deleting an existing set
-				CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
-						.get(setName);
-				cyCriteria.deleteCyCriteriaset();
-				result.addMessage("Criteria " + setName + " removed.");
-			}
+			String msg = updateCriteriaset(setName);
+			result.addMessage(msg);
 
 		} else if (UPDATE_DATASETS.equals(command)) {
 			String name;
@@ -397,6 +358,53 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	public static String updateCriteriaset(String setName){
+
+		/*
+		 * Three possibilities: (1) saving new set (2) saving or loading
+		 * existing set (3) deleting existing set
+		 */
+		showMessage("Update CriteriaSets: " + setName);
+
+		String setParameters = CytoscapeInit.getProperties().getProperty(
+				PROPERTY_SET_PREFIX + setName);
+		boolean isExistingSet = CyCriteriaset.criteriaNameMap
+				.containsKey(setName);
+		if (!isExistingSet && setParameters != null) {
+			// (1) saving new set or restoring session with saved sets
+			showMessage("Update CriteriaSets: save new set " + setName);
+
+			CyCriteriaset cyCriteria = new CyCriteriaset(setName,
+					setParameters);
+			// System.out.println("SAVE "+setName+":"+setParameters);
+			return "Criteria " + setName + " added.";
+
+		} else if (isExistingSet && setParameters != null) {
+			showMessage("Update CriteriaSets: save/load existing set "
+					+ setName);
+
+			// (2) saving or loading an existing set
+			CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
+					.get(setName);
+			cyCriteria.setCriteriaParams(setParameters);
+			cyCriteria.collectNetworkCounts();
+			// System.out.println("UPDATE "+setName+":"+setParameters);
+			return "Criteria " + setName + " updated.";
+
+		} else if (isExistingSet && null == setParameters) {
+			showMessage("Update CriteriaSets: delete existing set "
+					+ setName);
+
+			// (3) deleting an existing set
+			CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
+					.get(setName);
+			cyCriteria.deleteCyCriteriaset();
+			return "Criteria " + setName + " removed.";
+		} else {
+			return null;
+		}
+	}
+	
 	/**
 	 * @param setName
 	 */

@@ -20,9 +20,6 @@ import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
 import cytoscape.groups.CyGroup;
 import cytoscape.groups.CyGroupManager;
-import cytoscape.layout.CyLayouts;
-import cytoscape.layout.LayoutTask;
-import cytoscape.task.util.TaskManager;
 import cytoscape.view.CyNetworkView;
 
 public abstract class DatasetMapping {

@@ -13,7 +13,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.util.swing.AbstractTreeTableModel;
-import cytoscape.util.swing.TreeTableModel;
 
 /**
  * Inner class that extends the AbstractTreeTableModel
@@ -112,7 +111,7 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 				GenericColumnTypes.NETWORK_ICONS)
 				&& aValue instanceof Icon) {
 			networkIcons.put(((GenericTreeNode) node).getID(), new ImageIcon(
-					getClass().getResource("../images/network.png")));
+					getClass().getResource("network.png")));
 		}
 	}
 

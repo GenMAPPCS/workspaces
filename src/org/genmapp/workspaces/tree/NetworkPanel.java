@@ -53,17 +53,11 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
-import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
-import org.genmapp.workspaces.objects.CyCriteria;
-import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.CyNetwork;
-import cytoscape.CyNetworkEvent;
-import cytoscape.CyNetworkListener;
 import cytoscape.CyNetworkTitleChange;
 import cytoscape.Cytoscape;
 import cytoscape.actions.ApplyVisualStyleAction;
