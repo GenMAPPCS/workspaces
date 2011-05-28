@@ -22,10 +22,13 @@ import cytoscape.visual.VisualMappingManager;
 
 public class CyCriteriaset {
 
-	private String setname;
+	private String name;
 	private String[] criteriaParams;
 	private int rows;
-
+	
+	// Track last cset to be applied per network
+	private static Map<String, String> networkCriteriasetMap = new HashMap<String, String>();
+	
 	public static Map<String, CyCriteriaset> criteriaNameMap = new HashMap<String, CyCriteriaset>();
 	public static Map<String, Integer> criteriaRowsMap = new HashMap<String, Integer>();
 	public static Map<String, Map<String, Integer>> criteriaNetworkNodesMap = new HashMap<String, Map<String, Integer>>();
@@ -38,7 +41,7 @@ public class CyCriteriaset {
 	 *            display name for criteria set
 	 */
 	public CyCriteriaset(String s, String params) {
-		this.setname = s;
+		this.name = s;
 		this.setCriteriaParams(params);
 
 		criteriaNameMap.put(s, this);
@@ -46,13 +49,9 @@ public class CyCriteriaset {
 
 		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().addItem(s, "croot");
 	}
-
-	public void setDisplayName(String displayName) {
-		this.setname = displayName;
-	}
-
-	public String getDisplayName() {
-		return setname;
+	
+	public String getName() {
+		return name;
 	}
 
 	public void setRows(int rows) {
@@ -86,8 +85,8 @@ public class CyCriteriaset {
 		this.criteriaParams = paramArray;
 
 		this.rows = paramArray.length - 1; // don't count mapTo
-		criteriaRowsMap.put(this.getDisplayName(), this.rows);
-		System.out.println("SET: " + this.setname + ":" + paramArray[1]);
+		criteriaRowsMap.put(this.getName(), this.rows);
+		System.out.println("SET: " + this.name + ":" + paramArray[1]);
 	}
 
 	public String[] getCriteriaParams() {
@@ -111,7 +110,7 @@ public class CyCriteriaset {
 
 		/*
 		 * If called during a session reset (i.e. new session or open session),
-		 * then some of these functions are redudant with Cytoscape's
+		 * then some of these functions are redundant with Cytoscape's
 		 * network-level cleanup and can be skipped.
 		 */
 		if (Cytoscape.getSessionstate() != Cytoscape.SESSION_OPENED) {
@@ -122,9 +121,9 @@ public class CyCriteriaset {
 			Set<String> vsNames = catalog.getVisualStyleNames();
 			HashMap<String, String> removeAndSwitch = new HashMap<String, String>();
 			for (String vsName : vsNames) {
-				if (StringUtils.endsWith(vsName, "__" + this.getDisplayName())) {
+				if (StringUtils.endsWith(vsName, "__" + this.getName())) {
 					String vsSwitch = vsName.substring(0, vsName.indexOf("__"
-							+ this.getDisplayName()));
+							+ this.getName()));
 					removeAndSwitch.put(vsName, vsSwitch);
 				}
 			}
@@ -147,7 +146,7 @@ public class CyCriteriaset {
 				WorkspacesCommandHandler.PROPERTY_SETS);
 		if (null != setList) {
 			// trim leading and trailing brackets
-			setList = setList.replace("[" + this.getDisplayName() + "]", "");
+			setList = setList.replace("[" + this.getName() + "]", "");
 			if (setList.length() > 1)
 				CytoscapeInit.getProperties().setProperty(
 						WorkspacesCommandHandler.PROPERTY_SETS, setList);
@@ -157,15 +156,15 @@ public class CyCriteriaset {
 		}
 		CytoscapeInit.getProperties().remove(
 				WorkspacesCommandHandler.PROPERTY_SET_PREFIX
-						+ this.getDisplayName());
+						+ this.getName());
 
 		// remove from panel
 		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().removeItem(
-				this.getDisplayName());
+				this.getName());
 		// remove internal representation
-		criteriaNameMap.remove(this.getDisplayName());
-		criteriaRowsMap.remove(this.getDisplayName());
-		criteriaNetworkNodesMap.remove(this.getDisplayName());
+		criteriaNameMap.remove(this.getName());
+		criteriaRowsMap.remove(this.getName());
+		criteriaNetworkNodesMap.remove(this.getName());
 
 	}
 
@@ -176,7 +175,7 @@ public class CyCriteriaset {
 			split = c.split(":");
 			if (split.length < 3)
 				continue; // skip mapTo entry
-			nodeAttr = nodeAttr + setname + "_" + split[1] + ":";
+			nodeAttr = nodeAttr + name + "_" + split[1] + ":";
 		}
 		// prune final ":"
 		nodeAttr = nodeAttr.substring(0, nodeAttr.length() - 1);
@@ -228,9 +227,23 @@ public class CyCriteriaset {
 		}
 
 		// fill map
-		this.criteriaNetworkNodesMap.put(this.setname, networkNodes);
+		this.criteriaNetworkNodesMap.put(this.name, networkNodes);
 
 		CriteriasetPanel.getTreeTable().getTree().updateUI();
 		CriteriasetPanel.getTreeTable().updateUI();
 	}
+
+	/**
+	 * @param net
+	 * @param cset
+	 */
+	public static void setNetworkCriteriaset(CyNetwork net, CyCriteriaset cset) {
+		networkCriteriasetMap.put(net.getTitle(), cset.name);
+	}
+
+	public static CyCriteriaset getNetworkCriteriaset(CyNetwork net) {
+		String csetName = networkCriteriasetMap.get(net.getTitle());
+		return criteriaNameMap.get(csetName);
+	}
+
 }

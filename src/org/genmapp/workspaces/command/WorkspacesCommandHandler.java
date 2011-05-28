@@ -13,6 +13,7 @@ import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
+import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
 import cytoscape.command.AbstractCommandHandler;
 import cytoscape.command.CyCommandException;
@@ -358,7 +359,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static String updateCriteriaset(String setName){
+	public static String updateCriteriaset(String setName) {
 
 		/*
 		 * Three possibilities: (1) saving new set (2) saving or loading
@@ -374,9 +375,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			// (1) saving new set or restoring session with saved sets
 			showMessage("Update CriteriaSets: save new set " + setName);
 
-			CyCriteriaset cyCriteria = new CyCriteriaset(setName,
-					setParameters);
-			// System.out.println("SAVE "+setName+":"+setParameters);
+			CyCriteriaset cset = new CyCriteriaset(setName, setParameters);
+			CyCriteriaset.setNetworkCriteriaset(Cytoscape.getCurrentNetwork(), cset);
 			return "Criteria " + setName + " added.";
 
 		} else if (isExistingSet && setParameters != null) {
@@ -384,27 +384,25 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 					+ setName);
 
 			// (2) saving or loading an existing set
-			CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
-					.get(setName);
-			cyCriteria.setCriteriaParams(setParameters);
-			cyCriteria.collectNetworkCounts();
-			// System.out.println("UPDATE "+setName+":"+setParameters);
+			CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(setName);
+			cset.setCriteriaParams(setParameters);
+			cset.collectNetworkCounts();
+			CyCriteriaset.setNetworkCriteriaset(Cytoscape.getCurrentNetwork(),
+					cset);
 			return "Criteria " + setName + " updated.";
 
 		} else if (isExistingSet && null == setParameters) {
-			showMessage("Update CriteriaSets: delete existing set "
-					+ setName);
+			showMessage("Update CriteriaSets: delete existing set " + setName);
 
 			// (3) deleting an existing set
-			CyCriteriaset cyCriteria = CyCriteriaset.criteriaNameMap
-					.get(setName);
-			cyCriteria.deleteCyCriteriaset();
+			CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(setName);
+			cset.deleteCyCriteriaset();
 			return "Criteria " + setName + " removed.";
 		} else {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * @param setName
 	 */
@@ -428,7 +426,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	 * @param cset
 	 * @param network
 	 */
-	public static void applyCriteriasetToNetwork(CyCriteriaset cset,
+	public static void criteriaMapperApplySet(CyCriteriaset cset,
 			CyNetwork network) {
 
 		String mapto = new String();
@@ -440,7 +438,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (setParams.length > 0) {
 			mapto = setParams[0];
 		}
-		System.out.println(cset.getDisplayName() + ":"
+		System.out.println(cset.getName() + ":"
 				+ network.getIdentifier() + ":" + mapto);
 		for (int i = 1; i < setParams.length; i++) {
 			String[] temp = setParams[i].split(":");
@@ -454,7 +452,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put(ARG_SETNAME, cset.getDisplayName());
+		args.put(ARG_SETNAME, cset.getName());
 		args.put(ARG_NETWORK, network.getIdentifier());
 		args.put(ARG_MAP_TO, mapto);
 		args.put(ARG_COLOR_LIST, colorlist);
@@ -464,7 +462,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		CyCommandResult result;
 		try {
 			result = CyCommandManager.execute(CRITERIA_MAPPER, APPLY_SET, args);
-			// System.out.println(result.getMessages());
+			System.out.println(result.getMessages());
 		} catch (CyCommandException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -472,11 +470,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		// then update counts
-		// TODO: broken!!
-		// cset.collectCounts();
-
+		
+		//update counts and color highlight
+		cset.collectNetworkCounts();
+		// track last applied cset per network
+		CyCriteriaset.setNetworkCriteriaset(network, cset);
 	}
 
 	public static void createMetanode(String mnodeName, CyNetwork network,
@@ -711,10 +709,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		CyCommandHandler handler = CyCommandManager.getCommand("layout",
 				"circular");
 		Map<String, Tunable> layoutTunables = handler.getTunables("circular");
-//		Tunable t = layoutTunables.get("selected_only");
-//		t.setValue(false);
+		// Tunable t = layoutTunables.get("selected_only");
+		// t.setValue(false);
 		Collection<Tunable> ts = new ArrayList<Tunable>();
-//		ts.add(t);
+		// ts.add(t);
 		try {
 			CyCommandResult layoutResult = handler.execute("circular", ts);
 		} catch (CyCommandException e) {

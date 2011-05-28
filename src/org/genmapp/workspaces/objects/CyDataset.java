@@ -25,7 +25,7 @@ public class CyDataset {
 	private String source;
 	public static boolean isMappedToNetwork;
 
-	private static String displayName;
+	private static String name;
 	private String keyType;
 	private List<Integer> nodes;
 	private List<String> attrs;
@@ -49,7 +49,7 @@ public class CyDataset {
 
 	public CyDataset(String n, String t, List<Integer> nl, List<String> al,
 			boolean performDatasetMapping) {
-		this.displayName = n;
+		this.name = n;
 		this.keyType = t;
 		this.nodes = nl;
 		this.attrs = al;
@@ -80,7 +80,7 @@ public class CyDataset {
 						DatasetMapping.NET_ATTR_DATASETS);
 
 		if (datasetList != null) {
-			if (datasetList.contains(displayName))
+			if (datasetList.contains(name))
 				isMappedToNetwork = true;
 			else
 				isMappedToNetwork = false;
@@ -126,8 +126,8 @@ public class CyDataset {
 	/**
 	 * @return
 	 */
-	public String getDisplayName() {
-		return displayName;
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -217,7 +217,7 @@ public class CyDataset {
 	 * 
 	 */
 	public void deleteCyDataset() {
-		String dname = this.getDisplayName();
+		String dname = this.getName();
 
 		/*
 		 * If called during a session reset (i.e. new session or open session),
@@ -273,10 +273,10 @@ public class CyDataset {
 
 		// remove from panel
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().removeItem(
-				this.getDisplayName());
+				this.getName());
 
 		// remove internal representation
-		datasetNameMap.remove(this.getDisplayName());
+		datasetNameMap.remove(this.getName());
 
 	}
 }

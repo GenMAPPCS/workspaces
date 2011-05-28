@@ -81,8 +81,6 @@ public class CriteriasetPanel extends JPanel
 
 	private static final int DEF_ROW_HEIGHT = 20;
 
-	private static boolean greenlight = true;
-
 	// Make this panel as a source of events.
 	private final SwingPropertyChangeSupport pcs;
 
@@ -293,16 +291,14 @@ public class CriteriasetPanel extends JPanel
 			treeTable.doLayout();
 
 			/*
-			 * This is necessary because valueChanged is not fired above. BUT,
-			 * if you focus, then you engage calculation and application of
+			 * focusNode() is necessary because valueChanged is not fired above.
+			 * BUT, if you focus, then you engage calculation and application of
 			 * criteriaset for selected network. This is not good when restoring
 			 * saved session and you incidentally override last loaded network
 			 * with last loaded criteriaset. SO, we just skip the table
-			 * selection upon tree adding.
+			 * selection upon tree adding and leave this line commented out.
 			 */
 			// focusNode(id);
-			// need to reset greenlight for criteria panel selections
-			greenlight = true;
 		}
 	}
 
@@ -317,7 +313,7 @@ public class CriteriasetPanel extends JPanel
 		DefaultMutableTreeNode node = getTreeNode(id);
 
 		if (node != null) {
-			// fires valueChanged if the network isn't already selected
+			// fires valueChanged if the criteriaset isn't already selected
 			treeTable.getTree().getSelectionModel().setSelectionPath(
 					new TreePath(node.getPath()));
 			treeTable.getTree().scrollPathToVisible(
@@ -357,43 +353,18 @@ public class CriteriasetPanel extends JPanel
 	public void valueChanged(TreeSelectionEvent e) {
 		/*
 		 * NOTE: Every time user select an item, this method is called 3 times
-		 * and the code below is run twice. Using "greenlight" hack to limit to
-		 * a single run. This is ugly and the efficiency gains are debatable...
+		 * and the code below is run twice. It's just an unfortunate fact of
+		 * life...
 		 */
-		// System.out.println("click on criteriaset: " + greenlight);
-		if (greenlight) {
+		JTree mtree = treeTable.getTree();
 
-			// block immediate redundant calls;
-			greenlight = false;
-
-			JTree mtree = treeTable.getTree();
-
-			// Only if single criteria selected...
-			if (mtree.getSelectionCount() == 1) {
-
-				/*
-				 * Start a thread to delay reset of this code by ~300 msec, so
-				 * that it's only run once.
-				 */
-				SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
-
-					public Boolean doInBackground() {
-						// System.out.println("working");
-						try {
-							Thread.sleep(300);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						Set<CyNetwork> networks = new HashSet<CyNetwork>(
-								Cytoscape.getSelectedNetworks());
-						applyCriteriaToNetworks(networks);
-						return true;
-					}
-				};
-				workerA.execute();
-
-			}
+		// Only if single criteria selected...
+		if (mtree.getSelectionCount() == 1) {
+			Set<CyNetwork> networks = new HashSet<CyNetwork>(Cytoscape
+					.getSelectedNetworks());
+			applyCriteriasetToNetworks(networks);
 		}
+
 	}
 
 	/**
@@ -401,7 +372,7 @@ public class CriteriasetPanel extends JPanel
 	 * selected in panel; applies to all networks when context menu item
 	 * selected.
 	 */
-	private void applyCriteriaToNetworks(Set<CyNetwork> networkList) {
+	private void applyCriteriasetToNetworks(Set<CyNetwork> networkList) {
 		// sets the "current" criteriaset based on last node in the tree
 		// selected
 		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
@@ -409,24 +380,15 @@ public class CriteriasetPanel extends JPanel
 		if (node == null || node.getUserObject() == null)
 			return;
 
-		// GenericTreeNode n = (GenericTreeNode) mtree.getSelectionPath()
-		// .getLastPathComponent();
-
 		CyCriteriaset selectedCriteriaset = CyCriteriaset.criteriaNameMap
 				.get(node.getID());
 
 		for (CyNetwork network : networkList) {
 			if (Cytoscape.viewExists(network.getIdentifier())) {
-				// TODO: NEED TO SYNC WITH ORIGINAL NETWORK PANEL
-				Cytoscape.setCurrentNetwork(network.getIdentifier());
-				Cytoscape.setCurrentNetworkView(network.getIdentifier());
-				WorkspacesCommandHandler.applyCriteriasetToNetwork(
+				WorkspacesCommandHandler.criteriaMapperApplySet(
 						selectedCriteriaset, network);
-				//update counts and color highlight
-				selectedCriteriaset.collectNetworkCounts();
 			}
 		}
-		greenlight = true;
 	}
 
 	/**
@@ -553,7 +515,7 @@ public class CriteriasetPanel extends JPanel
 				return;
 
 			if (APPLY_CRITERIA.equals(label)) {
-				applyCriteriaToNetworks(Cytoscape.getNetworkSet());
+				applyCriteriasetToNetworks(Cytoscape.getNetworkSet());
 			} else if (EDIT_CRITERIA.equals(label)) {
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
 			} else if (DESTROY_CRITERIA.equals(label)) {

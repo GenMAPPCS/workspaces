@@ -29,7 +29,7 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingConstants;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
-import org.genmapp.workspaces.objects.CyCriteria;
+import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
 import org.genmapp.workspaces.utils.CyAttributesReader;
@@ -202,24 +202,42 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			showMessage("replacing cydataset map");
 			CyDataset.datasetNameMap = datasetNameMap;
 
+			/*
+			 * Load Criteriasets
+			 */
+			String setsString = CytoscapeInit.getProperties().getProperty(
+					WorkspacesCommandHandler.PROPERTY_SETS);
+			// extract cset names
+			String[] csetList = {""};
+			ArrayList<String> full = new ArrayList<String>();
+			if (null != setsString && setsString.length() > 2) {
+				setsString = setsString.substring(1, setsString.length() - 1);
+				String[] temp = setsString.split("\\]\\[");
+
+				for (String cs : temp) {
+					full.add(cs);
+				}
+			}
+			// create csets
+			for (String csetname : full) {
+				String setParameters = CytoscapeInit.getProperties()
+						.getProperty(
+								WorkspacesCommandHandler.PROPERTY_SET_PREFIX
+										+ csetname);
+				new CyCriteriaset(csetname, setParameters);
+			}
+			// restore network-criteria map from prop file
+			for (CyNetwork net : Cytoscape.getNetworkSet()) {
+				String csetname = props.getProperty("cs." + net.getTitle());
+				CyCriteriaset cset = CyCriteriaset.criteriaNameMap
+						.get(csetname);
+				// track last applied cset per network
+				CyCriteriaset.setNetworkCriteriaset(net, cset);
+				// apply them after SESSION_LOADED
+			}
+			// end try read files
 		} catch (Exception e) {
 			showMessage("Exception: " + e);
-		}
-
-		// Load Criteriasets
-		showMessage("Isaac: 2");
-		// call Workspaces-specific code for handling the opening of sessions
-		// at this point, all the criteria-related mapping has taken been loaded
-		// up
-		// only thing left to do is update the CriteriaPanel
-
-		// get all the criteriaSets ourselves from the session-level properties
-		// we don't trust the criteriamapper cycommand results b/c they are
-		// reported on a per-network basis
-		// and thus don't include those not mapped to any network
-		String[] vCs = CyCriteria.getCriteriaSets();
-		for (String cs : vCs) {
-			WorkspacesCommandHandler.updateCriteriaset(cs);
 		}
 
 	}
@@ -254,7 +272,17 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				}
 				props.setProperty("ds." + i + ".attrList", ds.getAttrString());
 				props.setProperty("ds." + i + ".nodeIdList", nodeIdListString);
+				i++;
 			}
+
+			// CyCriteriaset props (network map)
+			for (CyNetwork net : Cytoscape.getNetworkSet()) {
+				CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(net);
+				if (null != cset) {
+					props.setProperty("cs." + net.getTitle(), cset.getName());
+				}
+			}
+
 			// writes property file to disk
 			props.store(new FileOutputStream(propFile), null);
 			fileList.add(propFile);
@@ -321,7 +349,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		// set properties
 		// set view thresholds to handle "overview" xGMMLs
 		CytoscapeInit.getProperties().setProperty("viewThreshold", "100000");
-		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold", "120000");
+		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold",
+				"120000");
 
 		// cycommands
 		new WorkspacesCommandHandler();

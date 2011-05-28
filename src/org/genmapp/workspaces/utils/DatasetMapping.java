@@ -66,7 +66,7 @@ public abstract class DatasetMapping {
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
 				nodeIds, dnKeyType, secKeyType, isNew);
 
-		String datasetName = d.getDisplayName();
+		String datasetName = d.getName();
 		List<CyNetwork> networkList = nl;
 		if (null == networkList) {
 			// null means all
@@ -256,7 +256,7 @@ public abstract class DatasetMapping {
 			// System.out.println("MAP1");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
-		if (attr.contains(d.getDisplayName())) {
+		if (attr.contains(d.getName())) {
 			/*
 			 * This is the first time switching to group strategy, so we need to
 			 * retrieve prior mapped dn from this dataset and process both the
@@ -270,7 +270,7 @@ public abstract class DatasetMapping {
 					.getListAttribute(
 							cnid,
 							DatasetMapping.NET_ATTR_DATASET_PREFIX
-									+ d.getDisplayName());
+									+ d.getName());
 			for (String priordnid : attr) {
 				if (priordnid.equals(dnid))
 					return false; // TODO: report: skipped due to duplicate key
@@ -491,8 +491,8 @@ public abstract class DatasetMapping {
 		if (null == attr) {
 			attr = new ArrayList<String>();
 		}
-		if (!attr.contains(d.getDisplayName())) {
-			attr.add(d.getDisplayName());
+		if (!attr.contains(d.getName())) {
+			attr.add(d.getName());
 			Cytoscape.getNodeAttributes().setListAttribute(cnid,
 					DatasetMapping.NET_ATTR_DATASETS, attr);
 		}
@@ -500,7 +500,7 @@ public abstract class DatasetMapping {
 		// add dnid to cynode attribute
 		attr = (List<String>) Cytoscape.getNodeAttributes().getListAttribute(
 				cnid,
-				DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getDisplayName());
+				DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getName());
 
 		if (null == attr) {
 			attr = new ArrayList<String>();
@@ -511,7 +511,7 @@ public abstract class DatasetMapping {
 					.setListAttribute(
 							cnid,
 							DatasetMapping.NET_ATTR_DATASET_PREFIX
-									+ d.getDisplayName(), attr);
+									+ d.getName(), attr);
 		}
 
 		return true;

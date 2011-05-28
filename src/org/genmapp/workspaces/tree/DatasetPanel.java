@@ -509,7 +509,7 @@ public class DatasetPanel extends JPanel implements
 				}
 				if (goForIt) {
 					CyNetwork newNetwork = Cytoscape.createNetwork(nodes,
-							edges, ds.getDisplayName());
+							edges, ds.getName());
 					// set Network attributes to notify NetworkMapping that job
 					// is already done
 					Cytoscape.getNetworkAttributes().setAttribute(

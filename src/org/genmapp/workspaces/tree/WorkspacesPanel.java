@@ -113,7 +113,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
-		Cytoscape.getSwingPropertyChangeSupport().addPropertyChangeListener(this);
+		Cytoscape.getSwingPropertyChangeSupport().addPropertyChangeListener(
+				this);
 	}
 
 	/**
@@ -163,10 +164,15 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
 						.getNewValue())[0];
 				NetworkMapping.performNetworkMappings(newNetwork);
-				for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
-						.values()) {
-					WorkspacesCommandHandler.applyCriteriasetToNetwork(cset,
-							newNetwork);
+				if (Cytoscape.viewExists(newNetwork.getIdentifier())) {
+					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
+							.values()) {
+						WorkspacesCommandHandler.criteriaMapperApplySet(cset,
+								newNetwork);
+						// track last applied cset per network
+						CyCriteriaset.setNetworkCriteriaset(newNetwork, cset);
+
+					}
 				}
 			}
 
@@ -184,12 +190,19 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 */
 				NetworkMapping.performNetworkMappings(network);
 
+				/*
+				 * and restore network-criteria map from prop file
+				 */
+				CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(network);
+				if (Cytoscape.viewExists(network.getIdentifier())) {
+					WorkspacesCommandHandler.criteriaMapperApplySet(cset, network);
+				}
 			}
 		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {
 			// listen for last network destroyed and check session state in
 			// order to determine if new session is being loaded... awkward!
 			if ((Cytoscape.getNetworkSet().size() <= 1)
-				    && (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
+					&& (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
 				clearAllDatasets();
 				clearAllCriteriasets();
 			}
