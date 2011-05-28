@@ -20,10 +20,12 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -31,6 +33,7 @@ import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.view.CytoscapeDesktop;
 
 /**
@@ -148,9 +151,20 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 	protected static void clearAllCriteriasets() {
 		// clear out criteriasets
-		for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
-			cset.deleteCyCriteriaset();
+		for (String csetname : CyCriteriaset.criteriaNameMap.keySet()) {
+			CytoscapeInit.getProperties().remove(
+					WorkspacesCommandHandler.PROPERTY_SET_PREFIX + csetname);
+			WorkspacesPanel.getCriteriaTreePanel().removeItem(csetname);
 		}
+
+		CytoscapeInit.getProperties().remove(
+				WorkspacesCommandHandler.PROPERTY_SETS);
+
+		CyCriteriaset.criteriaNetworkNodesMap.clear();
+		CyCriteriaset.criteriaRowsMap.clear();
+		CyCriteriaset.networkCriteriasetMap.clear();
+		CyCriteriaset.criteriaNameMap.clear();
+
 	}
 
 	public void propertyChange(PropertyChangeEvent evt) {
@@ -193,9 +207,12 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				/*
 				 * and restore network-criteria map from prop file
 				 */
-				CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(network);
-				if (Cytoscape.viewExists(network.getIdentifier())) {
-					WorkspacesCommandHandler.criteriaMapperApplySet(cset, network);
+				CyCriteriaset cset = CyCriteriaset
+						.getNetworkCriteriaset(network);
+				if (null != cset
+						&& Cytoscape.viewExists(network.getIdentifier())) {
+					WorkspacesCommandHandler.criteriaMapperApplySet(cset,
+							network);
 				}
 			}
 		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {

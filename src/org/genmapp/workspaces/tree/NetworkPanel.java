@@ -445,7 +445,7 @@ public class NetworkPanel extends JPanel
 				WorkspacesPanel.getCriteriaTreePanel()
 						.focusNode(cset.getName());
 			}
-			CriteriasetPanel.getTreeTable().getTree().updateUI();
+			//CriteriasetPanel.getTreeTable().getTree().updateUI();
 
 			// and manually update network view / vizmapper
 			/*

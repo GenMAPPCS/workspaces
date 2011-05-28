@@ -396,7 +396,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 			// (3) deleting an existing set
 			CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(setName);
-			cset.deleteCyCriteriaset();
+			cset.deleteCriteriaset();
 			return "Criteria " + setName + " removed.";
 		} else {
 			return null;

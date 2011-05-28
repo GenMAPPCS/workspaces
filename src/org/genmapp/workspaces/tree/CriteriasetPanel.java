@@ -520,7 +520,7 @@ public class CriteriasetPanel extends JPanel
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
 			} else if (DESTROY_CRITERIA.equals(label)) {
 				CyCriteriaset.criteriaNameMap.get(node.getID())
-						.deleteCyCriteriaset();
+						.deleteCriteriaset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				System.out.println("create network");
 				createNetworkFromCriteria(node.getID()); // TODO
