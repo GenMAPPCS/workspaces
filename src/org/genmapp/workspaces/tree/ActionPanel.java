@@ -268,7 +268,8 @@ public class ActionPanel extends JPanel
 	}
 
 	public void mouseClicked(MouseEvent e) {
-
+		System.out.println("ACTION: " + e.getButton() + e.getSource()
+				+ e.getClickCount());
 		if (e.getSource().equals(goButton) && goButton.isEnabled()) {
 			// do stuff
 			String action = ((CyAction) actionCombobox.getSelectedItem())
@@ -292,6 +293,12 @@ public class ActionPanel extends JPanel
 
 				// now, open the new session file
 				OpenSessionAction osa = new OpenSessionAction();
+				
+				/*
+				 * TODO: Apparently this event is triggered 3x and causes NPEs.
+				 * May need to add greenlight/sleep() strategy here to avoid
+				 * consecutive events. Ugh...
+				 */
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
 
@@ -311,7 +318,7 @@ public class ActionPanel extends JPanel
 				CyNetworkView cnv = Cytoscape.getCurrentNetworkView();
 				if (null == cnv)
 					return;
-				System.out.println("CNV: "+cnv.getIdentifier());
+				System.out.println("CNV: " + cnv.getIdentifier());
 				TaskManager.executeTask(new LayoutTask(CyLayouts
 						.getLayout("force-directed"), cnv), LayoutTask
 						.getDefaultTaskConfig());

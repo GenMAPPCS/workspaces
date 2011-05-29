@@ -525,6 +525,7 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void onSelectEvent(SelectEvent event) {
+		//THIS METHOD IS NEVER CALLED!?
 		if (event.getTargetType() == SelectEvent.SINGLE_NODE
 				|| event.getTargetType() == SelectEvent.NODE_SET) {
 			final Set<Node> selectedNodes = (Set<Node>) Cytoscape
@@ -599,7 +600,7 @@ public class NetworkPanel extends JPanel
 		private void maybeShowPopup(MouseEvent e) {
 			// check for the popup type
 			if (e.isPopupTrigger()) {
-				// get the row where the mouse-click originated
+				// get the selected rows
 				final int[] nselected = treeTable.getSelectedRows();
 
 				if (nselected != null && nselected.length != 0) {

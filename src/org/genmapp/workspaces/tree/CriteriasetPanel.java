@@ -40,6 +40,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
@@ -80,6 +81,8 @@ public class CriteriasetPanel extends JPanel
 	private static final int PANEL_PREFFERED_WIDTH = 250;
 
 	private static final int DEF_ROW_HEIGHT = 20;
+
+	private static boolean greenlight = true;
 
 	// Make this panel as a source of events.
 	private final SwingPropertyChangeSupport pcs;
@@ -159,9 +162,10 @@ public class CriteriasetPanel extends JPanel
 		JScrollPane scroll = new JScrollPane(treeTable);
 		this.add(scroll);
 
-		// this mouse listener listens for the right-click event and will show
-		// the pop-up
-		// window when that occurrs
+		/*
+		 * This mouse listener listens for the right-click event and will show
+		 * the pop-up window when that occurrs
+		 */
 		treeTable.addMouseListener(new PopupListener());
 
 		// create and populate the popup window
@@ -353,18 +357,43 @@ public class CriteriasetPanel extends JPanel
 	public void valueChanged(TreeSelectionEvent e) {
 		/*
 		 * NOTE: Every time user select an item, this method is called 3 times
-		 * and the code below is run twice. It's just an unfortunate fact of
-		 * life...
+		 * and the code below is run twice (sometimes 2x). It's just an
+		 * unfortunate fact of life...
 		 */
-		JTree mtree = treeTable.getTree();
+		if (greenlight) {
 
-		// Only if single criteria selected...
-		if (mtree.getSelectionCount() == 1) {
-			Set<CyNetwork> networks = new HashSet<CyNetwork>(Cytoscape
-					.getSelectedNetworks());
-			applyCriteriasetToNetworks(networks);
+			// block immediate redundant calls;
+			greenlight = false;
+
+			/*
+			 * Start a thread to delay reset of this code by ~300 msec, so that
+			 * it's only run once no matter how many times it's called.
+			 */
+			SwingWorker<Boolean, Void> workerA = new SwingWorker<Boolean, Void>() {
+
+				public Boolean doInBackground() {
+					// System.out.println("working");
+					try {
+						Thread.sleep(300);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					/*
+					 * invokeLater() avoids an NPE related to BasicTableUI when
+					 * two consecutive calls occur outside of 300ms hold.
+					 */
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							Set<CyNetwork> networks = new HashSet<CyNetwork>(
+									Cytoscape.getSelectedNetworks());
+							applyCriteriasetToNetworks(networks);
+						}
+					});
+					return true;
+				}
+			};
+			workerA.execute();
 		}
-
 	}
 
 	/**
@@ -373,8 +402,10 @@ public class CriteriasetPanel extends JPanel
 	 * selected.
 	 */
 	private void applyCriteriasetToNetworks(Set<CyNetwork> networkList) {
-		// sets the "current" criteriaset based on last node in the tree
-		// selected
+
+		// reset hold on valueChanged() events
+		greenlight = true;
+		
 		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
 				.getLastSelectedPathComponent();
 		if (node == null || node.getUserObject() == null)
@@ -416,6 +447,7 @@ public class CriteriasetPanel extends JPanel
 	 */
 	public void onSelectEvent(SelectEvent event) {
 		// TODO is this the right method to call?
+		// THIS METHOD IS NEVER CALLED!?
 		System.out.println("onSelectEvent: " + event.getSource());
 		treeTable.getTree().updateUI();
 	}
@@ -456,24 +488,44 @@ public class CriteriasetPanel extends JPanel
 		private void maybeShowPopup(MouseEvent e) {
 			// check for the popup type
 			if (e.isPopupTrigger()) {
-				/*
-				 * Perform integer division to set row based on right-click
-				 * action
-				 */
-				int rowY = e.getY() / DEF_ROW_HEIGHT;
-				treeTable.getTree().setSelectionRow(rowY);
+				// get the selected rows
+				final int[] nselected = treeTable.getSelectedRows();
 
-				// get the row where the mouse-click originated
-				final int selected = treeTable.getSelectedRow();
+				if (nselected != null && nselected.length != 0) {
 
-				if (selected >= 0) {
+					// check for views on all selected networks
+					boolean enableViewRelatedMenu = true;
+					List<CyNetwork> networks = Cytoscape.getSelectedNetworks();
+					for (CyNetwork net : networks) {
+						if (!Cytoscape.viewExists(net.getIdentifier())) {
+							enableViewRelatedMenu = false;
+						}
+					}
+
+					// get clicked row even if multiple selected
+					// int rowY = e.getY() / DEF_ROW_HEIGHT;
+
+					// set menu items defaults
 					editCriteriaItem.setEnabled(true);
 					destroyCriteriaItem.setEnabled(true);
 					applyCriteriaItem.setEnabled(true);
 					createNetworkItem.setEnabled(true);
+					selectNodesItem.setEnabled(true);
+					combineMenu.setEnabled(false);
 
+					// enable items based on multiple selection
+					if (nselected.length > 1) {
+						combineMenu.setEnabled(true);
+						editCriteriaItem.setEnabled(false);
+						createNetworkItem.setEnabled(false);
+						selectNodesItem.setEnabled(false);
+					}
+
+					// pop it!
 					popup.show(e.getComponent(), e.getX(), e.getY());
+
 				}
+
 			}
 		}
 	}
