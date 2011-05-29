@@ -65,6 +65,7 @@ import cytoscape.Cytoscape;
 import cytoscape.data.SelectEvent;
 import cytoscape.logger.CyLogger;
 import cytoscape.util.swing.JTreeTable;
+import cytoscape.view.CyNetworkView;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
 
 /**
@@ -119,8 +120,7 @@ public class CriteriasetPanel extends JPanel
 		criteriaTreeTableModel = new CriteriasetTreeTableModel(root);
 
 		treeTable = new JTreeTable(criteriaTreeTableModel);
-		treeTable
-				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		initialize();
 
@@ -169,7 +169,7 @@ public class CriteriasetPanel extends JPanel
 		treeTable.addMouseListener(new PopupListener());
 
 		// create and populate the popup window
-		combineMenu = new JMenu("Combine Criteria");
+		combineMenu = new JMenu("Combine All Criteria");
 		popup = new JPopupMenu();
 		destroyCriteriaItem = new JMenuItem(
 				PopupActionListener.DESTROY_CRITERIA);
@@ -190,16 +190,17 @@ public class CriteriasetPanel extends JPanel
 		pieCriteriaItem.addActionListener(popupActionListener);
 		stripeCriteriaItem.addActionListener(popupActionListener);
 		clearCombinedCriteriaItem.addActionListener(popupActionListener);
-		combineMenu.add(pieCriteriaItem);
-		combineMenu.add(stripeCriteriaItem);
-		combineMenu.add(clearCombinedCriteriaItem);
 		popup.add(applyCriteriaItem);
 		popup.add(editCriteriaItem);
-		popup.add(combineMenu);
 		popup.add(destroyCriteriaItem);
 		popup.addSeparator();
 		popup.add(selectNodesItem);
 		popup.add(createNetworkItem);
+		popup.addSeparator();
+		combineMenu.add(pieCriteriaItem);
+		combineMenu.add(stripeCriteriaItem);
+		popup.add(combineMenu);
+		popup.add(clearCombinedCriteriaItem);
 	}
 
 	public void resetTable() {
@@ -312,7 +313,7 @@ public class CriteriasetPanel extends JPanel
 	 * @param id
 	 *            DOCUMENT ME!
 	 */
-	public void focusNode(String id) {
+	public void focusCriteriasetNode(String id) {
 		// logger.info("CriteriasetPanel: focus criteriaset node");
 		DefaultMutableTreeNode node = getTreeNode(id);
 
@@ -405,7 +406,7 @@ public class CriteriasetPanel extends JPanel
 
 		// reset hold on valueChanged() events
 		greenlight = true;
-		
+
 		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
 				.getLastSelectedPathComponent();
 		if (node == null || node.getUserObject() == null)
@@ -420,6 +421,18 @@ public class CriteriasetPanel extends JPanel
 						selectedCriteriaset, network);
 			}
 		}
+		/*
+		 * Reset current network and view based on NetworkPanel selection. This
+		 * is necessary after "Apply To All", which leaves the last network
+		 * handled as "current" even though it's not "selected". Not a good
+		 * state to be in...
+		 */
+		String netname = WorkspacesPanel.getNetworkTreePanel()
+				.getFocusNetworkNode();
+		CyNetwork net = Cytoscape.getNetwork(netname);
+		CyNetworkView netview = Cytoscape.getNetworkView(net.getIdentifier());
+		Cytoscape.setCurrentNetwork(net.getIdentifier());
+		Cytoscape.setCurrentNetworkView(netview.getIdentifier());
 	}
 
 	/**
@@ -494,16 +507,22 @@ public class CriteriasetPanel extends JPanel
 				if (nselected != null && nselected.length != 0) {
 
 					// check for views on all selected networks
-					boolean enableViewRelatedMenu = true;
-					List<CyNetwork> networks = Cytoscape.getSelectedNetworks();
-					for (CyNetwork net : networks) {
-						if (!Cytoscape.viewExists(net.getIdentifier())) {
-							enableViewRelatedMenu = false;
-						}
-					}
+					// boolean enableViewRelatedMenu = true;
+					// List<CyNetwork> networks =
+					// Cytoscape.getSelectedNetworks();
+					// for (CyNetwork net : networks) {
+					// if (!Cytoscape.viewExists(net.getIdentifier())) {
+					// enableViewRelatedMenu = false;
+					// }
+					// }
 
-					// get clicked row even if multiple selected
-					// int rowY = e.getY() / DEF_ROW_HEIGHT;
+					/*
+					 * Get clicked row and explicitly select it to cover the
+					 * case of right-click. Works even if using
+					 * multiple-selection model.
+					 */
+					int rowY = e.getY() / DEF_ROW_HEIGHT;
+					treeTable.getTree().setSelectionRow(rowY);
 
 					// set menu items defaults
 					editCriteriaItem.setEnabled(true);
@@ -511,15 +530,17 @@ public class CriteriasetPanel extends JPanel
 					applyCriteriaItem.setEnabled(true);
 					createNetworkItem.setEnabled(true);
 					selectNodesItem.setEnabled(true);
-					combineMenu.setEnabled(false);
+					combineMenu.setEnabled(true);
+					clearCombinedCriteriaItem.setEnabled(true);
 
 					// enable items based on multiple selection
-					if (nselected.length > 1) {
-						combineMenu.setEnabled(true);
-						editCriteriaItem.setEnabled(false);
-						createNetworkItem.setEnabled(false);
-						selectNodesItem.setEnabled(false);
-					}
+					// if (nselected.length > 1) {
+					// combineMenu.setEnabled(true);
+					// clearCombinedCriteriaItem.setEnabled(true);
+					// editCriteriaItem.setEnabled(false);
+					// createNetworkItem.setEnabled(false);
+					// selectNodesItem.setEnabled(false);
+					// }
 
 					// pop it!
 					popup.show(e.getComponent(), e.getX(), e.getY());

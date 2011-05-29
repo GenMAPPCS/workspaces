@@ -728,10 +728,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 	public static void pieCriteria() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("file",
-				"/Applications/Cytoscape_v2.8.1/nodecharts-pie-demo-run.txt");
+		args.put("attributelist", "glu2_Label1,gal1_Label1");
+		args.put("nodelist", "all");
+		args.put("scale", 1.0);
+		args.put("showlabels", false);
 		try {
-			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+			CyCommandResult re = CyCommandManager.execute("nodecharts", "pie",
 					args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block

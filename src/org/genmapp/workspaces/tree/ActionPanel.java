@@ -268,8 +268,6 @@ public class ActionPanel extends JPanel
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		System.out.println("ACTION: " + e.getButton() + e.getSource()
-				+ e.getClickCount());
 		if (e.getSource().equals(goButton) && goButton.isEnabled()) {
 			// do stuff
 			String action = ((CyAction) actionCombobox.getSelectedItem())

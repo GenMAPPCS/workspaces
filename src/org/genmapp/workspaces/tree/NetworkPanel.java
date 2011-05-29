@@ -379,6 +379,19 @@ public class NetworkPanel extends JPanel
 	}
 
 	/**
+	 * Returns name of network currently in focus in Network Panel. If multiple
+	 * selected, it returns the "first" in the list, i.e., the one closest to
+	 * the root and corresponding to Cytoscape's selection/focus model.
+	 * 
+	 * @return
+	 */
+	public String getFocusNetworkNode() {
+		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
+				.getLastSelectedPathComponent();
+		return node.getID();
+	}
+
+	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param network_id
@@ -469,8 +482,8 @@ public class NetworkPanel extends JPanel
 			CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(Cytoscape
 					.getNetwork(net));
 			if (null != cset) {
-				WorkspacesPanel.getCriteriaTreePanel()
-						.focusNode(cset.getName());
+				WorkspacesPanel.getCriteriaTreePanel().focusCriteriasetNode(
+						cset.getName());
 			}
 			// CriteriasetPanel.getTreeTable().getTree().updateUI();
 
@@ -525,7 +538,7 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void onSelectEvent(SelectEvent event) {
-		//THIS METHOD IS NEVER CALLED!?
+		// THIS METHOD IS NEVER CALLED!?
 		if (event.getTargetType() == SelectEvent.SINGLE_NODE
 				|| event.getTargetType() == SelectEvent.NODE_SET) {
 			final Set<Node> selectedNodes = (Set<Node>) Cytoscape
@@ -756,7 +769,7 @@ public class NetworkPanel extends JPanel
 							WorkspacesCommandHandler.COLLAPSE_ALL);
 
 					// TODO: fix bug related to independent layout of nested and
-					// 		expanded states
+					// expanded states
 					// layoutMetanodeChildren(network);
 				}
 
