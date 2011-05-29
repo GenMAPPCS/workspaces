@@ -61,12 +61,18 @@ import org.genmapp.workspaces.utils.DatasetMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNetworkTitleChange;
+import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.actions.ApplyVisualStyleAction;
 import cytoscape.actions.CreateNetworkViewAction;
 import cytoscape.data.SelectEvent;
 import cytoscape.data.SelectEventListener;
+import cytoscape.groups.CyGroup;
+import cytoscape.groups.CyGroupManager;
+import cytoscape.layout.CyLayouts;
+import cytoscape.layout.LayoutTask;
 import cytoscape.logger.CyLogger;
+import cytoscape.task.util.TaskManager;
 import cytoscape.util.CyNetworkNaming;
 import cytoscape.util.swing.JTreeTable;
 import cytoscape.view.CyNetworkView;
@@ -719,9 +725,8 @@ public class NetworkPanel extends JPanel
 				CyNetworkNaming.editNetworkTitle(cyNetwork);
 				Cytoscape.getDesktop().getNetworkPanel().updateTitle(cyNetwork);
 			} else if (METANODES_COLLAPSED.equals(label)) {
-				System.out.println("COLLAPSE!");
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(false,
-						null, null, null);
+						100.0, null, null);
 				WorkspacesCommandHandler
 						.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 				final List<CyNetwork> selected = Cytoscape
@@ -735,11 +740,10 @@ public class NetworkPanel extends JPanel
 							WorkspacesCommandHandler.COLLAPSE_ALL);
 				}
 			} else if (METANODES_NESTED.equals(label)) {
-				System.out.println("NEST!");
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(true,
-						null, null, null);
+						0.0, null, null);
 				WorkspacesCommandHandler
-				.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
+						.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
@@ -749,21 +753,50 @@ public class NetworkPanel extends JPanel
 					WorkspacesCommandHandler.allMetanodes(network
 							.getIdentifier(),
 							WorkspacesCommandHandler.COLLAPSE_ALL);
+
+					// TODO: fix bug related to independent layout of nested and
+					// 		expanded states
+					// layoutMetanodeChildren(network);
 				}
 
 			} else if (METANODES_EXPANDED.equals(label)) {
-				System.out.println("EXPAND!");
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
 					WorkspacesCommandHandler.allMetanodes(network
 							.getIdentifier(),
 							WorkspacesCommandHandler.EXPAND_ALL);
+
+					// TODO: add support to handle layout of expanded children
+					// layoutMetanodeChildren(network);
 				}
 			} else {
 				CyLogger.getLogger().warn(
 						"Unexpected network panel popup option");
 			}
+		}
+
+		private void layoutMetanodeChildren(CyNetwork net) {
+			List<String> metanodeList = WorkspacesCommandHandler
+					.listMetanodes(net);
+			for (String mn : metanodeList) {
+				CyNode cn = Cytoscape.getCyNode(mn, false);
+				CyGroup gn = CyGroupManager.getCyGroup(cn);
+				CyNetwork gnet = (CyNetwork) gn.getGroupNode()
+						.getNestedNetwork();
+				CyNetworkView gnv = Cytoscape.getNetworkView(gnet
+						.getIdentifier());
+				Cytoscape.setCurrentNetworkView(gnv.getIdentifier());
+
+				TaskManager.executeTask(new LayoutTask(CyLayouts
+						.getLayout("circular"), gnv), LayoutTask
+						.getDefaultTaskConfig());
+
+				// TODO: what we really want is vertical stack applied to nested
+				// or expanded children
+
+			}
+
 		}
 
 		/**

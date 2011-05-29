@@ -378,7 +378,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			showMessage("Update CriteriaSets: save new set " + setName);
 
 			CyCriteriaset cset = new CyCriteriaset(setName, setParameters);
-			CyCriteriaset.setNetworkCriteriaset(Cytoscape.getCurrentNetwork(), cset);
+			CyCriteriaset.setNetworkCriteriaset(Cytoscape.getCurrentNetwork(),
+					cset);
 			return "Criteria " + setName + " added.";
 
 		} else if (isExistingSet && setParameters != null) {
@@ -440,8 +441,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (setParams.length > 0) {
 			mapto = setParams[0];
 		}
-		System.out.println(cset.getName() + ":"
-				+ network.getIdentifier() + ":" + mapto);
+		System.out.println(cset.getName() + ":" + network.getIdentifier() + ":"
+				+ mapto);
 		for (int i = 1; i < setParams.length; i++) {
 			String[] temp = setParams[i].split(":");
 			if (temp.length != 3) {
@@ -472,8 +473,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		//update counts and color highlight
+
+		// update counts and color highlight
 		cset.collectNetworkCounts();
 		// track last applied cset per network
 		CyCriteriaset.setNetworkCriteriaset(network, cset);
@@ -592,8 +593,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
 					SETDEFAULTAPP, args);
-			System.out.println("RE: " + re.getErrors().toString()
-					+ re.getMessages().toString());
+			// System.out.println("RE: " + re.getErrors().toString()
+			// + re.getMessages().toString());
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -648,8 +649,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	}
 
 	/**
-	 * @param id network id
-	 * @param function "expand all" or "collapse all"
+	 * @param id
+	 *            network id
+	 * @param function
+	 *            "expand all" or "collapse all"
 	 */
 	public static void allMetanodes(String id, String function) {
 		Map<String, Object> args = new HashMap<String, Object>();
@@ -665,13 +668,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	/**
-	 * @param scope "apply to all" or "apply to selected"
+	 * @param scope
+	 *            "apply to all" or "apply to selected"
 	 */
-	public static void applyMetanodeSettings(String scope){
+	public static void applyMetanodeSettings(String scope) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		if (scope.equals(ALL_METANODES) || scope.equals(SELECTED_METANODES)){
+		if (scope.equals(ALL_METANODES) || scope.equals(SELECTED_METANODES)) {
 			try {
 				CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
 						scope, args);
@@ -683,6 +687,27 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				e1.printStackTrace();
 			}
 		}
+	}
+
+	public static List<String> listMetanodes(CyNetwork net) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		if (null != net)
+			args.put(ARG_NETWORK, net.getIdentifier());
+
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+					"list metanodes", args);
+			
+			return (List<String>) re.getResult();
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return null;
 	}
 
 	public static void clearCombinedCriteria() {

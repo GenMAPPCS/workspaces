@@ -346,30 +346,6 @@ public abstract class DatasetMapping {
 		 * add a child crashes with NPE.
 		 */
 		collapseAllMetanodes(network);
-		
-		// Position children nodes in nested network view
-//		network.unselectAllNodes();
-//		network.setSelectedNodeState(gn.getNodes(), true);
-//		AlignVerticalAction ava = new AlignVerticalAction(cnv);
-//		ava.actionPerformed(new ActionEvent(ava,
-//				ActionEvent.ACTION_PERFORMED, "Vertical"));
-		
-		//TODO: do this separate from mapping
-//		CyNetwork gnet = (CyNetwork)  gn.getGroupNode().getNestedNetwork();
-//		System.out.println("GN: "+gnet.getIdentifier());
-//		CyNetworkView gnv = Cytoscape.getNetworkView(gnet.getIdentifier());
-//		System.out.println("GNV: "+gnv.getIdentifier());
-//		Cytoscape.setCurrentNetworkView(gnv.getIdentifier());
-		
-		
-//		TaskManager.executeTask(new LayoutTask(CyLayouts
-//				.getLayout("circular"), gnv), LayoutTask
-//				.getDefaultTaskConfig());
-		
-		//TODO: what we really want is vertical stack
-//		WorkspacesCommandHandler.selectedCircleLayout();
-		
-//		network.unselectAllNodes();
 
 		return true;
 	}
