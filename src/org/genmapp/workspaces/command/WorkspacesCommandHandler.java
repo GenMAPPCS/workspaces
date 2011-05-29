@@ -69,6 +69,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String MODIFYAPP = "modify appearance";
 	public static final String EXPAND_ALL = "expand all";
 	public static final String COLLAPSE_ALL = "collapse all";
+	public static final String ALL_METANODES = "apply to all";
+	public static final String SELECTED_METANODES = "apply to selected";
 	public static final String ARG_METANODE_NAME = "metanode";
 	public static final String ARG_NODE = "node";
 	public static final String ARG_NODE_LIST = "nodelist";
@@ -579,10 +581,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static void setDefaultMetanodeAppearance(Boolean usenestednetworks,
 			Double opacity, String nodechart, String chartattr) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());
-		args.put(ARG_OPACITY, opacity);
-		args.put(ARG_NODECHART, nodechart);
-		args.put(ARG_CHARTATTR, chartattr);
+		if (null != usenestednetworks)
+			args.put(ARG_USENESTEDNETWORKS, usenestednetworks.toString());
+		if (null != opacity)
+			args.put(ARG_OPACITY, opacity);
+		if (null != nodechart)
+			args.put(ARG_NODECHART, nodechart);
+		if (null != chartattr)
+			args.put(ARG_CHARTATTR, chartattr);
 		try {
 			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
 					SETDEFAULTAPP, args);
@@ -641,6 +647,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * @param id network id
+	 * @param function "expand all" or "collapse all"
+	 */
 	public static void allMetanodes(String id, String function) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_NETWORKID, id);
@@ -653,6 +663,25 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		} catch (RuntimeException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+		}
+	}
+	
+	/**
+	 * @param scope "apply to all" or "apply to selected"
+	 */
+	public static void applyMetanodeSettings(String scope){
+		Map<String, Object> args = new HashMap<String, Object>();
+		if (scope.equals(ALL_METANODES) || scope.equals(SELECTED_METANODES)){
+			try {
+				CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
+						scope, args);
+			} catch (CyCommandException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (RuntimeException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 	}
 

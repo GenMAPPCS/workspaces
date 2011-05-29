@@ -53,6 +53,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -102,6 +103,10 @@ public class NetworkPanel extends JPanel
 	private JMenuItem destroyViewItem;
 	private JMenuItem destroyNetworkItem;
 	private JMenuItem editNetworkTitle;
+	private JMenuItem viewMetanodesAsSubMenu;
+	private JMenuItem metanodesCollapsedItem;
+	private JMenuItem metanodesNestedItem;
+	private JMenuItem metanodesExpandedItem;
 	private JMenuItem applyVisualStyleMenu;
 
 	private BiModalJSplitPane split;
@@ -184,6 +189,16 @@ public class NetworkPanel extends JPanel
 		createViewItem = new JMenuItem(PopupActionListener.CREATE_VIEW);
 		destroyViewItem = new JMenuItem(PopupActionListener.DESTROY_VIEW);
 		destroyNetworkItem = new JMenuItem(PopupActionListener.DESTROY_NETWORK);
+
+		viewMetanodesAsSubMenu = new JMenu(
+				PopupActionListener.VIEW_METANODES_AS);
+		metanodesCollapsedItem = new JMenuItem(
+				PopupActionListener.METANODES_COLLAPSED);
+		metanodesNestedItem = new JMenuItem(
+				PopupActionListener.METANODES_NESTED);
+		metanodesExpandedItem = new JMenuItem(
+				PopupActionListener.METANODES_EXPANDED);
+
 		applyVisualStyleMenu = new JMenu(PopupActionListener.APPLY_VISUAL_STYLE);
 		// action listener which performs the tasks associated with the popup
 		popupActionListener = new PopupActionListener();
@@ -191,12 +206,18 @@ public class NetworkPanel extends JPanel
 		createViewItem.addActionListener(popupActionListener);
 		destroyViewItem.addActionListener(popupActionListener);
 		destroyNetworkItem.addActionListener(popupActionListener);
-		applyVisualStyleMenu.addActionListener(popupActionListener);
+		metanodesCollapsedItem.addActionListener(popupActionListener);
+		metanodesNestedItem.addActionListener(popupActionListener);
+		metanodesExpandedItem.addActionListener(popupActionListener);
 		popup.add(editNetworkTitle);
 		popup.add(createViewItem);
 		popup.add(destroyViewItem);
 		popup.add(destroyNetworkItem);
 		popup.addSeparator();
+		viewMetanodesAsSubMenu.add(metanodesCollapsedItem);
+		viewMetanodesAsSubMenu.add(metanodesNestedItem);
+		viewMetanodesAsSubMenu.add(metanodesExpandedItem);
+		popup.add(viewMetanodesAsSubMenu);
 		popup.add(applyVisualStyleMenu);
 
 	}
@@ -445,7 +466,7 @@ public class NetworkPanel extends JPanel
 				WorkspacesPanel.getCriteriaTreePanel()
 						.focusNode(cset.getName());
 			}
-			//CriteriasetPanel.getTreeTable().getTree().updateUI();
+			// CriteriasetPanel.getTreeTable().getTree().updateUI();
 
 			// and manually update network view / vizmapper
 			/*
@@ -454,7 +475,6 @@ public class NetworkPanel extends JPanel
 			 * style.
 			 */
 			Cytoscape.getNetworkView(net).redrawGraph(true, true);
-
 		} else {
 			// do nothing... or maybe deselect datasets and criteriaset?
 		}
@@ -601,18 +621,20 @@ public class NetworkPanel extends JPanel
 					if (selectedItemCount == 1) {
 						editNetworkTitle.setEnabled(true);
 						popupActionListener.setActiveNetwork(cyNetwork);
-					} else
+					} else {
 						editNetworkTitle.setEnabled(false);
-
+					}
 					if (enableViewRelatedMenu) {
 						// At least one selected network has a view.
 						createViewItem.setEnabled(true);
 						destroyViewItem.setEnabled(true);
+						viewMetanodesAsSubMenu.setEnabled(true);
 						applyVisualStyleMenu.setEnabled(true);
 					} else {
 						// None of the selected networks has view.
 						createViewItem.setEnabled(true);
 						destroyViewItem.setEnabled(false);
+						viewMetanodesAsSubMenu.setEnabled(false);
 						applyVisualStyleMenu.setEnabled(false);
 					}
 
@@ -649,6 +671,10 @@ public class NetworkPanel extends JPanel
 		public static final String CREATE_VIEW = "Create View";
 		public static final String DESTROY_NETWORK = "Destroy Network";
 		public static final String EDIT_NETWORK_TITLE = "Edit Network Title";
+		public static final String VIEW_METANODES_AS = "View Metanodes As...";
+		public static final String METANODES_COLLAPSED = "Collapsed";
+		public static final String METANODES_EXPANDED = "Expanded";
+		public static final String METANODES_NESTED = "Nested";
 		public static final String APPLY_VISUAL_STYLE = "Apply Visual Style";
 
 		/**
@@ -692,6 +718,48 @@ public class NetworkPanel extends JPanel
 			} else if (EDIT_NETWORK_TITLE.equals(label)) {
 				CyNetworkNaming.editNetworkTitle(cyNetwork);
 				Cytoscape.getDesktop().getNetworkPanel().updateTitle(cyNetwork);
+			} else if (METANODES_COLLAPSED.equals(label)) {
+				System.out.println("COLLAPSE!");
+				WorkspacesCommandHandler.setDefaultMetanodeAppearance(false,
+						null, null, null);
+				WorkspacesCommandHandler
+						.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
+				final List<CyNetwork> selected = Cytoscape
+						.getSelectedNetworks();
+				for (final CyNetwork network : selected) {
+					WorkspacesCommandHandler.allMetanodes(network
+							.getIdentifier(),
+							WorkspacesCommandHandler.EXPAND_ALL);
+					WorkspacesCommandHandler.allMetanodes(network
+							.getIdentifier(),
+							WorkspacesCommandHandler.COLLAPSE_ALL);
+				}
+			} else if (METANODES_NESTED.equals(label)) {
+				System.out.println("NEST!");
+				WorkspacesCommandHandler.setDefaultMetanodeAppearance(true,
+						null, null, null);
+				WorkspacesCommandHandler
+				.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
+				final List<CyNetwork> selected = Cytoscape
+						.getSelectedNetworks();
+				for (final CyNetwork network : selected) {
+					WorkspacesCommandHandler.allMetanodes(network
+							.getIdentifier(),
+							WorkspacesCommandHandler.EXPAND_ALL);
+					WorkspacesCommandHandler.allMetanodes(network
+							.getIdentifier(),
+							WorkspacesCommandHandler.COLLAPSE_ALL);
+				}
+
+			} else if (METANODES_EXPANDED.equals(label)) {
+				System.out.println("EXPAND!");
+				final List<CyNetwork> selected = Cytoscape
+						.getSelectedNetworks();
+				for (final CyNetwork network : selected) {
+					WorkspacesCommandHandler.allMetanodes(network
+							.getIdentifier(),
+							WorkspacesCommandHandler.EXPAND_ALL);
+				}
 			} else {
 				CyLogger.getLogger().warn(
 						"Unexpected network panel popup option");
