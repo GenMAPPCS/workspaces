@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JOptionPane;
+
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 
@@ -122,10 +124,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		return execute(command, createKVMap(args));
 	}
 	public static void showMessage(String message) {
-		/*
-		 * JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
-		 * JOptionPane.ERROR_MESSAGE );
-		 */
+		
+//		 JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
+//		 JOptionPane.ERROR_MESSAGE );
+		 
 	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
@@ -726,12 +728,20 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void pieCriteria() {
+	public static void pieCriteria(List<String> nodelist, List<String> colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("attributelist", "glu2_Label1,gal1_Label1");
-		args.put("nodelist", "all");
-		args.put("scale", 1.0);
-		args.put("showlabels", false);
+		
+		//construct even-distribution valuelist to match colorlist
+		List<String> valuelist = new ArrayList<String>();
+		for (int i = 0; i < colorlist.size(); i++){
+			valuelist.add("1");
+		}
+		args.put("nodelist", nodelist);
+		args.put("colorlist", colorlist);
+		args.put("valuelist", valuelist);
+		args.put("scale", "1.0");
+		args.put("showlabels", "false");
+		args.put("arcstart", "90");
 		try {
 			CyCommandResult re = CyCommandManager.execute("nodecharts", "pie",
 					args);
@@ -744,13 +754,21 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void stripeCriteria() {
+	public static void stripeCriteria(List<String> nodelist, List<String> colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args
-				.put("file",
-						"/Applications/Cytoscape_v2.8.1/nodecharts-stripe-demo-run.txt");
+		
+		//construct even-distribution valuelist to match colorlist
+		List<String> valuelist = new ArrayList<String>();
+		for (int i = 0; i < colorlist.size(); i++){
+			valuelist.add("1");
+		}
+		args.put("nodelist", nodelist);
+		args.put("colorlist", colorlist);
+		args.put("valuelist", valuelist);
+		args.put("scale", "1.0");
+		args.put("showlabels", "false");
 		try {
-			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+			CyCommandResult re = CyCommandManager.execute("nodecharts", "stripe",
 					args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block

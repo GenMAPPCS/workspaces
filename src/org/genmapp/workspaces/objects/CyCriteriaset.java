@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.commons.lang.StringUtils;
 import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
@@ -86,7 +88,7 @@ public class CyCriteriaset {
 
 		this.rows = paramArray.length - 1; // don't count mapTo
 		criteriaRowsMap.put(this.getName(), this.rows);
-		//System.out.println("SET: " + this.name + ":" + paramArray[1]);
+		// System.out.println("SET: " + this.name + ":" + paramArray[1]);
 	}
 
 	public String[] getCriteriaParams() {
@@ -104,7 +106,7 @@ public class CyCriteriaset {
 	/**
 	 * Clears all criteriaset data, including Cytoscape properties, Workspaces
 	 * panel, and internal HashMaps. Also resets visual styles to "base" style
-	 * and removes it from the catalog. 
+	 * and removes it from the catalog.
 	 */
 	public void deleteCriteriaset() {
 
@@ -133,7 +135,7 @@ public class CyCriteriaset {
 
 		}
 
-		//remove from props
+		// remove from props
 		String setList = CytoscapeInit.getProperties().getProperty(
 				WorkspacesCommandHandler.PROPERTY_SETS);
 		if (null != setList) {
@@ -148,7 +150,6 @@ public class CyCriteriaset {
 		}
 		CytoscapeInit.getProperties().remove(
 				WorkspacesCommandHandler.PROPERTY_SET_PREFIX + this.getName());
-	
 
 		// remove from panel
 		GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().removeItem(
@@ -159,21 +160,20 @@ public class CyCriteriaset {
 		criteriaNetworkNodesMap.remove(this.getName());
 
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public String getNodeAttribute() {
-		String[] split;
 		String nodeAttr = "";
-		for (String c : criteriaParams) {
+		if (rows > 1) {
+			nodeAttr = name + ":composite";
+		} else {
+			String[] split;
+			String c = criteriaParams[1];
 			split = c.split(":");
-			if (split.length < 3)
-				continue; // skip mapTo entry
-			nodeAttr = nodeAttr + name + "_" + split[1] + ":";
+			nodeAttr = nodeAttr + name + "_" + split[1];
 		}
-		// prune final ":"
-		nodeAttr = nodeAttr.substring(0, nodeAttr.length() - 1);
 		return nodeAttr;
 
 	}
@@ -201,9 +201,9 @@ public class CyCriteriaset {
 					}
 
 				} else if (rows > 1) {
-					Integer i = ca.getIntegerAttribute(n.getIdentifier(),
+					String s = ca.getStringAttribute(n.getIdentifier(),
 							nodeAttr);
-					if (i >= 0) {
+					if (!s.equals("null")) {
 						hitList.add(n);
 					}
 				}
@@ -228,8 +228,13 @@ public class CyCriteriaset {
 		// fill map
 		this.criteriaNetworkNodesMap.put(this.name, networkNodes);
 
-		CriteriasetPanel.getTreeTable().getTree().updateUI();
-		CriteriasetPanel.getTreeTable().updateUI();
+//		// invokeLater() avoids NPEs during busy times
+//		SwingUtilities.invokeLater(new Runnable() {
+//			public void run() {
+				CriteriasetPanel.getTreeTable().getTree().updateUI();
+				CriteriasetPanel.getTreeTable().updateUI();
+//			}
+//		});
 	}
 
 	/**

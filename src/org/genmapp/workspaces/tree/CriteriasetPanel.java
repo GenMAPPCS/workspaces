@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -62,11 +62,14 @@ import cytoscape.CyEdge;
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.data.SelectEvent;
 import cytoscape.logger.CyLogger;
 import cytoscape.util.swing.JTreeTable;
 import cytoscape.view.CyNetworkView;
 import cytoscape.view.cytopanels.BiModalJSplitPane;
+import cytoscape.visual.NodeShape;
+import cytoscape.visual.VisualPropertyType;
 
 /**
  * GUI component for managing network list in current session.
@@ -95,14 +98,12 @@ public class CriteriasetPanel extends JPanel
 	private PopupActionListener popupActionListener;
 
 	private JMenuItem destroyCriteriaItem;
-	private JMenuItem clearCombinedCriteriaItem;
 	private JMenuItem applyCriteriaItem;
 	private JMenuItem createNetworkItem;
 	private JMenuItem selectNodesItem;
-	private JMenu combineMenu;
 	private JMenuItem editCriteriaItem;
-	private JMenuItem pieCriteriaItem;
-	private JMenuItem stripeCriteriaItem;
+	private JMenuItem combineCriteriaItem;
+	private JMenuItem clearCombinedCriteriaItem;
 
 	private BiModalJSplitPane split;
 
@@ -169,7 +170,6 @@ public class CriteriasetPanel extends JPanel
 		treeTable.addMouseListener(new PopupListener());
 
 		// create and populate the popup window
-		combineMenu = new JMenu("Combine All Criteria");
 		popup = new JPopupMenu();
 		destroyCriteriaItem = new JMenuItem(
 				PopupActionListener.DESTROY_CRITERIA);
@@ -177,8 +177,8 @@ public class CriteriasetPanel extends JPanel
 		applyCriteriaItem = new JMenuItem(PopupActionListener.APPLY_CRITERIA);
 		createNetworkItem = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		selectNodesItem = new JMenuItem(PopupActionListener.SELECT_NODES);
-		pieCriteriaItem = new JMenuItem(PopupActionListener.PIE_CRITERIA);
-		stripeCriteriaItem = new JMenuItem(PopupActionListener.STRIPE_CRITERIA);
+		combineCriteriaItem = new JMenuItem(
+				PopupActionListener.COMBINE_CRITERIA);
 		clearCombinedCriteriaItem = new JMenuItem(
 				PopupActionListener.CLEAR_COMBINED_CRITERIA);
 		popupActionListener = new PopupActionListener();
@@ -187,8 +187,7 @@ public class CriteriasetPanel extends JPanel
 		applyCriteriaItem.addActionListener(popupActionListener);
 		createNetworkItem.addActionListener(popupActionListener);
 		selectNodesItem.addActionListener(popupActionListener);
-		pieCriteriaItem.addActionListener(popupActionListener);
-		stripeCriteriaItem.addActionListener(popupActionListener);
+		combineCriteriaItem.addActionListener(popupActionListener);
 		clearCombinedCriteriaItem.addActionListener(popupActionListener);
 		popup.add(applyCriteriaItem);
 		popup.add(editCriteriaItem);
@@ -197,9 +196,7 @@ public class CriteriasetPanel extends JPanel
 		popup.add(selectNodesItem);
 		popup.add(createNetworkItem);
 		popup.addSeparator();
-		combineMenu.add(pieCriteriaItem);
-		combineMenu.add(stripeCriteriaItem);
-		popup.add(combineMenu);
+		popup.add(combineCriteriaItem);
 		popup.add(clearCombinedCriteriaItem);
 	}
 
@@ -530,7 +527,7 @@ public class CriteriasetPanel extends JPanel
 					applyCriteriaItem.setEnabled(true);
 					createNetworkItem.setEnabled(true);
 					selectNodesItem.setEnabled(true);
-					combineMenu.setEnabled(true);
+					combineCriteriaItem.setEnabled(true);
 					clearCombinedCriteriaItem.setEnabled(true);
 
 					// enable items based on multiple selection
@@ -560,8 +557,7 @@ public class CriteriasetPanel extends JPanel
 
 		public static final String APPLY_CRITERIA = "Apply to All Networks";
 		public static final String EDIT_CRITERIA = "Edit Criteria";
-		public static final String PIE_CRITERIA = "Pie Criteria";
-		public static final String STRIPE_CRITERIA = "Stripe Criteria";
+		public static final String COMBINE_CRITERIA = "Combine All Criteria";
 		public static final String CLEAR_COMBINED_CRITERIA = "Clear Combined Criteria";
 		public static final String DESTROY_CRITERIA = "Destroy Criteria";
 		public static final String SELECT_NODES = "Select Nodes in Network";
@@ -607,12 +603,37 @@ public class CriteriasetPanel extends JPanel
 				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList,
 						true);
 				Cytoscape.getCurrentNetworkView().updateView();
-			} else if (PIE_CRITERIA.equals(label)) {
-				// pie
-				WorkspacesCommandHandler.pieCriteria();
-			} else if (STRIPE_CRITERIA.equals(label)) {
-				// stripe
-				WorkspacesCommandHandler.stripeCriteria();
+			} else if (COMBINE_CRITERIA.equals(label)) {
+				// collect nodelists and colorlists
+				List<String> nodelist = new ArrayList<String>();
+				List<String> colorlist = new ArrayList<String>();
+
+				// track nodes per colorlist to make more efficient cycommand
+				// calls to nodecharts
+				HashMap<List<String>, List<String>> colorlistNodes = new HashMap<List<String>, List<String>>();
+
+				for (String csetname : CyCriteriaset.criteriaNameMap.keySet()) {
+					String paramStr = CytoscapeInit
+							.getProperties()
+							.getProperty(
+									WorkspacesCommandHandler.PROPERTY_SET_PREFIX
+											+ csetname);
+					paramStr = paramStr.substring(1, paramStr.length() - 1);
+					String[] paramArray = paramStr.split("\\]\\[");
+				}
+
+				// pie for ellipses; stripes for all others
+				NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView()
+						.getVizMapManager().getVisualStyle()
+						.getNodeAppearanceCalculator().getDefaultAppearance()
+						.get(VisualPropertyType.NODE_SHAPE);
+				if (shape.getShapeName().equals("Ellipse")) {
+					WorkspacesCommandHandler.pieCriteria(nodelist, colorlist);
+				} else {
+					WorkspacesCommandHandler
+							.stripeCriteria(nodelist, colorlist);
+				}
+
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
 				// clear
 				WorkspacesCommandHandler.clearCombinedCriteria();
