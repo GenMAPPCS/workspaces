@@ -642,11 +642,11 @@ public class CriteriasetPanel extends JPanel
 				}
 
 				// pie for ellipses; stripes for all others
-				NodeShape shape = NodeShape.ELLIPSE;
-				// (NodeShape) Cytoscape.getCurrentNetworkView()
-				// .getVizMapManager().getVisualStyle()
-				// .getNodeAppearanceCalculator().getDefaultAppearance()
-				// .get(VisualPropertyType.NODE_SHAPE);
+//				NodeShape shape = NodeShape.ELLIPSE;
+				NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView()
+				 .getVisualStyle()
+				 .getNodeAppearanceCalculator().getDefaultAppearance()
+				 .get(VisualPropertyType.NODE_SHAPE);
 				System.out.println("NODE: "+colorlistNodes.size()+":"+colorlistNodes.keySet());
 				
 				for (String cl : colorlistNodes.keySet()) {

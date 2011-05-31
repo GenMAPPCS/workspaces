@@ -786,7 +786,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private static String trimListStrings(String list){
 		String str = list.replaceAll("\\[|\\]", "");
 		str = str.replaceAll("\\s+", "");
-		System.out.println("STR: "+list+":"+str);
 		return str;
 	}
 	
