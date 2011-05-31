@@ -178,6 +178,7 @@ public class CyCriteriaset {
 
 	}
 
+
 	/**
 	 * @param nodeList
 	 * @return

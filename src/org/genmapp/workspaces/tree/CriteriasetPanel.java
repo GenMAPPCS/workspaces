@@ -604,34 +604,59 @@ public class CriteriasetPanel extends JPanel
 						true);
 				Cytoscape.getCurrentNetworkView().updateView();
 			} else if (COMBINE_CRITERIA.equals(label)) {
-				// collect nodelists and colorlists
-				List<String> nodelist = new ArrayList<String>();
-				List<String> colorlist = new ArrayList<String>();
 
 				// track nodes per colorlist to make more efficient cycommand
 				// calls to nodecharts
-				HashMap<List<String>, List<String>> colorlistNodes = new HashMap<List<String>, List<String>>();
+				HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
+				List<String> nodelist;
+				List<String> colorlist = new ArrayList<String>();
 
-				for (String csetname : CyCriteriaset.criteriaNameMap.keySet()) {
-					String paramStr = CytoscapeInit
-							.getProperties()
-							.getProperty(
-									WorkspacesCommandHandler.PROPERTY_SET_PREFIX
-											+ csetname);
-					paramStr = paramStr.substring(1, paramStr.length() - 1);
-					String[] paramArray = paramStr.split("\\]\\[");
+				for (int ni : Cytoscape.getCurrentNetwork()
+						.getNodeIndicesArray()) {
+					String nodeid = Cytoscape.getRootGraph().getNode(ni)
+							.getIdentifier();
+
+					colorlist.clear();
+					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
+							.values()) {
+						String attr = Cytoscape.getNodeAttributes()
+								.getStringAttribute(nodeid,
+										cset.getNodeAttribute());
+						String color = "#ffffff"; // default for "false" and "null"
+						if (attr.equals("true")) {
+							color = cset.getCriteriaParams()[1].split(":")[2];
+						} else if (attr.startsWith("#")) {
+							color = attr;
+						}
+						colorlist.add(color);
+					}
+					
+					nodelist = colorlistNodes.get(colorlist.toString());
+					if (null == nodelist) {
+						nodelist = new ArrayList<String>();
+					}
+					nodelist.add(nodeid);
+					colorlistNodes.put(colorlist.toString(), nodelist);
+//					System.out.println("LIST1: "+colorlist+":"+nodelist);
+					
 				}
 
 				// pie for ellipses; stripes for all others
-				NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView()
-						.getVizMapManager().getVisualStyle()
-						.getNodeAppearanceCalculator().getDefaultAppearance()
-						.get(VisualPropertyType.NODE_SHAPE);
-				if (shape.getShapeName().equals("Ellipse")) {
-					WorkspacesCommandHandler.pieCriteria(nodelist, colorlist);
-				} else {
-					WorkspacesCommandHandler
-							.stripeCriteria(nodelist, colorlist);
+				NodeShape shape = NodeShape.ELLIPSE;
+				// (NodeShape) Cytoscape.getCurrentNetworkView()
+				// .getVizMapManager().getVisualStyle()
+				// .getNodeAppearanceCalculator().getDefaultAppearance()
+				// .get(VisualPropertyType.NODE_SHAPE);
+				System.out.println("NODE: "+colorlistNodes.size()+":"+colorlistNodes.keySet());
+				
+				for (String cl : colorlistNodes.keySet()) {
+					if (shape.getShapeName().equals("Ellipse")) {
+						WorkspacesCommandHandler.pieCriteria(colorlistNodes
+								.get(cl).toString(), cl);
+					} else {
+						WorkspacesCommandHandler.stripeCriteria(colorlistNodes
+								.get(cl).toString(), cl);
+					}
 				}
 
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {

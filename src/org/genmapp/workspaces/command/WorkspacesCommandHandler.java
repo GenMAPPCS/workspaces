@@ -728,23 +728,26 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void pieCriteria(List<String> nodelist, List<String> colorlist) {
+	public static void pieCriteria(String nodelist, String colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		
 		//construct even-distribution valuelist to match colorlist
+		String[] colors = colorlist.split(",");
 		List<String> valuelist = new ArrayList<String>();
-		for (int i = 0; i < colorlist.size(); i++){
+		for (int i = 0; i < colors.length; i++){
 			valuelist.add("1");
 		}
-		args.put("nodelist", nodelist);
-		args.put("colorlist", colorlist);
-		args.put("valuelist", valuelist);
+		
+		args.put("nodelist", trimListStrings(nodelist));
+		args.put("colorlist", trimListStrings(colorlist));
+		args.put("valuelist", trimListStrings(valuelist.toString()));
 		args.put("scale", "1.0");
 		args.put("showlabels", "false");
 		args.put("arcstart", "90");
 		try {
 			CyCommandResult re = CyCommandManager.execute("nodecharts", "pie",
 					args);
+//			System.out.println("RE: "+re.getStringResult()+re.getMessages()+re.getErrors());
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -754,17 +757,18 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void stripeCriteria(List<String> nodelist, List<String> colorlist) {
+	public static void stripeCriteria(String nodelist, String colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		
 		//construct even-distribution valuelist to match colorlist
+		String[] colors = colorlist.split(",");
 		List<String> valuelist = new ArrayList<String>();
-		for (int i = 0; i < colorlist.size(); i++){
+		for (int i = 0; i < colors.length; i++){
 			valuelist.add("1");
 		}
-		args.put("nodelist", nodelist);
-		args.put("colorlist", colorlist);
-		args.put("valuelist", valuelist);
+		args.put("nodelist", trimListStrings(nodelist));
+		args.put("colorlist", trimListStrings(colorlist));
+		args.put("valuelist", trimListStrings(valuelist.toString()));
 		args.put("scale", "1.0");
 		args.put("showlabels", "false");
 		try {
@@ -779,6 +783,13 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	private static String trimListStrings(String list){
+		String str = list.replaceAll("\\[|\\]", "");
+		str = str.replaceAll("\\s+", "");
+		System.out.println("STR: "+list+":"+str);
+		return str;
+	}
+	
 	public static void selectedCircleLayout() {
 		CyCommandHandler handler = CyCommandManager.getCommand("layout",
 				"circular");
