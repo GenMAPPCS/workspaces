@@ -171,7 +171,7 @@ public class CyCriteriaset {
 		} else {
 			String[] split;
 			String c = criteriaParams[1];
-			split = c.split(":");
+			split = c.split("::");
 			nodeAttr = nodeAttr + name + "_" + split[1];
 		}
 		return nodeAttr;

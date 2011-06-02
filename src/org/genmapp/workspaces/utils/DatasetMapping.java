@@ -127,8 +127,8 @@ public abstract class DatasetMapping {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
-						System.out.println(network.getIdentifier() + ":"
-								+ dn.getIdentifier() + " - mapped naturally");
+//						System.out.println(network.getIdentifier() + ":"
+//								+ dn.getIdentifier() + " - mapped naturally");
 						continue;
 					}
 
@@ -144,9 +144,9 @@ public abstract class DatasetMapping {
 							mapData(d, dn, dnKeyType, attrs, cn, network);
 							// mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
-							System.out.println(network.getIdentifier() + ":"
-									+ dn.getIdentifier()
-									+ " - mapped via ID/CODE");
+//							System.out.println(network.getIdentifier() + ":"
+//									+ dn.getIdentifier()
+//									+ " - mapped via ID/CODE");
 							continue;
 						}
 					}
@@ -163,10 +163,10 @@ public abstract class DatasetMapping {
 								mapData(d, dn, dnKeyType, attrs, cn, network);
 								// mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
-								System.out
-										.println(network.getIdentifier()
-												+ " - mapped via dataset secondary key: "
-												+ secondaryKey);
+//								System.out
+//										.println(network.getIdentifier()
+//												+ " - mapped via dataset secondary key: "
+//												+ secondaryKey);
 								break; // skip remaining secondary keys
 							}
 
@@ -184,11 +184,11 @@ public abstract class DatasetMapping {
 										// mapAttributes(dn, dnKeyType, attrs,
 										// cn);
 										mappedToNetworks.add(network);
-										System.out
-												.println(network
-														.getIdentifier()
-														+ " - mapped via network-dataset secondary key: "
-														+ secondaryKey);
+//										System.out
+//												.println(network
+//														.getIdentifier()
+//														+ " - mapped via network-dataset secondary key: "
+//														+ secondaryKey);
 										break; // skip remaining secondary keys
 									}
 								}

@@ -634,7 +634,7 @@ public class CriteriasetPanel extends JPanel
 										cset.getNodeAttribute());
 						String color = "#C0C0C0"; // default for "false" and "null"
 						if (attr.equals("true")) {
-							color = cset.getCriteriaParams()[1].split(":")[2];
+							color = cset.getCriteriaParams()[1].split("::")[2];
 						} else if (attr.startsWith("#")) {
 							color = attr;
 						}
@@ -657,7 +657,6 @@ public class CriteriasetPanel extends JPanel
 				 .getVisualStyle()
 				 .getNodeAppearanceCalculator().getDefaultAppearance()
 				 .get(VisualPropertyType.NODE_SHAPE);
-				System.out.println("NODE: "+colorlistNodes.size()+":"+colorlistNodes.keySet());
 				
 				for (String cl : colorlistNodes.keySet()) {
 					if (shape.getShapeName().equals("Ellipse")) {

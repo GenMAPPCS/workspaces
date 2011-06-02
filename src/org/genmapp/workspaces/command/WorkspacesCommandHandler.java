@@ -443,14 +443,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (setParams.length > 0) {
 			mapto = setParams[0];
 		}
-		System.out.println(cset.getName() + ":" + network.getIdentifier() + ":"
-				+ mapto);
+//		System.out.println(cset.getName() + ":" + network.getIdentifier() + ":"
+//				+ mapto);
 		for (int i = 1; i < setParams.length; i++) {
-			String[] temp = setParams[i].split(":");
+			String[] temp = setParams[i].split("::");
 			if (temp.length != 3) {
 				break;
 			}
-			System.out.println(temp[0] + ":" + temp[1] + ":" + temp[2]);
+//			System.out.println(temp[0] + ":" + temp[1] + ":" + temp[2]);
 			explist.add(temp[0]);
 			labellist.add(temp[1]);
 			colorlist.add(temp[2]);
