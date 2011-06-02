@@ -195,8 +195,8 @@ public class CyCriteriaset {
 			if (ca.hasAttribute(n.getIdentifier(), nodeAttr)) {
 				if (rows == 1) {
 
-					boolean b = ca.getBooleanAttribute(n.getIdentifier(),
-							nodeAttr);
+					boolean b = Boolean.valueOf(ca.getStringAttribute(n.getIdentifier(),
+							nodeAttr));
 					if (b) {
 						hitList.add(n);
 					}
