@@ -527,9 +527,15 @@ public class CriteriasetPanel extends JPanel
 					applyCriteriaItem.setEnabled(true);
 					createNetworkItem.setEnabled(true);
 					selectNodesItem.setEnabled(true);
-					combineCriteriaItem.setEnabled(true);
+					combineCriteriaItem.setEnabled(false);
 					clearCombinedCriteriaItem.setEnabled(true);
 
+					//enable items based on number of csets in panel
+					if (treeTable.getTree().getRowCount() > 1){
+						combineCriteriaItem.setEnabled(true);
+					}
+					
+					
 					// enable items based on multiple selection
 					// if (nselected.length > 1) {
 					// combineMenu.setEnabled(true);
@@ -604,7 +610,11 @@ public class CriteriasetPanel extends JPanel
 						true);
 				Cytoscape.getCurrentNetworkView().updateView();
 			} else if (COMBINE_CRITERIA.equals(label)) {
-
+				// double check that there are more than one cset to work with
+				if (CyCriteriaset.criteriaNameMap.size() < 2){
+					return;
+				}
+				
 				// track nodes per colorlist to make more efficient cycommand
 				// calls to nodecharts
 				HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
@@ -622,7 +632,7 @@ public class CriteriasetPanel extends JPanel
 						String attr = Cytoscape.getNodeAttributes()
 								.getStringAttribute(nodeid,
 										cset.getNodeAttribute());
-						String color = "#ffffff"; // default for "false" and "null"
+						String color = "#C0C0C0"; // default for "false" and "null"
 						if (attr.equals("true")) {
 							color = cset.getCriteriaParams()[1].split(":")[2];
 						} else if (attr.startsWith("#")) {

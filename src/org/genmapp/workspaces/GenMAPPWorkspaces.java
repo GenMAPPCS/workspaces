@@ -34,22 +34,18 @@ import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
 import org.genmapp.workspaces.utils.CyAttributesReader;
 import org.genmapp.workspaces.utils.CyAttributesWriter;
-import org.pathvisio.cytoscape.GpmlConverter;
+import org.pathvisio.core.model.ConverterException;
+import org.pathvisio.core.model.Pathway;
 import org.pathvisio.cytoscape.GpmlPlugin;
-import org.pathvisio.model.ConverterException;
-import org.pathvisio.model.Pathway;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
-import cytoscape.command.CyCommandException;
-import cytoscape.command.CyCommandManager;
 import cytoscape.data.CyAttributes;
 import cytoscape.data.attr.CountedIterator;
 import cytoscape.plugin.CytoscapePlugin;
 import cytoscape.view.cytopanels.CytoPanel;
-import ding.view.DGraphView;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 

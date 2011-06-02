@@ -454,15 +454,22 @@ public class SpeciesPanel extends JPanel
 				/*
 				 * Databases local and remote. So, compare versions.
 				 */
-				String latestlocalname = this.latestLocalState.substring(0,
-						this.latestLocalState.indexOf("."));
-				String currentname = current.substring(0, current.indexOf("."));
-				String remotename = remote.substring(0, remote.indexOf("."));
-				if (!currentname.equals(remotename)) {
+				
+				Pattern p = Pattern.compile("(\\d{6})");
+				Matcher m = p.matcher(current);
+				String currentdate = m.group(1); //current. current.substring(0, current.indexOf("."));
+				int currentdateint = Integer.decode(currentdate);
+				m = p.matcher(remote);
+				String remotedate = m.group(1); // remote.substring(0, remote.indexOf("."));
+				int remotedateint = Integer.decode(remotedate);
+				m = p.matcher(this.latestLocalState);
+				String latestlocaldate = m.group(1);
+				int latestlocaldateint = Integer.decode(latestlocaldate);
+				if (currentdateint < remotedateint) {
 					// updated database available
 					dbConnection.setForeground(red);
-					if (!latestlocalname.equals(currentname)) {
-						// already got it locally
+					if (currentdateint < latestlocaldateint) {
+						// already got a newer one locally
 						downloadButton
 								.setToolTipText("Switch to latest database for "
 										+ supportedSpecies.get(species)[0]);
