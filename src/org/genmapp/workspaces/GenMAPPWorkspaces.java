@@ -46,6 +46,7 @@ import cytoscape.data.CyAttributes;
 import cytoscape.data.attr.CountedIterator;
 import cytoscape.plugin.CytoscapePlugin;
 import cytoscape.view.cytopanels.CytoPanel;
+import cytoscape.visual.VisualPropertyDependency;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 
@@ -347,6 +348,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		CytoscapeInit.getProperties().setProperty("viewThreshold", "100000");
 		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold",
 				"120000");
+		// set default node width/height lock to avoid dependency issues
+		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency()
+				.set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED,
+						false);
 
 		// cycommands
 		new WorkspacesCommandHandler();
