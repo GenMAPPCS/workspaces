@@ -53,6 +53,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
@@ -416,6 +417,22 @@ public class CriteriasetPanel extends JPanel
 			if (Cytoscape.viewExists(network.getIdentifier())) {
 				WorkspacesCommandHandler.criteriaMapperApplySet(
 						selectedCriteriaset, network);
+
+				/*
+				 * Also apply to all sub and nested networks relative to
+				 * selected network.
+				 */
+				Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
+						.getNetworkTreePanel().getNetworkTreeNode(
+								network.getIdentifier()))
+						.breadthFirstEnumeration();
+				while (subnets.hasMoreElements()) {
+					GenericTreeNode subnode = (GenericTreeNode) subnets
+							.nextElement();
+					WorkspacesCommandHandler.criteriaMapperApplySet(
+							selectedCriteriaset, Cytoscape.getNetwork(subnode
+									.getID()));
+				}
 			}
 		}
 		/*
@@ -530,12 +547,11 @@ public class CriteriasetPanel extends JPanel
 					combineCriteriaItem.setEnabled(false);
 					clearCombinedCriteriaItem.setEnabled(true);
 
-					//enable items based on number of csets in panel
-					if (treeTable.getTree().getRowCount() > 1){
+					// enable items based on number of csets in panel
+					if (treeTable.getTree().getRowCount() > 1) {
 						combineCriteriaItem.setEnabled(true);
 					}
-					
-					
+
 					// enable items based on multiple selection
 					// if (nselected.length > 1) {
 					// combineMenu.setEnabled(true);
@@ -611,10 +627,10 @@ public class CriteriasetPanel extends JPanel
 				Cytoscape.getCurrentNetworkView().updateView();
 			} else if (COMBINE_CRITERIA.equals(label)) {
 				// double check that there are more than one cset to work with
-				if (CyCriteriaset.criteriaNameMap.size() < 2){
+				if (CyCriteriaset.criteriaNameMap.size() < 2) {
 					return;
 				}
-				
+
 				// track nodes per colorlist to make more efficient cycommand
 				// calls to nodecharts
 				HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
@@ -632,7 +648,8 @@ public class CriteriasetPanel extends JPanel
 						String attr = Cytoscape.getNodeAttributes()
 								.getStringAttribute(nodeid,
 										cset.getNodeAttribute());
-						String color = "#C0C0C0"; // default for "false" and "null"
+						String color = "#C0C0C0"; // default for "false" and
+						// "null"
 						if (attr.equals("true")) {
 							color = cset.getCriteriaParams()[1].split("::")[2];
 						} else if (attr.startsWith("#")) {
@@ -640,24 +657,24 @@ public class CriteriasetPanel extends JPanel
 						}
 						colorlist.add(color);
 					}
-					
+
 					nodelist = colorlistNodes.get(colorlist.toString());
 					if (null == nodelist) {
 						nodelist = new ArrayList<String>();
 					}
 					nodelist.add(nodeid);
 					colorlistNodes.put(colorlist.toString(), nodelist);
-//					System.out.println("LIST1: "+colorlist+":"+nodelist);
-					
+					// System.out.println("LIST1: "+colorlist+":"+nodelist);
+
 				}
 
 				// pie for ellipses; stripes for all others
-//				NodeShape shape = NodeShape.ELLIPSE;
+				// NodeShape shape = NodeShape.ELLIPSE;
 				NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView()
-				 .getVisualStyle()
-				 .getNodeAppearanceCalculator().getDefaultAppearance()
-				 .get(VisualPropertyType.NODE_SHAPE);
-				
+						.getVisualStyle().getNodeAppearanceCalculator()
+						.getDefaultAppearance().get(
+								VisualPropertyType.NODE_SHAPE);
+
 				for (String cl : colorlistNodes.keySet()) {
 					if (shape.getShapeName().equals("Ellipse")) {
 						WorkspacesCommandHandler.pieCriteria(colorlistNodes
