@@ -261,9 +261,9 @@ public class CyDataset {
 							DatasetMapping.NET_ATTR_DATASET_PREFIX + dname);
 				}
 				String netId = cnet.getIdentifier();
-				WorkspacesCommandHandler.allMetanodes(netId,
+				WorkspacesCommandHandler.allMetanodesOperation(netId,
 						WorkspacesCommandHandler.EXPAND_ALL);
-				WorkspacesCommandHandler.allMetanodes(netId,
+				WorkspacesCommandHandler.allMetanodesOperation(netId,
 						WorkspacesCommandHandler.COLLAPSE_ALL);
 			}
 
