@@ -11,7 +11,10 @@ import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +74,7 @@ public class SpeciesPanel extends JPanel
 	public static final String bridgedbDerbyDir = "http://bridgedb.org/data/gene_database/";
 	public static String genmappcsdir = "/GenMAPP-CS-Data/";
 	public static String genmappcsdatabasedir;
+	private static String localSpecieslist;
 	private String speciesState = null;
 	private String connState = null;
 	private String derbyState = null;
@@ -85,7 +90,6 @@ public class SpeciesPanel extends JPanel
 	private static JLabel db2Connection;
 	private Color green = new Color(20, 150, 20);
 	private Color red = new Color(200, 50, 50);
-	private Color orange = new Color(200, 150, 50);
 	private Color blue = new Color(50, 50, 180);
 	private Color grey = new Color(230, 230, 230);
 
@@ -114,7 +118,7 @@ public class SpeciesPanel extends JPanel
 		this.speciesState = initSpecies;
 		speciesBox = new JComboBox();
 		speciesBox.addItem(initSpecies);
-		//speciesBox.setEnabled(false);
+		// speciesBox.setEnabled(false);
 		speciesBox.addActionListener(this);
 		speciesBox.setToolTipText("Select a species-specific database");
 
@@ -135,6 +139,7 @@ public class SpeciesPanel extends JPanel
 		// Create main genmappcsdata dir
 		genmappcsdir = System.getProperty("user.home") + genmappcsdir;
 		genmappcsdatabasedir = genmappcsdir + "databases/";
+		localSpecieslist = genmappcsdatabasedir + "localSpecies.txt";
 
 		File gcsdir = new File(genmappcsdir);
 		if (!gcsdir.exists()) {
@@ -273,53 +278,21 @@ public class SpeciesPanel extends JPanel
 
 		/*
 		 * If readUrl fails (for whatever reason), then just read local files to
-		 * provide offline performance.
+		 * provide offline functionality.
 		 */
 		if (null == lines || lines.size() < 1) {
-			String derbyfile = null;
-			int latest = 0;
-			File dir = new File(genmappcsdatabasedir);
-			if (!dir.exists()) {
-				dir.mkdir();
-			}
+			lines = readFile(localSpecieslist);
+		}
 
-			FilenameFilter filter = new FilenameFilter() {
-				public boolean accept(File dir, String name) {
-					return (name.endsWith(".bridge") || name.endsWith(".pgdb"));
-				}
-			};
-
-			String[] children = dir.list(filter);
-			if (children == null) {
-				JOptionPane
-						.showMessageDialog(
-								Cytoscape.getDesktop(),
-								"Can not find databases online or in local directory.\n Please verify internet connection or download databases at your own convenience from\n\t http://bridgedb.org/data/gene_database/ \n and place in your user directory under GenMAPP-CS-Data/databases/",
-								"Show stopper", JOptionPane.WARNING_MESSAGE);
-			} else {
-				JOptionPane
-						.showMessageDialog(
-								Cytoscape.getDesktop(),
-								"Can not find databases online, but we did find some in a local directory.\n We will attempt to use these without reference to centralized resources. \n You may experience unexpected behaviors...",
-								"Technical difficulty",
-								JOptionPane.WARNING_MESSAGE);
-
-				// TODO: need better solution here
-				// e.g., create and reuse local file
-				for (int i = 0; i < children.length; i++) {
-					// Get filename of file or directory
-					String filename = children[i];
-					String twoletter = filename.substring(0, 2);
-					// add unique list of twoletter codes
-					if (!supportedSpecies.containsKey(twoletter)) {
-						speciesList.add(twoletter);
-						supportedSpecies.put(twoletter, new String[]{twoletter,
-								twoletter});
-					}
-
-				}
-			}
-
+		/*
+		 * If both local and remote are coming up empty, then apologize to user.
+		 */
+		if (null == lines || lines.size() < 1) {
+			JOptionPane
+					.showMessageDialog(
+							Cytoscape.getDesktop(),
+							"Can not find databases online or in local directory.\n Please verify internet connection or download databases at your own convenience from\n\t http://bridgedb.org/data/gene_database/ \n and place in your user directory under GenMAPP-CS-Data/databases/",
+							"Show stopper", JOptionPane.WARNING_MESSAGE);
 		} else {
 			for (String line : lines) {
 				String[] s = line.split("\t");
@@ -328,13 +301,14 @@ public class SpeciesPanel extends JPanel
 						new String[]{s[2], s[3]});
 				speciesList.add(s[0] + " " + s[1]);
 			}
+
+			Collections.sort(speciesList);
+			for (String s : speciesList) {
+				speciesBox.addItem(s);
+			}
+			// speciesBox.setSelectedItem(initSpecies);
+			// speciesBox.setEnabled(true);
 		}
-		Collections.sort(speciesList);
-		for (String s : speciesList) {
-			speciesBox.addItem(s);
-		}
-		//speciesBox.setSelectedItem(initSpecies);
-		//speciesBox.setEnabled(true);
 	}
 
 	/**
@@ -398,7 +372,7 @@ public class SpeciesPanel extends JPanel
 			if (attempts++ >= 10) {
 				dbConnection.setText("No databases found!  ");
 				dbConnection
-						.setToolTipText("You've basically got three options:\n 1. Try the download button\n 2. Configure your own resources\n 3. Select another species");
+						.setToolTipText("You've basically got three options:\n 1. Try the download button\n 2. Manually configure resources\n 3. Select another species");
 				dbConnection.setForeground(red);
 				resourcesCount = -1;
 
@@ -454,13 +428,16 @@ public class SpeciesPanel extends JPanel
 				/*
 				 * Databases local and remote. So, compare versions.
 				 */
-				
+
 				Pattern p = Pattern.compile("(\\d{6})");
 				Matcher m = p.matcher(current);
-				String currentdate = m.group(1); //current. current.substring(0, current.indexOf("."));
+				String currentdate = m.group(1); // current.
+				// current.substring(0,
+				// current.indexOf("."));
 				int currentdateint = Integer.decode(currentdate);
 				m = p.matcher(remote);
-				String remotedate = m.group(1); // remote.substring(0, remote.indexOf("."));
+				String remotedate = m.group(1); // remote.substring(0,
+				// remote.indexOf("."));
 				int remotedateint = Integer.decode(remotedate);
 				m = p.matcher(this.latestLocalState);
 				String latestlocaldate = m.group(1);
@@ -529,6 +506,45 @@ public class SpeciesPanel extends JPanel
 		}
 
 		return ret;
+	}
+
+	/**
+	 * @param filename
+	 * @return
+	 */
+	private static List<String> readFile(final String filename) {
+		final List<String> ret = new ArrayList<String>();
+
+		try {
+			BufferedReader in = new BufferedReader(new FileReader(filename));
+			String inputLine;
+			while ((inputLine = in.readLine()) != null)
+				ret.add(inputLine);
+			in.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return ret;
+	}
+
+	/**
+	 * @param filename
+	 * @param lines
+	 */
+	private static void writeFile(String filename, List<String> lines) {
+
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(filename));
+			for (String line : lines) {
+				out.write(line);
+				out.newLine();
+			}
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	/**
@@ -707,9 +723,81 @@ public class SpeciesPanel extends JPanel
 	 * @return filename
 	 */
 	private void identifyLatestLocal(String species) {
-		String derbyfile = null;
 		final String prefix = supportedSpecies.get(species)[1];
-		int latest = 0;
+		List<String> derbylist = new ArrayList<String>();
+
+		// update localSpecies file
+		derbylist = retrieveLocalDerbyDatabases();
+		if (derbylist == null) { // not good
+			this.latestLocalState = null;
+		} else {
+			// create map of latest version of each local species derby file
+			HashMap<String, String> latestversions = new HashMap<String, String>();
+
+			for (String filename : derbylist) {
+				String twoletter = filename.substring(0, 2);
+				String datestr = filename.substring(
+						filename.lastIndexOf("_") + 1, filename.indexOf("."));
+				if (datestr.matches("^\\d+$")) {
+					int date = new Integer(datestr);
+					int latestdate = 0;
+					String prevfile = latestversions.get(twoletter);
+					if (null != prevfile) {
+						latestdate = new Integer(prevfile.substring(prevfile
+								.lastIndexOf("_") + 1, prevfile.indexOf(".")));
+					}
+					if (date > latestdate) {
+						latestversions.put(twoletter, filename);
+					}
+				}
+			}
+
+			// process unique list
+			List<String> writelines = new ArrayList<String>();
+			for (String local : latestversions.keySet()) {
+				boolean known = false;
+				for (String key : supportedSpecies.keySet()) {
+					String[] values = supportedSpecies.get(key);
+					String supported = values[1];
+					if (local.equals(supported)) {
+						String[] genusspecies = key.split(" ");
+						writelines.add(genusspecies[0] + "\t" + genusspecies[1]
+								+ "\t" + values[0] + "\t" + values[1]);
+						known = true;
+						break; // only need one hit per file
+					}
+
+				}
+				if (!known) {
+					/*
+					 * There is local derby database with an unknown prefix.
+					 * Let's assume the user has a special database file (e.g.,
+					 * for a custom species) and add it to the list. Must make
+					 * exceptions for known special databases like "metabolite"
+					 * and future "generic" derby files.
+					 */
+					String filename = latestversions.get(local);
+					if (!filename.startsWith("metabolite")
+							&& !filename.startsWith("generic")) {
+						speciesList.add(local);
+						supportedSpecies.put(filename, new String[]{local,
+								local});
+					}
+				}
+			}
+			// write to local file
+			writeFile(localSpecieslist, writelines);
+
+			// set latest version for selected species
+			this.latestLocalState = latestversions.get(prefix);
+		}
+	}
+	/**
+	 * @param prefix
+	 * @return
+	 */
+	private List<String> retrieveLocalDerbyDatabases() {
+
 		File dir = new File(genmappcsdatabasedir);
 		if (!dir.exists()) {
 			dir.mkdir();
@@ -717,28 +805,16 @@ public class SpeciesPanel extends JPanel
 
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return (name.startsWith(prefix) && (name.endsWith(".bridge") || name
-						.endsWith(".pgdb")));
+				return (name.endsWith(".bridge") || name.endsWith(".pgdb"));
 			}
 		};
 
 		String[] children = dir.list(filter);
 		if (children == null) {
-			// Either dir does not exist or is not a directory
+			return null;
 		} else {
-			for (int i = 0; i < children.length; i++) {
-				// Get filename of file or directory
-				String filename = children[i];
-				String temp = filename.substring(9, filename.indexOf("."));
-				if (temp.matches("^\\d+$")) {
-					int date = new Integer(temp);
-					if (date > latest) {
-						derbyfile = filename;
-					}
-				}
-			}
+			return Arrays.asList(children);
 		}
-		this.latestLocalState = derbyfile;
 	}
 
 	/**
