@@ -242,7 +242,7 @@ public abstract class DatasetMapping {
 
 		// If cn is a gn, then we know to continue with grouping strategy
 		if (cn.isaGroup()) {
-			System.out.println("GROUP1");
+//			System.out.println("GROUP: "+cn.getIdentifier());
 			return relateNodes(dn, cn, network);
 		}
 
@@ -415,7 +415,7 @@ public abstract class DatasetMapping {
 	 */
 	private static void collapseAllMetanodes(CyNetwork network) {
 		String netId = network.getIdentifier();
-		WorkspacesCommandHandler.allMetanodes(netId,
+		WorkspacesCommandHandler.allMetanodesOperation(netId,
 				WorkspacesCommandHandler.COLLAPSE_ALL);
 	}
 
