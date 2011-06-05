@@ -653,6 +653,19 @@ public class CriteriasetPanel extends JPanel
 				}
 
 				for (CyNetwork net : netlist) {
+
+					// for (int ni : net.getNodeIndicesArray()) {
+					// String nodeid = Cytoscape.getRootGraph().getNode(ni)
+					// .getIdentifier();
+					//
+					// String colorlist = generateColorlist(nodeid);
+					// if (null == colorlist)
+					// continue;
+					//						
+					// WorkspacesCommandHandler.pieCriteria(nodeid,colorlist,
+					// net);
+					// }
+
 					HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
 					colorlistNodes = collectColorlistNodes(net);
 
@@ -673,6 +686,7 @@ public class CriteriasetPanel extends JPanel
 									colorlistNodes.get(cl).toString(), cl, net);
 						}
 					}
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
 				}
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
 				List<CyNetwork> netlist = new ArrayList<CyNetwork>();
@@ -696,6 +710,7 @@ public class CriteriasetPanel extends JPanel
 				}
 				for (CyNetwork net : netlist) {
 					WorkspacesCommandHandler.clearCombinedCriteria(net);
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
 				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
@@ -713,39 +728,53 @@ public class CriteriasetPanel extends JPanel
 
 		HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
 		List<String> nodelist;
-		List<String> colorlist = new ArrayList<String>();
 
 		for (int ni : net.getNodeIndicesArray()) {
 			String nodeid = Cytoscape.getRootGraph().getNode(ni)
 					.getIdentifier();
 
-			colorlist.clear();
-			for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
-				String attr = Cytoscape.getNodeAttributes().getStringAttribute(
-						nodeid, cset.getNodeAttribute());
-				String color = "#C0C0C0"; // default for "false" and
-				// "null"
-				if (attr.equals("true")) {
-					color = cset.getCriteriaParams()[1].split("::")[2];
-				} else if (attr.startsWith("#")) {
-					color = attr;
-				}
-				colorlist.add(color);
-			}
-
-			nodelist = colorlistNodes.get(colorlist.toString());
+			String colorlist = generateColorlist(nodeid);
+			 if (null == colorlist)
+			 continue;
+			
+			nodelist = colorlistNodes.get(colorlist);
 			if (null == nodelist) {
 				nodelist = new ArrayList<String>();
 			}
 			if (!nodelist.contains(nodeid)) {
 				nodelist.add(nodeid);
 			}
-			colorlistNodes.put(colorlist.toString(), nodelist);
+			colorlistNodes.put(colorlist, nodelist);
 			// System.out.println("LIST1: "+colorlist+":"+nodelist);
-
 		}
 
 		return colorlistNodes;
+	}
+
+	/**
+	 * @param nodeid
+	 * @return
+	 */
+	private String generateColorlist(String nodeid) {
+		List<String> colorlist = new ArrayList<String>();
+		// skip nested networks to avoid obscuring view with custom graphic
+		if (null != Cytoscape.getCyNode(nodeid, false).getNestedNetwork())
+			return null;
+
+		colorlist.clear();
+		for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
+			String attr = Cytoscape.getNodeAttributes().getStringAttribute(
+					nodeid, cset.getNodeAttribute());
+			String color = "#C0C0C0"; // default for "false" and
+			// "null"
+			if (attr.equals("true")) {
+				color = cset.getCriteriaParams()[1].split("::")[2];
+			} else if (attr.startsWith("#")) {
+				color = attr;
+			}
+			colorlist.add(color);
+		}
+		return colorlist.toString();
 	}
 
 	/**
