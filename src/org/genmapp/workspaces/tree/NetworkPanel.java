@@ -26,9 +26,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -741,48 +743,162 @@ public class NetworkPanel extends JPanel
 			} else if (METANODES_COLLAPSED.equals(label)) {
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(false,
 						100.0, null, null);
-				WorkspacesCommandHandler
-						.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
-					WorkspacesCommandHandler.allMetanodes(network
-							.getIdentifier(),
-							WorkspacesCommandHandler.EXPAND_ALL);
-					WorkspacesCommandHandler.allMetanodes(network
-							.getIdentifier(),
-							WorkspacesCommandHandler.COLLAPSE_ALL);
+					if (Cytoscape.viewExists(network.getIdentifier())) {
+						List<CyNode> nodes = new ArrayList<CyNode>(network
+								.getSelectedNodes());
+						if (nodes.size() > 0) { // operate on selected metanodes
+							WorkspacesCommandHandler
+									.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
+							List<CyNode> gnlist = new ArrayList<CyNode>();
+							for (CyNode cn : nodes) {
+								if (cn.isaGroup()) { // group node selected
+									gnlist.add(cn);
+								} else if (cn.getGroups().size() > 0) {
+									// child node selected from expanded view
+									for (CyGroup gn : cn.getGroups()) {
+										gnlist.add(gn.getGroupNode());
+									}
+								} else if (cn.getNestedNetwork() != null) {
+									// group is selected as nested network node
+									gnlist.add(cn);
+								} else { // vanilla node selected
+									continue;
+								}
+								for (CyNode gn : gnlist) {
+									WorkspacesCommandHandler.metanodeOperation(
+											network.getIdentifier(), gn
+													.getIdentifier(),
+											WorkspacesCommandHandler.EXPAND);
+									WorkspacesCommandHandler.metanodeOperation(
+											network.getIdentifier(), gn
+													.getIdentifier(),
+											WorkspacesCommandHandler.COLLAPSE);
+								}
+							}
+						} else { // operate on all metanodes
+							WorkspacesCommandHandler
+									.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
+							WorkspacesCommandHandler.allMetanodesOperation(
+									network.getIdentifier(),
+									WorkspacesCommandHandler.EXPAND_ALL);
+							if (Cytoscape.viewExists(network.getIdentifier())) {
+								// view on nested may be destroyed during this
+								// operation
+								WorkspacesCommandHandler.allMetanodesOperation(
+										network.getIdentifier(),
+										WorkspacesCommandHandler.COLLAPSE_ALL);
+							}
+						}
+					}
 				}
 			} else if (METANODES_NESTED.equals(label)) {
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(true,
 						0.0, null, null);
-				WorkspacesCommandHandler
-						.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
-					WorkspacesCommandHandler.allMetanodes(network
-							.getIdentifier(),
-							WorkspacesCommandHandler.EXPAND_ALL);
-					WorkspacesCommandHandler.allMetanodes(network
-							.getIdentifier(),
-							WorkspacesCommandHandler.COLLAPSE_ALL);
+					if (Cytoscape.viewExists(network.getIdentifier())) {
+						List<CyNode> nodes = new ArrayList<CyNode>(network
+								.getSelectedNodes());
+						if (nodes.size() > 0) { // operate on selected metanodes
+							WorkspacesCommandHandler
+									.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
+							List<CyNode> gnlist = new ArrayList<CyNode>();
+							for (CyNode cn : nodes) {
+								if (cn.isaGroup()) { // group node selected
+									gnlist.add(cn);
+								} else if (cn.getGroups().size() > 0) {
+									// child node selected
+									for (CyGroup gn : cn.getGroups()) {
+										gnlist.add(gn.getGroupNode());
+									}
+								} else if (cn.getNestedNetwork() != null) {
+									// group is selected as nested network node
+									gnlist.add(cn);
+								} else { // vanilla node selected
+									continue;
+								}
+								for (CyNode gn : gnlist) {
+									WorkspacesCommandHandler.metanodeOperation(
+											network.getIdentifier(), gn
+													.getIdentifier(),
+											WorkspacesCommandHandler.EXPAND);
+									WorkspacesCommandHandler.metanodeOperation(
+											network.getIdentifier(), gn
+													.getIdentifier(),
+											WorkspacesCommandHandler.COLLAPSE);
+								}
 
-					// TODO: fix bug related to independent layout of nested and
-					// expanded states
-					// layoutMetanodeChildren(network);
+							}
+						} else { // operate on all metanodes
+							WorkspacesCommandHandler
+									.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
+							WorkspacesCommandHandler.allMetanodesOperation(
+									network.getIdentifier(),
+									WorkspacesCommandHandler.EXPAND_ALL);
+							if (Cytoscape.viewExists(network.getIdentifier())) {
+								// view on nested may be destroyed during this
+								// operation
+								WorkspacesCommandHandler.allMetanodesOperation(
+										network.getIdentifier(),
+										WorkspacesCommandHandler.COLLAPSE_ALL);
+							}
+
+							/*
+							 * TODO: fix bug related to independent layout of //
+							 * nested and // expanded states //
+							 * layoutMetanodeChildren(network);
+							 */
+
+						}
+					}
 				}
 
 			} else if (METANODES_EXPANDED.equals(label)) {
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
-					WorkspacesCommandHandler.allMetanodes(network
-							.getIdentifier(),
-							WorkspacesCommandHandler.EXPAND_ALL);
+					if (Cytoscape.viewExists(network.getIdentifier())) {
+						List<CyNode> nodes = new ArrayList<CyNode>(network
+								.getSelectedNodes());
+						if (nodes.size() > 0) { // operate on selected metanodes
+							List<CyNode> gnlist = new ArrayList<CyNode>();
+							for (CyNode cn : nodes) {
+								if (cn.isaGroup()) { // group node selected
+									gnlist.add(cn);
+								} else if (cn.getGroups().size() > 0) {
+									// child node selected
+									for (CyGroup gn : cn.getGroups()) {
+										gnlist.add(gn.getGroupNode());
+									}
+								} else if (cn.getNestedNetwork() != null) {
+									// group is selected as nested network node
+									gnlist.add(cn);
+								} else { // vanilla node selected
+									continue;
+								}
+								for (CyNode gn : gnlist) {
+									WorkspacesCommandHandler.metanodeOperation(
+											network.getIdentifier(), gn
+													.getIdentifier(),
+											WorkspacesCommandHandler.EXPAND);
 
-					// TODO: add support to handle layout of expanded children
-					// layoutMetanodeChildren(network);
+								}
+							}
+						} else { // operate on all metanodes
+							WorkspacesCommandHandler.allMetanodesOperation(
+									network.getIdentifier(),
+									WorkspacesCommandHandler.EXPAND_ALL);
+
+							/*
+							 * TODO: add support to handle layout of expanded //
+							 * children layoutMetanodeChildren(network);
+							 */
+						}
+					}
 				}
 			} else {
 				CyLogger.getLogger().warn(

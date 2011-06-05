@@ -71,6 +71,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String MODIFYAPP = "modify appearance";
 	public static final String EXPAND_ALL = "expand all";
 	public static final String COLLAPSE_ALL = "collapse all";
+	public static final String EXPAND = "expand";
+	public static final String COLLAPSE = "collapse";
+	public static final String LISTMETA ="list metanodes";
 	public static final String ALL_METANODES = "apply to all";
 	public static final String SELECTED_METANODES = "apply to selected";
 	public static final String ARG_METANODE_NAME = "metanode";
@@ -88,7 +91,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_USENESTEDNETWORKS = "usenestednetworks";
 	public static final String ARG_CHARTATTR = "chartattribute";
 	public static final String ARG_NODECHART = "nodechart";
-	public static final String ARG_NETWORKID = "networkview";
+	public static final String ARG_NETWORKVIEW = "networkview";
 
 	private final static String ADD_GOELITE_JOB = "add job";
 	private final static String ARG_GOELITE_JOB = "jobid";
@@ -124,10 +127,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		return execute(command, createKVMap(args));
 	}
 	public static void showMessage(String message) {
-		
-//		 JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
-//		 JOptionPane.ERROR_MESSAGE );
-		 
+
+		// JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
+		// JOptionPane.ERROR_MESSAGE );
+
 	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
@@ -443,14 +446,15 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		if (setParams.length > 0) {
 			mapto = setParams[0];
 		}
-//		System.out.println(cset.getName() + ":" + network.getIdentifier() + ":"
-//				+ mapto);
+		// System.out.println(cset.getName() + ":" + network.getIdentifier() +
+		// ":"
+		// + mapto);
 		for (int i = 1; i < setParams.length; i++) {
 			String[] temp = setParams[i].split("::");
 			if (temp.length != 3) {
 				break;
 			}
-//			System.out.println(temp[0] + ":" + temp[1] + ":" + temp[2]);
+			// System.out.println(temp[0] + ":" + temp[1] + ":" + temp[2]);
 			explist.add(temp[0]);
 			labellist.add(temp[1]);
 			colorlist.add(temp[2]);
@@ -651,17 +655,41 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	}
 
 	/**
-	 * @param id
+	 * @param netid
 	 *            network id
-	 * @param function
+	 * @param op
 	 *            "expand all" or "collapse all"
 	 */
-	public static void allMetanodes(String id, String function) {
+	public static void allMetanodesOperation(String netid, String op) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put(ARG_NETWORKID, id);
+		args.put(ARG_NETWORKVIEW, netid);
 		try {
-			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
-					function, args);
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN, op,
+					args);
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param netid
+	 *            network id
+	 * @param mn
+	 *            metanode name
+	 * @param op
+	 *            "expand" or "collapse"
+	 */
+	public static void metanodeOperation(String netid, String mn, String op) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_NETWORKVIEW, netid);
+		args.put(ARG_METANODE_NAME, mn);
+		try {
+			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN, op,
+					args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -698,8 +726,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		try {
 			CyCommandResult re = CyCommandManager.execute(METANODE_PLUGIN,
-					"list metanodes", args);
-			
+					LISTMETA, args);
+
 			return (List<String>) re.getResult();
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
@@ -708,7 +736,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 		return null;
 	}
 
@@ -730,14 +758,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 	public static void pieCriteria(String nodelist, String colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		
-		//construct even-distribution valuelist to match colorlist
+
+		// construct even-distribution valuelist to match colorlist
 		String[] colors = colorlist.split(",");
 		List<String> valuelist = new ArrayList<String>();
-		for (int i = 0; i < colors.length; i++){
+		for (int i = 0; i < colors.length; i++) {
 			valuelist.add("1");
 		}
-		
+
 		args.put("nodelist", trimListStrings(nodelist));
 		args.put("colorlist", trimListStrings(colorlist));
 		args.put("valuelist", trimListStrings(valuelist.toString()));
@@ -747,7 +775,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		try {
 			CyCommandResult re = CyCommandManager.execute("nodecharts", "pie",
 					args);
-//			System.out.println("RE: "+re.getStringResult()+re.getMessages()+re.getErrors());
+			//System.out.println("RE: "+re.getStringResult()+re.getMessages()+re
+			// .getErrors());
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -759,11 +788,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 	public static void stripeCriteria(String nodelist, String colorlist) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		
-		//construct even-distribution valuelist to match colorlist
+
+		// construct even-distribution valuelist to match colorlist
 		String[] colors = colorlist.split(",");
 		List<String> valuelist = new ArrayList<String>();
-		for (int i = 0; i < colors.length; i++){
+		for (int i = 0; i < colors.length; i++) {
 			valuelist.add("1");
 		}
 		args.put("nodelist", trimListStrings(nodelist));
@@ -772,8 +801,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		args.put("scale", "1.0");
 		args.put("showlabels", "false");
 		try {
-			CyCommandResult re = CyCommandManager.execute("nodecharts", "stripe",
-					args);
+			CyCommandResult re = CyCommandManager.execute("nodecharts",
+					"stripe", args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -783,12 +812,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	private static String trimListStrings(String list){
+	private static String trimListStrings(String list) {
 		String str = list.replaceAll("\\[|\\]", "");
 		str = str.replaceAll("\\s+", "");
 		return str;
 	}
-	
+
 	public static void selectedCircleLayout() {
 		CyCommandHandler handler = CyCommandManager.getCommand("layout",
 				"circular");
