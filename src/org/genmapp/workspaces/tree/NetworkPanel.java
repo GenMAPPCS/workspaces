@@ -756,7 +756,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups().size() > 0) {
+								} else if (cn.getGroups() != null){
 									// child node selected from expanded view
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
@@ -810,7 +810,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups().size() > 0) {
+								} else if (cn.getGroups() != null){
 									// child node selected
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
@@ -869,7 +869,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups().size() > 0) {
+								} else if (cn.getGroups() != null){
 									// child node selected
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
