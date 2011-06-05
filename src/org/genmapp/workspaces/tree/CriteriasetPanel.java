@@ -175,7 +175,8 @@ public class CriteriasetPanel extends JPanel
 		destroyCriteriaItem = new JMenuItem(
 				PopupActionListener.DESTROY_CRITERIA);
 		editCriteriaItem = new JMenuItem(PopupActionListener.EDIT_CRITERIA);
-		applyCriteriaItem = new JMenuItem(PopupActionListener.APPLY_CRITERIA);
+		applyCriteriaItem = new JMenuItem(
+				PopupActionListener.APPLY_CRITERIA_TO_ALL);
 		createNetworkItem = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		selectNodesItem = new JMenuItem(PopupActionListener.SELECT_NODES);
 		combineCriteriaItem = new JMenuItem(
@@ -577,7 +578,7 @@ public class CriteriasetPanel extends JPanel
 	 */
 	protected class PopupActionListener implements ActionListener {
 
-		public static final String APPLY_CRITERIA = "Apply to All Networks";
+		public static final String APPLY_CRITERIA_TO_ALL = "Apply to All Networks";
 		public static final String EDIT_CRITERIA = "Edit Criteria";
 		public static final String COMBINE_CRITERIA = "Combine All Criteria";
 		public static final String CLEAR_COMBINED_CRITERIA = "Clear Combined Criteria";
@@ -605,7 +606,7 @@ public class CriteriasetPanel extends JPanel
 			if (node == null || node.getUserObject() == null)
 				return;
 
-			if (APPLY_CRITERIA.equals(label)) {
+			if (APPLY_CRITERIA_TO_ALL.equals(label)) {
 				applyCriteriasetToNetworks(Cytoscape.getNetworkSet());
 			} else if (EDIT_CRITERIA.equals(label)) {
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
@@ -631,67 +632,120 @@ public class CriteriasetPanel extends JPanel
 					return;
 				}
 
-				// track nodes per colorlist to make more efficient cycommand
-				// calls to nodecharts
-				HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
-				List<String> nodelist;
-				List<String> colorlist = new ArrayList<String>();
+				List<CyNetwork> netlist = new ArrayList<CyNetwork>();
 
-				for (int ni : Cytoscape.getCurrentNetwork()
-						.getNodeIndicesArray()) {
-					String nodeid = Cytoscape.getRootGraph().getNode(ni)
-							.getIdentifier();
+				for (CyNetwork network : Cytoscape.getSelectedNetworks()) {
+					netlist.add(network);
+					/*
+					 * Also collect from all sub and nested networks relative to
+					 * selected network.
+					 */
+					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
+							.getNetworkTreePanel().getNetworkTreeNode(
+									network.getIdentifier()))
+							.breadthFirstEnumeration();
+					while (subnets.hasMoreElements()) {
+						GenericTreeNode subnode = (GenericTreeNode) subnets
+								.nextElement();
 
-					colorlist.clear();
-					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
-							.values()) {
-						String attr = Cytoscape.getNodeAttributes()
-								.getStringAttribute(nodeid,
-										cset.getNodeAttribute());
-						String color = "#C0C0C0"; // default for "false" and
-						// "null"
-						if (attr.equals("true")) {
-							color = cset.getCriteriaParams()[1].split("::")[2];
-						} else if (attr.startsWith("#")) {
-							color = attr;
+						netlist.add(Cytoscape.getNetwork(subnode.getID()));
+					}
+				}
+
+				for (CyNetwork net : netlist) {
+					HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
+					colorlistNodes = collectColorlistNodes(net);
+
+					// pie for ellipses; stripes for all others
+					// NodeShape shape = NodeShape.ELLIPSE;
+					NodeShape shape = (NodeShape) Cytoscape
+							.getCurrentNetworkView().getVisualStyle()
+							.getNodeAppearanceCalculator()
+							.getDefaultAppearance().get(
+									VisualPropertyType.NODE_SHAPE);
+
+					for (String cl : colorlistNodes.keySet()) {
+						if (shape.getShapeName().equals("Ellipse")) {
+							WorkspacesCommandHandler.pieCriteria(colorlistNodes
+									.get(cl).toString(), cl, net);
+						} else {
+							WorkspacesCommandHandler.stripeCriteria(
+									colorlistNodes.get(cl).toString(), cl, net);
 						}
-						colorlist.add(color);
-					}
-
-					nodelist = colorlistNodes.get(colorlist.toString());
-					if (null == nodelist) {
-						nodelist = new ArrayList<String>();
-					}
-					nodelist.add(nodeid);
-					colorlistNodes.put(colorlist.toString(), nodelist);
-					// System.out.println("LIST1: "+colorlist+":"+nodelist);
-
-				}
-
-				// pie for ellipses; stripes for all others
-				// NodeShape shape = NodeShape.ELLIPSE;
-				NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView()
-						.getVisualStyle().getNodeAppearanceCalculator()
-						.getDefaultAppearance().get(
-								VisualPropertyType.NODE_SHAPE);
-
-				for (String cl : colorlistNodes.keySet()) {
-					if (shape.getShapeName().equals("Ellipse")) {
-						WorkspacesCommandHandler.pieCriteria(colorlistNodes
-								.get(cl).toString(), cl);
-					} else {
-						WorkspacesCommandHandler.stripeCriteria(colorlistNodes
-								.get(cl).toString(), cl);
 					}
 				}
-
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
-				// clear
-				WorkspacesCommandHandler.clearCombinedCriteria();
+				List<CyNetwork> netlist = new ArrayList<CyNetwork>();
+
+				for (CyNetwork network : Cytoscape.getSelectedNetworks()) {
+					netlist.add(network);
+					/*
+					 * Also collect from all sub and nested networks relative to
+					 * selected network.
+					 */
+					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
+							.getNetworkTreePanel().getNetworkTreeNode(
+									network.getIdentifier()))
+							.breadthFirstEnumeration();
+					while (subnets.hasMoreElements()) {
+						GenericTreeNode subnode = (GenericTreeNode) subnets
+								.nextElement();
+
+						netlist.add(Cytoscape.getNetwork(subnode.getID()));
+					}
+				}
+				for (CyNetwork net : netlist) {
+					WorkspacesCommandHandler.clearCombinedCriteria(net);
+				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
 			}
 		}
+	}
+
+	/**
+	 * Tracks nodes per colorlist to make more efficient cycommand calls to
+	 * nodecharts.
+	 * 
+	 * @return
+	 */
+	private HashMap<String, List<String>> collectColorlistNodes(CyNetwork net) {
+
+		HashMap<String, List<String>> colorlistNodes = new HashMap<String, List<String>>();
+		List<String> nodelist;
+		List<String> colorlist = new ArrayList<String>();
+
+		for (int ni : net.getNodeIndicesArray()) {
+			String nodeid = Cytoscape.getRootGraph().getNode(ni)
+					.getIdentifier();
+
+			colorlist.clear();
+			for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
+				String attr = Cytoscape.getNodeAttributes().getStringAttribute(
+						nodeid, cset.getNodeAttribute());
+				String color = "#C0C0C0"; // default for "false" and
+				// "null"
+				if (attr.equals("true")) {
+					color = cset.getCriteriaParams()[1].split("::")[2];
+				} else if (attr.startsWith("#")) {
+					color = attr;
+				}
+				colorlist.add(color);
+			}
+
+			nodelist = colorlistNodes.get(colorlist.toString());
+			if (null == nodelist) {
+				nodelist = new ArrayList<String>();
+			}
+			if (!nodelist.contains(nodeid)) {
+				nodelist.add(nodeid);
+			}
+			colorlistNodes.put(colorlist.toString(), nodelist);
+			// System.out.println("LIST1: "+colorlist+":"+nodelist);
+
+		}
+
+		return colorlistNodes;
 	}
 
 	/**
