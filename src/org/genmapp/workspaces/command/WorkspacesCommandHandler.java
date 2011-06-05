@@ -73,7 +73,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String COLLAPSE_ALL = "collapse all";
 	public static final String EXPAND = "expand";
 	public static final String COLLAPSE = "collapse";
-	public static final String LISTMETA ="list metanodes";
+	public static final String LISTMETA = "list metanodes";
 	public static final String ALL_METANODES = "apply to all";
 	public static final String SELECTED_METANODES = "apply to selected";
 	public static final String ARG_METANODE_NAME = "metanode";
@@ -740,12 +740,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		return null;
 	}
 
-	public static void clearCombinedCriteria() {
+	public static void clearCombinedCriteria(CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("file",
-				"/Applications/Cytoscape_v2.8.1/nodecharts-demo-CLEAR-run.txt");
+		args.put("nodelist", "all");
+		args.put("network", network.getIdentifier());
 		try {
-			CyCommandResult re = CyCommandManager.execute("commandtool", "run",
+			CyCommandResult re = CyCommandManager.execute("nodecharts", "clear",
 					args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
@@ -756,7 +756,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void pieCriteria(String nodelist, String colorlist) {
+	public static void pieCriteria(String nodelist, String colorlist,
+			CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
 
 		// construct even-distribution valuelist to match colorlist
@@ -769,6 +770,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		args.put("nodelist", trimListStrings(nodelist));
 		args.put("colorlist", trimListStrings(colorlist));
 		args.put("valuelist", trimListStrings(valuelist.toString()));
+		args.put("network", network.getIdentifier());
 		args.put("scale", "1.0");
 		args.put("showlabels", "false");
 		args.put("arcstart", "90");
@@ -786,7 +788,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static void stripeCriteria(String nodelist, String colorlist) {
+	public static void stripeCriteria(String nodelist, String colorlist,
+			CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
 
 		// construct even-distribution valuelist to match colorlist
@@ -798,6 +801,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		args.put("nodelist", trimListStrings(nodelist));
 		args.put("colorlist", trimListStrings(colorlist));
 		args.put("valuelist", trimListStrings(valuelist.toString()));
+		args.put("network", network.getIdentifier());
 		args.put("scale", "1.0");
 		args.put("showlabels", "false");
 		try {
