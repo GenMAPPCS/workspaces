@@ -31,7 +31,10 @@ package org.genmapp.workspaces.utils;
 
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URLDecoder;
 import java.text.MessageFormat;
@@ -47,7 +50,13 @@ import cytoscape.data.attr.MultiHashMapDefinition;
 import cytoscape.data.readers.EqnAttrTracker;
 import cytoscape.data.writers.CyAttributesWriter;
 import cytoscape.logger.CyLogger;
+import cytoscape.plugin.PluginManager;
 
+import java.net.URLDecoder;
+import java.text.MessageFormat;
+import java.io.FileReader;
+
+import javax.swing.JOptionPane;
 
 public class CyAttributesReader {
 	public static final String DECODE_PROPERTY = "cytoscape.decode.attributes";
@@ -69,7 +78,14 @@ public class CyAttributesReader {
 		doDecoding = Boolean.valueOf(System.getProperty(DECODE_PROPERTY, "true"));
 		idsToAttribNameToTypeMapMap = new HashMap<String, Map<String, Class>>();
 	}
-
+	public static void showMessage( String message )
+	  {
+		//JOptionPane.showMessageDialog(  Cytoscape.getDesktop(), 
+		//		message, 
+		//		"", 
+		//		JOptionPane.ERROR_MESSAGE ); 
+	  }
+	// XXX - how do we handle null values?
 	/**
 	 *  DOCUMENT ME!
 	 *
@@ -78,336 +94,106 @@ public class CyAttributesReader {
 	 *
 	 * @throws IOException DOCUMENT ME!
 	 */
-	public static void loadAttributes(final CyAttributes cyAttrs, final Reader fileIn) throws IOException {
-		CyAttributesReader ar = new CyAttributesReader();
-		ar.loadAttributesInternal(cyAttrs, fileIn);
-	}
-
-	private Class mapCytoscapeAttribTypeToEqnType(final byte attribType) {
-		switch (attribType) {
-		case CyAttributes.TYPE_BOOLEAN:
-			return Boolean.class;
-		case CyAttributes.TYPE_INTEGER:
-			return Long.class;
-		case CyAttributes.TYPE_FLOATING:
-			return Double.class;
-		case CyAttributes.TYPE_STRING:
-			return String.class;
-		case CyAttributes.TYPE_SIMPLE_LIST:
-			return List.class;
-		default:
-			return null;
-		}
-	}
-
-	/**
-	 *  DOCUMENT ME!
-	 *
-	 * @param cyAttrs DOCUMENT ME!
-	 * @param fileIn DOCUMENT ME!
-	 *
-	 * @throws IOException DOCUMENT ME!
-	 */
-	public void loadAttributesInternal(CyAttributes cyAttrs, Reader fileIn)
-		throws IOException
+	public static void loadAttributes(final CyAttributes cyAttrs, final Reader fileIn) throws IOException 
 	{
-		badDecode = false;
-		boolean guessedAttrType = false; // We later set this to true if we have to guess the attribute type.
+	  int row = 0;
+	  java.util.HashMap< String, String[] > masterValues = new java.util.HashMap< String, String[]>();
+		
+	  BufferedReader fileReader = new BufferedReader( fileIn );
+	  String line = null;
+	  while( null != ( line = fileReader.readLine() ) )
+	  {
+	    String[] values = line.split( "," );
+	    if ( row == 0 )
+	    {
+	    	masterValues.put( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName, values );
+	    }
+	    else
+	    {
+	    	// skip null value rows
+	    	if ( values[ 0 ].equals( "null") ) { continue; }
+	    	
+	    	masterValues.put( values[ 0 ], values );
+	    }
+	    row++;
+	  }
+	  
+	  String masterValuesContents = "";
+	  for( String key : masterValues.keySet() )
+	  {
+		
+		  masterValuesContents  += "[" + key + "]";
+		  for ( String v : masterValues.get( key ) )
+		  {
+			  masterValuesContents  += v + ","; 
+		 }
+		  masterValuesContents  += "\n";
+	  }
+	  showMessage( masterValuesContents );		    
+	  int numCols = masterValues.get( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName ).length;
+	  // done reading file into mastervalues: now, write out a column at a time into a temp file
+	  //   so that core CyAttrReader can read it ( yes, this qualifies as a hack )
+	  // we are going through these convolutions because the attribute reading code is complex
+	  //    and we want to reuse it as cleanly as we can.  Surprisingly this is the best way I see
+	  for( int col = 0; col < numCols; col++ )
+	  {
+		showMessage( "processing " + masterValues.get( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName )[ col ] );
 
-		try {
-			final BufferedReader reader;
+		// criteriaSet/criteria were selected
+		String pluginDir = PluginManager.getPluginManager()
+					.getPluginManageDirectory().getCanonicalPath()
+					+ "/Workspaces";
+		if ( !new File( pluginDir ).exists() )
+		{
+			new File( pluginDir ).mkdir();
+		}
 
-			if (fileIn instanceof BufferedReader) {
-				reader = (BufferedReader) fileIn;
-			} else {
-				reader = new BufferedReader(fileIn);
-			}
-
-			String attributeName;
-			byte type = -1;
-
-processAttribRecord:
-			while( true )
+		File tempFile = new File( pluginDir + "/dummy.temp" ); // XXX put in proper path
+		tempFile.delete();
+		showMessage( "deleted tempfile" );
+		
+		PrintWriter tempWriter = new PrintWriter( new FileWriter( tempFile, false ) );
+		// write it in format that cytoscape.data.readers.CyAttributeReader can read
+		//
+		tempWriter.println( masterValues.get( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName )[ col ] );
+		
+								  
+		for( String nodeId : masterValues.keySet() )
+		{		
+			if ( nodeId.equals( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName ) )
 			{
-				final String firstLine = reader.readLine();
-				lineNum++;
-
-				if (firstLine == null) {
-					return;
-				}
-
-				final String searchStr = "class=";
-				int inx = firstLine.indexOf(searchStr);
-
-				if (inx < 0) {
-					attributeName = firstLine.trim();
-				} else {
-					attributeName = firstLine.substring(0, inx - 1).trim();
-
-					String foo = firstLine.substring(inx);
-					final StringTokenizer tokens = new StringTokenizer(foo);
-					foo = tokens.nextToken();
-
-					String className = foo.substring(searchStr.length()).trim();
-
-					if (className.endsWith(")")) {
-						className = className.substring(0, className.length() - 1);
-					}
-
-					if (className.equalsIgnoreCase("java.lang.String")
-					    || className.equalsIgnoreCase("String")) {
-						type = MultiHashMapDefinition.TYPE_STRING;
-					} else if (className.equalsIgnoreCase("java.lang.Boolean")
-					           || className.equalsIgnoreCase("Boolean")) {
-						type = MultiHashMapDefinition.TYPE_BOOLEAN;
-					} else if (className.equalsIgnoreCase("java.lang.Integer")
-					           || className.equalsIgnoreCase("Integer")) {
-						type = MultiHashMapDefinition.TYPE_INTEGER;
-					} else if (className.equalsIgnoreCase("java.lang.Double")
-					           || className.equalsIgnoreCase("Double")
-					           || className.equalsIgnoreCase("java.lang.Float")
-					           || className.equalsIgnoreCase("Float")) {
-						type = MultiHashMapDefinition.TYPE_FLOATING_POINT;
-					}
-				}
-			
-
-				if (attributeName.indexOf("(") >= 0) {
-					attributeName = attributeName.substring(0, attributeName.indexOf("(")).trim();
-				}
-				
-	
-				boolean bFirstLine = true;
-				boolean list = false;
-	
-				while (true) {
-					final String line = reader.readLine();
-					lineNum++;
-	
-					// End Of Record
-					if ( line.contains( org.genmapp.workspaces.utils.CyAttributesWriter.RECORD_DELIMITER ) )
-						continue processAttribRecord;
-					
-					// EOF
-					if (line == null)
-						break;
-	
-					// Empty line?
-					if ("".equals(line.trim())) {
-						continue;
-					}
-	
-					inx = line.indexOf('=');
-					String key = line.substring(0, inx).trim();
-					String val = line.substring(inx + 1).trim();
-					final boolean equation = val.startsWith("=");
-	
-					key = decodeString(key);
-	
-					if (bFirstLine && val.startsWith("("))
-						list = true;
-	
-					if (list) {
-						// Chop away leading '(' and trailing ')'.
-						val = val.substring(1).trim();
-						val = val.substring(0, val.length() - 1).trim();
-	
-						String[] elms = val.split("::");
-						final ArrayList elmsBuff = new ArrayList();
-	
-						for (String vs : elms) {
-							vs = decodeString(vs);
-							vs = decodeSlashEscapes(vs);
-							elmsBuff.add(vs);
-						}
-	
-						if (bFirstLine) {
-							if (type < 0) {
-								guessedAttrType = true;
-								while (true) {
-									try {
-										new Integer((String) elmsBuff.get(0));
-										type = MultiHashMapDefinition.TYPE_INTEGER;
-										break;
-									} catch (Exception e) {
-									}
-	
-									try {
-										new Double((String) elmsBuff.get(0));
-										type = MultiHashMapDefinition.TYPE_FLOATING_POINT;
-										break;
-									} catch (Exception e) {
-									}
-									type = MultiHashMapDefinition.TYPE_STRING;
-									break;
-								}
-							}
-	
-							bFirstLine = false;
-						}
-	
-						for (int i = 0; i < elmsBuff.size(); i++) {
-							if (type == MultiHashMapDefinition.TYPE_INTEGER) {
-								elmsBuff.set(i, new Integer((String) elmsBuff.get(i)));
-							} else if (type == MultiHashMapDefinition.TYPE_BOOLEAN) {
-								elmsBuff.set(i, new Boolean((String) elmsBuff.get(i)));
-							} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
-								elmsBuff.set(i, new Double((String) elmsBuff.get(i)));
-							} else {
-								// A string; do nothing.
-							}
-						}
-	
-						cyAttrs.setListAttribute(key, attributeName, elmsBuff);
-					} else { // Not a list.
-						val = decodeString(val);
-						val = decodeSlashEscapes(val);
-	
-						if (bFirstLine) {
-							if (type < 0) {
-								guessedAttrType = true;
-								while (true) {
-									try {
-										new Integer(val);
-										type = MultiHashMapDefinition.TYPE_INTEGER;
-										break;
-									} catch (Exception e) {
-									}
-	
-									try {
-										new Double(val);
-										type = MultiHashMapDefinition.TYPE_FLOATING_POINT;
-										break;
-									} catch (Exception e) {
-									}
-	
-									type = MultiHashMapDefinition.TYPE_STRING;
-									break;
-								}
-							}
-	
-							bFirstLine = false;
-						}
-	
-						if (equation) {
-							final Class eqnReturnType;
-							switch (type) {
-							case CyAttributes.TYPE_INTEGER:
-								eqnReturnType = Long.class;
-								break;
-							case CyAttributes.TYPE_FLOATING:
-								eqnReturnType = Double.class;
-								break;
-							case CyAttributes.TYPE_BOOLEAN:
-								eqnReturnType = Boolean.class;
-								break;
-							case CyAttributes.TYPE_STRING:
-								eqnReturnType = String.class;
-								break;
-							case CyAttributes.TYPE_SIMPLE_LIST:
-								eqnReturnType = List.class;
-								break;
-							default:
-								final String message = "don't know which equation return type to register on line " + lineNum + "!";
-								System.err.println(message);
-								logger.warn(message);
-								continue;
-							}
-							
-							
-							final EqnAttrTracker eqnAttrTracker = Cytoscape.getEqnAttrTracker();
-							// equative atttr tracker not supported! XXX we are trying to use this outside of the package...
-							// XXX - the below line should be in there hwoever, I've probably just broken support for equation tracking!
-							//eqnAttrTracker.recordEquation(cyAttrs, key, attributeName, val, eqnReturnType);
-						}
-						else if (type == MultiHashMapDefinition.TYPE_INTEGER)
-							cyAttrs.setAttribute(key, attributeName, new Integer(val));
-						else if (type == MultiHashMapDefinition.TYPE_BOOLEAN)
-							cyAttrs.setAttribute(key, attributeName, new Boolean(val));
-						else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT)
-							cyAttrs.setAttribute(key, attributeName, new Double(val));
-						else
-							cyAttrs.setAttribute(key, attributeName, val);
-					}
-				}
+				continue;
 			}
-		} catch (Exception e) {
-			String message;
-			if (guessedAttrType) {
-				message = "failed parsing attributes file at line: " + lineNum
-					+ " with exception: " + e.getMessage()
-					+ " This is most likely due to a missing attribute type on the first line.\n"
-					+ "Attribute type should be one of the following: "
-					+ "(class=String), (class=Boolean), (class=Integer), or (class=Double). "
-					+ "(\"Double\" stands for a floating point a.k.a. \"decimal\" number.)"
-					+ " This should be added to end of the first line.";
-			}
-			else
-				message = "failed parsing attributes file at line: " + lineNum
-					+ " with exception: " + e.getMessage();
-			logger.warn(message, e);
-			throw new IOException(message);
+			tempWriter.println( nodeId + " = " + masterValues.get( nodeId )[ col ] );
 		}
-	}
-	
-
-	private String decodeString(String in) throws IOException {
-		if (doDecoding) {
-			try {
-				in = URLDecoder.decode(in, CyAttributesWriter.ENCODING_SCHEME);
-			}
-			catch (IllegalArgumentException iae) {
-				if (!badDecode) {
-					logger.info(MessageFormat.format(badDecodeMessage, lineNum), iae);
-					badDecode = true;
-				}
-			}
+		tempWriter.close();
+		FileReader tempReader = new FileReader( tempFile );
+		
+		try
+		{
+		cytoscape.data.readers.CyAttributesReader.loadAttributes( cyAttrs, tempReader );
 		}
-
-		return in;
-	}
-
-	private static String decodeSlashEscapes(String in) {
-		final StringBuilder elmBuff = new StringBuilder();
-		int inx2;
-
-		for (inx2 = 0; inx2 < in.length(); inx2++) {
-			char ch = in.charAt(inx2);
-
-			if (ch == '\\') {
-				if ((inx2 + 1) < in.length()) {
-					inx2++;
-
-					char ch2 = in.charAt(inx2);
-
-					if (ch2 == 'n') {
-						elmBuff.append('\n');
-					} else if (ch2 == 't') {
-						elmBuff.append('\t');
-					} else if (ch2 == 'b') {
-						elmBuff.append('\b');
-					} else if (ch2 == 'r') {
-						elmBuff.append('\r');
-					} else if (ch2 == 'f') {
-						elmBuff.append('\f');
-					} else {
-						elmBuff.append(ch2);
-					}
-				} else {
-					/* val ends in '\' - just ignore it. */ }
-			} else {
-				elmBuff.append(ch);
-			}
+		catch( Exception e )
+		{
+			showMessage( "Error: " + e);
 		}
-
-		return elmBuff.toString();
+	  }
+	  showMessage( "displaying attributes");
+	  String s = cyAttrs.getAttributeNames() + "\n";
+	  
+	  for( String nodeId : masterValues.keySet() )
+      {		
+  		if ( nodeId.equals( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName ) )
+		{
+		  continue;
+	    }
+		for ( String a : cyAttrs.getAttributeNames() )
+		{
+		  s += cyAttrs.getAttribute( nodeId, a ) + ",";
+		}
+		s += "\n";  
+      }
+	  showMessage( s );
 	}
-
-	public boolean isDoDecoding() {
-		return doDecoding;
-	}
-
-	public void setDoDecoding(boolean doDec) {
-		doDecoding = doDec;
-	}
+		      	
 }
