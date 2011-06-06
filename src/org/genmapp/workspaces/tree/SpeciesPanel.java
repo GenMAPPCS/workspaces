@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToolTip;
+import javax.swing.MutableComboBoxModel;
 import javax.swing.SpringLayout;
 import javax.swing.SwingWorker;
 import javax.swing.border.Border;
@@ -79,6 +80,7 @@ public class SpeciesPanel extends JPanel
 	private String connState = null;
 	private String derbyState = null;
 	private String latestLocalState = null;
+	private static boolean onlineState = true;
 	String downloadFile = null;
 	private static List<String> speciesList = new ArrayList<String>();
 	private static String initSpecies = null;
@@ -190,7 +192,6 @@ public class SpeciesPanel extends JPanel
 				return new JMultiLineToolTip();
 			}
 		};
-		dbConnection.setForeground(blue);
 		dbConnection.setFont(new Font("Arial", Font.ITALIC, 12));
 		dbConnection.setForeground(blue);
 		this.add(dbConnection);
@@ -270,8 +271,8 @@ public class SpeciesPanel extends JPanel
 
 	/**
 	 * Collects list of species from centralized BridgeDb file and populates
-	 * species selector. Should only run once per session.
-	 * 
+	 * species selector. Should only run once at initialization and per
+	 * reconnect click.
 	 */
 	private static void initializeSupportedSpecies() {
 		List<String> lines = readUrl(bridgedbSpecieslist);
@@ -294,6 +295,8 @@ public class SpeciesPanel extends JPanel
 							"Can not find databases online or in local directory.\n Please verify internet connection or download databases at your own convenience from\n\t http://bridgedb.org/data/gene_database/ \n and place in your user directory under GenMAPP-CS-Data/databases/",
 							"Show stopper", JOptionPane.WARNING_MESSAGE);
 		} else {
+			supportedSpecies.clear();
+			speciesList.clear();
 			for (String line : lines) {
 				String[] s = line.split("\t");
 				// format: genus \t species \t common \t two-letter
@@ -302,19 +305,27 @@ public class SpeciesPanel extends JPanel
 				speciesList.add(s[0] + " " + s[1]);
 			}
 
+			// remove all but the selected index (i=0)
+			int selectedIndex = speciesBox.getSelectedIndex();
+			for (int i = speciesBox.getItemCount() -1; i >=0 ; i--) {
+				if (i != selectedIndex) {
+					MutableComboBoxModel mcbm = (MutableComboBoxModel) speciesBox
+							.getModel();
+					mcbm.removeElementAt(i);
+				}
+			}
+			// add sorted list
 			Collections.sort(speciesList);
 			for (String s : speciesList) {
 				speciesBox.addItem(s);
 			}
-			// speciesBox.setSelectedItem(initSpecies);
-			// speciesBox.setEnabled(true);
 		}
 	}
 
 	/**
 	 * Check the BridgeDb download site for the lateset Derby database files.
-	 * Stores these in a hash for reference later. Should only run once per
-	 * session.
+	 * Stores these in a hash for reference later. Should only run once at
+	 * initialization and per reconnect click.
 	 * 
 	 * @param species
 	 */
@@ -372,7 +383,7 @@ public class SpeciesPanel extends JPanel
 			if (attempts++ >= 10) {
 				dbConnection.setText("No databases found!  ");
 				dbConnection
-						.setToolTipText("You've basically got three options:\n 1. Try the download button\n 2. Manually configure resources\n 3. Select another species");
+						.setToolTipText("You've basically got three options:\n 1. Try the reconnect button\n 2. Manually configure resources\n 3. Select another species");
 				dbConnection.setForeground(red);
 				resourcesCount = -1;
 
@@ -472,6 +483,18 @@ public class SpeciesPanel extends JPanel
 
 			}
 		}
+		// override based on onlineState
+		if (!onlineState) {
+			downloadButton.setIcon(new ImageIcon(getClass().getResource(
+					"../images/retry-blue.png")));
+			downloadButton
+					.setToolTipText("Not connected to download  site. Try again.");
+			downloadButton.setEnabled(true);
+		} else {
+			downloadButton.setIcon(new ImageIcon(getClass().getResource(
+					"../images/download-green.png")));
+		}
+
 		// and re-enable config button
 		configButton.setEnabled(true);
 	}
@@ -504,7 +527,7 @@ public class SpeciesPanel extends JPanel
 		// TODO: refactor executor
 		try {
 			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-				System.err.println("Failed to connect to " + strUrl);
+				// System.err.println("Failed to connect to " + strUrl);
 				executor.shutdown();
 			}
 		} catch (Exception e) {
@@ -638,6 +661,14 @@ public class SpeciesPanel extends JPanel
 	 * @param species
 	 */
 	public void connectToResources() {
+		// check connection to download site
+		List<String> lines = readUrl(bridgedbSpecieslist);
+		if (lines.size() > 1) {
+			onlineState = true;
+		} else {
+			onlineState = false;
+		}
+
 		/*
 		 * Deselect old derby or web service resources
 		 */
@@ -666,57 +697,66 @@ public class SpeciesPanel extends JPanel
 		/*
 		 * Register new derby or web service resources
 		 */
-		String classpath;
-		String connstring;
-		String displayname;
-		if (null == this.latestLocalState) {
-			// then try web service
-			dbConnection.setText("Connecting to BridgeDb web service...");
-			dbConnection.setForeground(blue);
-			classpath = "org.bridgedb.webservice.bridgerest.BridgeRest";
-			connstring = "idmapper-bridgerest:http://webservice.bridgedb.org/"
-					+ this.speciesState;
-			displayname = "http://webservice.bridgedb.org/" + this.speciesState;
+		if (null == this.latestLocalState && !onlineState) {
+			dbConnection.setText("Failed to connect!  ");
+			dbConnection.setToolTipText("Can't find a " + this.speciesState
+					+ " database");
+			dbConnection.setForeground(red);
+			this.connState = null;
 		} else {
-			dbConnection.setText("Connecting to " + this.latestLocalState
-					+ "...");
-			dbConnection.setForeground(blue);
-			classpath = "org.bridgedb.rdb.IDMapperRdb";
-			connstring = "idmapper-pgdb:" + genmappcsdatabasedir
-					+ this.latestLocalState;
-			displayname = this.latestLocalState;
-		}
-		// TODO: Move to CommandHandler
-		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("classpath", classpath);
-		args.put("connstring", connstring);
-		args.put("displayname", displayname);
-		try {
-			CyCommandResult result = CyCommandManager.execute("idmapping",
-					"register resource", args);
-			List<String> results = result.getMessages();
-			if (results.size() > 0) {
-				for (String re : results) {
-					if (re.contains("Success")) {
-						// save the connState for this panel
-						this.connState = connstring;
-					} else {
-						// don't bother trying to deselect in the future
-						this.connState = null;
-					}
-				}
+			String classpath;
+			String connstring;
+			String displayname;
+			if (null == this.latestLocalState) {
+				// then try web service
+				dbConnection.setText("Connecting to BridgeDb web service...");
+				dbConnection.setForeground(blue);
+				classpath = "org.bridgedb.webservice.bridgerest.BridgeRest";
+				connstring = "idmapper-bridgerest:http://webservice.bridgedb.org/"
+						+ this.speciesState;
+				displayname = "http://webservice.bridgedb.org/"
+						+ this.speciesState;
 			} else {
-				dbConnection.setText("Failed to connect!  ");
-				dbConnection.setToolTipText(displayname);
-				dbConnection.setForeground(red);
-				this.connState = null;
+				dbConnection.setText("Connecting to " + this.latestLocalState
+						+ "...");
+				dbConnection.setForeground(blue);
+				classpath = "org.bridgedb.rdb.IDMapperRdb";
+				connstring = "idmapper-pgdb:" + genmappcsdatabasedir
+						+ this.latestLocalState;
+				displayname = this.latestLocalState;
 			}
-		} catch (CyCommandException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (RuntimeException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			// TODO: Move to CommandHandler
+			Map<String, Object> args = new HashMap<String, Object>();
+			args.put("classpath", classpath);
+			args.put("connstring", connstring);
+			args.put("displayname", displayname);
+			try {
+				CyCommandResult result = CyCommandManager.execute("idmapping",
+						"register resource", args);
+				List<String> results = result.getMessages();
+				if (results.size() > 0) {
+					for (String re : results) {
+						if (re.contains("Success")) {
+							// save the connState for this panel
+							this.connState = connstring;
+						} else {
+							// don't bother trying to deselect in the future
+							this.connState = null;
+						}
+					}
+				} else {
+					dbConnection.setText("Failed to connect!  ");
+					dbConnection.setToolTipText(displayname);
+					dbConnection.setForeground(red);
+					this.connState = null;
+				}
+			} catch (CyCommandException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (RuntimeException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 
 		// and, finally, refresh list of selected resources
@@ -891,33 +931,87 @@ public class SpeciesPanel extends JPanel
 		} else if (e.getSource().equals(downloadButton)
 				&& downloadButton.isEnabled()) {
 
-			/*
-			 * If there is a more recent database locally, then simply trigger
-			 * speciesBox action performed to make the switch
-			 */
-			if (null != this.latestLocalState) {
-				if (!this.latestLocalState.equals(this.derbyState)) {
-					speciesBox.setSelectedItem(this.speciesState);
+			if (!onlineState) {
+				/*
+				 * Start thread to fill in available species.
+				 */
+				final SwingWorker<Boolean, Void> worker1 = new SwingWorker<Boolean, Void>() {
 
-					// and skip download
-					return;
+					public Boolean doInBackground() {
+						initializeSupportedSpecies();
+						return true;
+					}
+				};
+				worker1.execute();
+
+				/*
+				 * Start thread to compile list of downloadable databases.
+				 */
+				SwingWorker<Boolean, Void> worker2 = new SwingWorker<Boolean, Void>() {
+
+					public Boolean doInBackground() {
+						try {
+							worker1.get();
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						} catch (ExecutionException e1) {
+							e1.printStackTrace();
+						}
+						// AFTER worker1 is done
+						try {
+							initializeLatestDatabases();
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						return true;
+					}
+				};
+				worker2.execute();
+
+				downloadButton.setEnabled(false);
+				downloadButton.setIcon(new ImageIcon(getClass().getResource(
+						"../images/download-green.png")));
+				dbConnection.setText("connecting...");
+				dbConnection.setForeground(blue);
+
+				WaitForResoucesThread a = new WaitForResoucesThread(this);
+				a.start();
+
+				ConnectResourcesThread b = new ConnectResourcesThread(a, this);
+				b.start();
+
+			} else {
+
+				/*
+				 * If there is a more recent database locally, then simply
+				 * trigger speciesBox action performed to make the switch
+				 */
+				if (null != this.latestLocalState) {
+					if (!this.latestLocalState.equals(this.derbyState)) {
+						speciesBox.setSelectedItem(this.speciesState);
+
+						// and skip download
+						return;
+					}
 				}
+
+				// In the meantime display message and progress
+				speciesBox.setEnabled(false);
+				downloadButton.setEnabled(false);
+				configButton.setEnabled(false);
+				dbConnection.setText(downloadFile + ": 0%");
+				dbConnection.setToolTipText("one moment please...");
+				dbConnection.setForeground(blue);
+				downloadButton.setToolTipText("Downloading...");
+
+				DownloadThread a = new DownloadThread(this);
+				a.start();
+				ConnectResourcesThread b = new ConnectResourcesThread(a, this);
+				b.start();
+
 			}
-
-			// In the meantime display message and progress
-			speciesBox.setEnabled(false);
-			downloadButton.setEnabled(false);
-			configButton.setEnabled(false);
-			dbConnection.setText(downloadFile + ": 0%");
-			dbConnection.setToolTipText("one moment please...");
-			dbConnection.setForeground(blue);
-			downloadButton.setToolTipText("Downloading...");
-
-			DownloadThread a = new DownloadThread(this);
-			a.start();
-			ConnectResourcesThread b = new ConnectResourcesThread(a, this);
-			b.start();
-
 		}
 	}
 
@@ -1143,3 +1237,4 @@ class MultiLineToolTipUI extends BasicToolTipUI {
 		return getPreferredSize(c);
 	}
 }
+
