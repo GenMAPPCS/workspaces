@@ -336,7 +336,7 @@ public class SpeciesPanel extends JPanel
 						new InputStreamReader(in, "UTF-8"));
 				while ((line = reader.readLine()) != null) {
 					Pattern p = Pattern
-							.compile(".*([A-Z][a-z]_Derby_\\d+\\.zip).*");
+							.compile(".*([A-Z][a-z]_Derby_\\d{8}\\.zip).*");
 					Matcher m = p.matcher(line);
 					while (m.find()) {
 						derbyfile = m.group(1);
@@ -428,20 +428,25 @@ public class SpeciesPanel extends JPanel
 				/*
 				 * Databases local and remote. So, compare versions.
 				 */
-
-				Pattern p = Pattern.compile("(\\d{6})");
+				int currentdateint = 0;
+				int remotedateint = 0;
+				int latestlocaldateint = 0;
+				Pattern p = Pattern.compile("[A-Z][a-z]_Derby_(\\d{8})\\..*");
 				Matcher m = p.matcher(current);
-				String currentdate = m.group(1); // current.
-				// current.substring(0,
-				// current.indexOf("."));
-				int currentdateint = Integer.decode(currentdate);
+				while (m.find()) {
+					String currentdate = m.group(1);
+					currentdateint = Integer.decode(currentdate);
+				}
 				m = p.matcher(remote);
-				String remotedate = m.group(1); // remote.substring(0,
-				// remote.indexOf("."));
-				int remotedateint = Integer.decode(remotedate);
+				while (m.find()) {
+					String remotedate = m.group(1);
+					remotedateint = Integer.decode(remotedate);
+				}
 				m = p.matcher(this.latestLocalState);
-				String latestlocaldate = m.group(1);
-				int latestlocaldateint = Integer.decode(latestlocaldate);
+				while (m.find()) {
+					String latestlocaldate = m.group(1);
+					latestlocaldateint = Integer.decode(latestlocaldate);
+				}
 				if (currentdateint < remotedateint) {
 					// updated database available
 					dbConnection.setForeground(red);
@@ -464,6 +469,7 @@ public class SpeciesPanel extends JPanel
 							.setToolTipText("Already using latest database");
 					downloadButton.setEnabled(false);
 				}
+
 			}
 		}
 		// and re-enable config button
@@ -738,7 +744,7 @@ public class SpeciesPanel extends JPanel
 				String twoletter = filename.substring(0, 2);
 				String datestr = filename.substring(
 						filename.lastIndexOf("_") + 1, filename.indexOf("."));
-				if (datestr.matches("^\\d+$")) {
+				if (datestr.matches("^\\d{8}$")) {
 					int date = new Integer(datestr);
 					int latestdate = 0;
 					String prevfile = latestversions.get(twoletter);
