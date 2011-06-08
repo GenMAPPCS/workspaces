@@ -59,6 +59,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	final static String nodeAttributeFileName = "GenMAPPWorkspaces.nodeAttr";
 	public static final String ATTR_PATHWAY_URL = "wikipathways.url";
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see cytoscape.plugin.CytoscapePlugin#restoreSessionState(java.util.List)
+	 */
 	public void restoreSessionState(List<File> fileList) {
 		showMessage("loadSessionState");
 		final String tmpDir = System.getProperty("java.io.tmpdir");
@@ -118,13 +123,14 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 			}
 
-			// first process the node attribute file so as to populate missing
-			// RootGraph nodes
-			// properties file for GenMAPPWorkspaces
+			/* first process the node attribute file so as to populate missing
+			* RootGraph nodes
+			* properties file for GenMAPPWorkspaces
 
-			// this will read the properties directly into the Cytoscape node
-			// attributes structure, (hopefully) overwriting
-			// any duplicates
+			* this will read the properties directly into the Cytoscape node
+			* attributes structure, (hopefully) overwriting
+			* any duplicates
+			*/
 			CyAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
 					new FileReader(nodeAttributeFile));
 
@@ -238,6 +244,12 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		}
 
 	}
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * cytoscape.plugin.CytoscapePlugin#saveSessionStateFiles(java.util.List)
+	 */
 	public void saveSessionStateFiles(List<File> fileList) {
 		showMessage("saveSessionState");
 
@@ -284,17 +296,16 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			props.store(new FileOutputStream(propFile), null);
 			fileList.add(propFile);
 
-			// Now write the second file
-			// this one stores all the node attributes for all nodes in the
-			// rootgraph
-			// This is needed because the rootgraph is not fully stored in the
-			// session: in particular, any nodes
-			// that belong to no networks will not be stored. The problem is
-			// that these nodes may belong to CyDatasets
-			// so we must store them ourselves.
-			// To keep things simple ( though inefficient ), we simply store all
-			// the nodes in the rootgraph and allow mergers/collisions to happen
-			// naturally.
+			/*
+			 * Now write the second file this one stores all the node attributes
+			 * for all nodes in the rootgraph This is needed because the
+			 * rootgraph is not fully stored in the session: in particular, any
+			 * nodes that belong to no networks will not be stored. The problem
+			 * is that these nodes may belong to CyDatasets so we must store
+			 * them ourselves. To keep things simple ( though inefficient ), we
+			 * simply store all the nodes in the rootgraph and allow
+			 * mergers/collisions to happen naturally.
+			 */
 
 			CyAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
 					nodeAttributeFile);
@@ -330,6 +341,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		showMessage("done");
 	}
 
+	/**
+	 * 
+	 */
 	public GenMAPPWorkspaces() {
 
 		// create workspaces panel
@@ -353,6 +367,24 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				.set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED,
 						false);
 
+		/*
+		 * Clear out all org.genmapp.criteriaset* properties that may have been
+		 * "saved as default." This happens right after the plugin is loaded,
+		 * well before properties are added from session files. This way we can
+		 * utilize props for storing criteriasets with sessions without allowing
+		 * them to be recalled from .cytoscape/cytoscape.props
+		 */	
+		Properties props = CytoscapeInit.getProperties();
+		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
+			CytoscapeInit.getProperties().remove(WorkspacesCommandHandler.PROPERTY_SETS);
+			for (Object key : props.keySet()) {
+				if (((String) key)
+						.startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
+					CytoscapeInit.getProperties().remove(key);
+				}
+			}
+		}
+		
 		// cycommands
 		new WorkspacesCommandHandler();
 	}
