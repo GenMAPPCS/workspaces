@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -377,11 +378,16 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		Properties props = CytoscapeInit.getProperties();
 		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
 			CytoscapeInit.getProperties().remove(WorkspacesCommandHandler.PROPERTY_SETS);
+			List<String> keylist = new ArrayList<String>();
 			for (Object key : props.keySet()) {
 				if (((String) key)
 						.startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
-					CytoscapeInit.getProperties().remove(key);
+					keylist.add((String) key);
+					
 				}
+			}
+			for (String key : keylist){
+				CytoscapeInit.getProperties().remove(key);
 			}
 		}
 		
