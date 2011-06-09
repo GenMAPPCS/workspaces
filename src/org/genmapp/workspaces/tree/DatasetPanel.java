@@ -346,7 +346,6 @@ public class DatasetPanel extends JPanel implements
 		CyDataset ds = CyDataset.datasetNameMap.get(node.getID());
 
 		// TODO: set Attribute Browser to display this dataset's columns
-		
 
 	}
 
@@ -416,10 +415,10 @@ public class DatasetPanel extends JPanel implements
 					destroyDatasetItem.setEnabled(true);
 					createNetwork.setEnabled(true);
 
-					if (!ds.isMappedToNetwork)
+//					if (!ds.isMappedToNetwork)
 						remapDataset.setEnabled(true);
-					else
-						remapDataset.setEnabled(false);
+//					else
+//						remapDataset.setEnabled(false);
 
 					popup.show(e.getComponent(), e.getX(), e.getY());
 					// }
@@ -486,8 +485,8 @@ public class DatasetPanel extends JPanel implements
 			CyDataset ds = CyDataset.datasetNameMap.get(dsname);
 
 			if (DESTROY_DATASET.equals(label)) {
-				//TODO
-				//CyDataset.datasetNameMap.get(dsname).deleteCyDataset();
+				// TODO
+				// CyDataset.datasetNameMap.get(dsname).deleteCyDataset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				int[] edges = new int[0];
 				List<Integer> nodesL = ds.getNodes();
@@ -539,21 +538,25 @@ public class DatasetPanel extends JPanel implements
 					Cytoscape.getNetworkAttributes().setListAttribute(netid,
 							DatasetMapping.NET_ATTR_DATASET_PREFIX + dsname,
 							ds.getAttrs());
-					
+
 					// fire NETWORK_LOADED
 					Object[] new_value = new Object[2];
 					new_value[0] = newNetwork;
 					new_value[1] = newNetwork.getIdentifier();
 					Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
 							null, new_value);
-					
+
 					// force update of highlight
 					ds.setCurrentHighlight();
 				}
 
 			} else if (REMAP_DATA.equals(label)) {
-				DatasetMapping.performDatasetMapping(ds, null, false);
-				
+				// set "force" = true to support re-annotation of ds nodes
+				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
+				for (CyNetwork network : netlist) {
+					NetworkMapping.performNetworkAnnotation(network, true);
+				}
+				DatasetMapping.performDatasetMapping(ds, netlist, true);
 				// force update of highlight
 				ds.setCurrentHighlight();
 			} else if (SELECT_ATTRIBUTES.equals(label)) {

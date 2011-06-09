@@ -42,11 +42,11 @@ public abstract class DatasetMapping {
 	 * @param nl
 	 *            list of CyNetworks to map to. Use null to map to all unmapped
 	 *            networks.
-	 * @param isNew
-	 *            is this a new CyDataset, or are you re-mapping
+	 * @param force
+	 *            force re-annotation of dataset nodes?
 	 */
 	public static void performDatasetMapping(CyDataset d, List<CyNetwork> nl,
-			boolean isNew) {
+			boolean force) {
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
 		System.out.println("Dataset primary key (" + dnKeyType
@@ -64,12 +64,12 @@ public abstract class DatasetMapping {
 		}
 
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
-				nodeIds, dnKeyType, secKeyType, isNew);
+				nodeIds, dnKeyType, secKeyType, force);
 
 		String datasetName = d.getName();
 		List<CyNetwork> networkList = nl;
 		if (null == networkList) {
-			// null means all
+			// null means all unmapped networks
 			networkList = collectVirginNetworks(datasetName);
 		}
 
@@ -90,7 +90,7 @@ public abstract class DatasetMapping {
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
 
-			if (isNew && secKeys != null) {
+			if (force && secKeys != null) {
 				List<String> secKeyList = new ArrayList<String>();
 				for (String sk : secKeys) {
 					secKeyList.add(sk);
@@ -107,9 +107,11 @@ public abstract class DatasetMapping {
 						NET_ATTR_DATASETS);
 				if (null == datasetlist)
 					datasetlist = new ArrayList<String>();
-				datasetlist.add(datasetName);
-				nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS,
-						datasetlist);
+				if (!datasetlist.contains(datasetName)) {
+					datasetlist.add(datasetName);
+					nodeAttrs.setListAttribute(dnKey, NET_ATTR_DATASETS,
+							datasetlist);
+				}
 			}
 			/*
 			 * Perform mapping on a per network basis to track associations with
@@ -127,8 +129,8 @@ public abstract class DatasetMapping {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
-//						System.out.println(network.getIdentifier() + ":"
-//								+ dn.getIdentifier() + " - mapped naturally");
+						// System.out.println(network.getIdentifier() + ":"
+						// + dn.getIdentifier() + " - mapped naturally");
 						continue;
 					}
 
@@ -144,9 +146,9 @@ public abstract class DatasetMapping {
 							mapData(d, dn, dnKeyType, attrs, cn, network);
 							// mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
-//							System.out.println(network.getIdentifier() + ":"
-//									+ dn.getIdentifier()
-//									+ " - mapped via ID/CODE");
+							// System.out.println(network.getIdentifier() + ":"
+							// + dn.getIdentifier()
+							// + " - mapped via ID/CODE");
 							continue;
 						}
 					}
@@ -163,10 +165,10 @@ public abstract class DatasetMapping {
 								mapData(d, dn, dnKeyType, attrs, cn, network);
 								// mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
-//								System.out
-//										.println(network.getIdentifier()
-//												+ " - mapped via dataset secondary key: "
-//												+ secondaryKey);
+								// System.out
+								// .println(network.getIdentifier()
+								// + " - mapped via dataset secondary key: "
+								// + secondaryKey);
 								break; // skip remaining secondary keys
 							}
 
@@ -184,11 +186,12 @@ public abstract class DatasetMapping {
 										// mapAttributes(dn, dnKeyType, attrs,
 										// cn);
 										mappedToNetworks.add(network);
-//										System.out
-//												.println(network
-//														.getIdentifier()
-//														+ " - mapped via network-dataset secondary key: "
-//														+ secondaryKey);
+										// System.out
+										// .println(network
+										// .getIdentifier()
+										// +
+										// " - mapped via network-dataset secondary key: "
+										// + secondaryKey);
 										break; // skip remaining secondary keys
 									}
 								}
@@ -242,7 +245,7 @@ public abstract class DatasetMapping {
 
 		// If cn is a gn, then we know to continue with grouping strategy
 		if (cn.isaGroup()) {
-//			System.out.println("GROUP: "+cn.getIdentifier());
+			// System.out.println("GROUP: "+cn.getIdentifier());
 			return relateNodes(dn, cn, network);
 		}
 
@@ -365,7 +368,7 @@ public abstract class DatasetMapping {
 		WorkspacesCommandHandler.setMetanodeAggregation("true");
 		List<String> attrs = d.getAttrs();
 		for (String attr : attrs) {
-			System.out.println("OVERRIDE: "+attr);
+			System.out.println("OVERRIDE: " + attr);
 			Byte aType = Cytoscape.getNodeAttributes().getType(attr);
 			switch (aType) {
 				case CyAttributes.TYPE_STRING :
@@ -475,19 +478,15 @@ public abstract class DatasetMapping {
 
 		// add dnid to cynode attribute
 		attr = (List<String>) Cytoscape.getNodeAttributes().getListAttribute(
-				cnid,
-				DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getName());
+				cnid, DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getName());
 
 		if (null == attr) {
 			attr = new ArrayList<String>();
 		}
 		if (!attr.contains(dnid)) {
 			attr.add(dnid);
-			Cytoscape.getNodeAttributes()
-					.setListAttribute(
-							cnid,
-							DatasetMapping.NET_ATTR_DATASET_PREFIX
-									+ d.getName(), attr);
+			Cytoscape.getNodeAttributes().setListAttribute(cnid,
+					DatasetMapping.NET_ATTR_DATASET_PREFIX + d.getName(), attr);
 		}
 
 		return true;

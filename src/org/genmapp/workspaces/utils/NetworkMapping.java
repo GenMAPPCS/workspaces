@@ -29,15 +29,17 @@ public abstract class NetworkMapping {
 	public static final String MIXED = "MIXED";
 
 	/**
-	 * @param parts
+	 * @param network
+	 * @param force
+	 *            force re-annotation of network
 	 */
-	public static void performNetworkMappings(CyNetwork network) {
+	public static void performNetworkAnnotation(CyNetwork network, Boolean force) {
 		String netid = network.getIdentifier();
 		String secKeyType = DatasetMapping.getSecKeyType();
 		// check network-level system code
 		String networkCode = Cytoscape.getNetworkAttributes()
 				.getStringAttribute(netid, CODE);
-		if (networkCode != null) {
+		if (networkCode != null && !force) {
 			// skip this network; it's already been id mapped
 			return;
 		}
@@ -144,12 +146,18 @@ public abstract class NetworkMapping {
 				}
 			}
 		}
-		
-		// Now, map all datasets to this network
+	}
+
+	/**
+	 * @param network
+	 * @param force
+	 *            force re-annotation of dataset nodes
+	 */
+	public static void performNetworkMapping(CyNetwork network, Boolean force) {
 		List<CyNetwork> networklist = new ArrayList<CyNetwork>();
 		networklist.add(network);
-		for (CyDataset d: CyDataset.datasetNameMap.values()){
-			DatasetMapping.performDatasetMapping(d, networklist, false);
+		for (CyDataset d : CyDataset.datasetNameMap.values()) {
+			DatasetMapping.performDatasetMapping(d, networklist, force);
 		}
 		CyDataset.setCurrentHighlight();
 	}
@@ -231,7 +239,7 @@ public abstract class NetworkMapping {
 		}
 
 		for (String msg : result.getMessages()) {
-			//System.out.println(msg);
+			// System.out.println(msg);
 		}
 		return result;
 	}
