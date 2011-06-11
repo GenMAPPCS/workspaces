@@ -20,7 +20,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,14 +123,13 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 			}
 
-			/* first process the node attribute file so as to populate missing
-			* RootGraph nodes
-			* properties file for GenMAPPWorkspaces
-
-			* this will read the properties directly into the Cytoscape node
-			* attributes structure, (hopefully) overwriting
-			* any duplicates
-			*/
+			/*
+			 * first process the node attribute file so as to populate missing
+			 * RootGraph nodes properties file for GenMAPPWorkspaces
+			 * 
+			 * this will read the properties directly into the Cytoscape node
+			 * attributes structure, (hopefully) overwriting any duplicates
+			 */
 			CyAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
 					new FileReader(nodeAttributeFile));
 
@@ -348,14 +346,14 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	public GenMAPPWorkspaces() {
 
 		// create workspaces panel
-		CytoPanel cytoPanel = Cytoscape.getDesktop().getCytoPanel(
+		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(
 				SwingConstants.WEST);
 
 		wsPanel = new WorkspacesPanel();
 
-		cytoPanel.add("GenMAPP-CS", new ImageIcon(getClass().getResource(
+		cytoPanel1.add("GenMAPP-CS", new ImageIcon(getClass().getResource(
 				"images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);
-		cytoPanel.setSelectedIndex(0);
+		cytoPanel1.setSelectedIndex(0);
 		// cytoPanel.remove(1);
 
 		// set properties
@@ -369,28 +367,29 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						false);
 
 		/*
-		 * Clear out all org.genmapp.criteriaset* properties that may have been
+		 * Clear out all org.genmapp.criteriaset properties that may have been
 		 * "saved as default." This happens right after the plugin is loaded,
 		 * well before properties are added from session files. This way we can
 		 * utilize props for storing criteriasets with sessions without allowing
 		 * them to be recalled from .cytoscape/cytoscape.props
-		 */	
+		 */
 		Properties props = CytoscapeInit.getProperties();
 		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
-			CytoscapeInit.getProperties().remove(WorkspacesCommandHandler.PROPERTY_SETS);
+			CytoscapeInit.getProperties().remove(
+					WorkspacesCommandHandler.PROPERTY_SETS);
 			List<String> keylist = new ArrayList<String>();
 			for (Object key : props.keySet()) {
 				if (((String) key)
 						.startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
 					keylist.add((String) key);
-					
+
 				}
 			}
-			for (String key : keylist){
+			for (String key : keylist) {
 				CytoscapeInit.getProperties().remove(key);
 			}
 		}
-		
+
 		// cycommands
 		new WorkspacesCommandHandler();
 	}

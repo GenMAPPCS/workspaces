@@ -28,11 +28,13 @@ public class CyCriteriaset {
 	private String[] criteriaParams;
 	private int rows;
 
-	// Track last cset to be applied per network
+	//Map of network title, setname. Used to track last cset to be applied per network. 
 	public static Map<String, String> networkCriteriasetMap = new HashMap<String, String>();
-
+	//Map of setname, CyCriteriaset objects
 	public static Map<String, CyCriteriaset> criteriaNameMap = new HashMap<String, CyCriteriaset>();
+	//Map of setname, criteria count (rows in a given set)
 	public static Map<String, Integer> criteriaRowsMap = new HashMap<String, Integer>();
+	//Map of setname, network id, node count 
 	public static Map<String, Map<String, Integer>> criteriaNetworkNodesMap = new HashMap<String, Map<String, Integer>>();
 
 	/**
