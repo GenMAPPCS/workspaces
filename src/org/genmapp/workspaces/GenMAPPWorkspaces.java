@@ -52,6 +52,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 	public static WorkspacesPanel wsPanel;
 	public static void showMessage(String message) {
+		// System.out.println(message);
 		// JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
 		// JOptionPane.ERROR_MESSAGE );
 	}
@@ -189,8 +190,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				String[] nodeIdsAsStr = nodeIdListString.split(",");
 				List<Integer> nodeRootIdList = new ArrayList<Integer>();
 				for (String cyNodeID : nodeIdsAsStr) {
-
-					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID)
+					showMessage("id: "+cyNodeID);
+					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true)
 							.getRootGraphIndex());
 				}
 				showMessage(nodeRootIdList + "");
