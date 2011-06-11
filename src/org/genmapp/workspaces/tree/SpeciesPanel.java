@@ -72,6 +72,7 @@ public class SpeciesPanel extends JPanel
 	private static final long serialVersionUID = 3824505202304808596L;
 
 	private static final String bridgedbSpecieslist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/organisms.txt";
+	private static final String bridgedbDatasourcelist = "http://svn.bigcat.unimaas.nl/bridgedb/trunk/org.bridgedb.bio/resources/org/bridgedb/bio/datasources.txt";
 	public static final String bridgedbDerbyDir = "http://bridgedb.org/data/gene_database/";
 	public static String genmappcsdir = "/GenMAPP-CS-Data/";
 	public static String genmappcsdatabasedir;
@@ -106,6 +107,12 @@ public class SpeciesPanel extends JPanel
 	 * values.
 	 */
 	public static Map<String, String[]> supportedSpecies = new HashMap<String, String[]>();
+
+	/**
+	 * Hash of datasource names mapped to code[0], website url[1], and query
+	 * url[2].
+	 */
+	public static Map<String, String[]> supportedDatasources = new HashMap<String, String[]>();
 
 	public SpeciesPanel() {
 		super();
@@ -307,7 +314,7 @@ public class SpeciesPanel extends JPanel
 
 			// remove all but the selected index (i=0)
 			int selectedIndex = speciesBox.getSelectedIndex();
-			for (int i = speciesBox.getItemCount() -1; i >=0 ; i--) {
+			for (int i = speciesBox.getItemCount() - 1; i >= 0; i--) {
 				if (i != selectedIndex) {
 					MutableComboBoxModel mcbm = (MutableComboBoxModel) speciesBox
 							.getModel();
@@ -318,6 +325,19 @@ public class SpeciesPanel extends JPanel
 			Collections.sort(speciesList);
 			for (String s : speciesList) {
 				speciesBox.addItem(s);
+			}
+		}
+
+		// Now collect supported datasources
+		List<String> lines2 = readUrl(bridgedbDatasourcelist);
+		if (null == lines2 || lines2.size() < 1) {
+			//null taken care of above, just ignore here
+		} else {
+			supportedDatasources.clear();
+			for (String line : lines2) {
+				String[] s = line.split("\t");
+				// format: name \t code \t website url \t query url
+				supportedDatasources.put(s[0], new String[]{s[1], s[2], s[3]});
 			}
 		}
 	}
@@ -1237,4 +1257,3 @@ class MultiLineToolTipUI extends BasicToolTipUI {
 		return getPreferredSize(c);
 	}
 }
-

@@ -24,17 +24,21 @@ import java.util.Collection;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.utils.BackpagePanel;
 import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
 import cytoscape.view.CytoscapeDesktop;
+import cytoscape.view.cytopanels.CytoPanel;
+import cytoscape.view.cytopanels.CytoPanelState;
 
 /**
  * GUI component for managing network list in current session.
@@ -51,6 +55,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	private static NetworkPanel networkPanel;
 	private static DatasetPanel datasetPanel;
 	private static CriteriasetPanel criteriaPanel;
+	private static BackpagePanel backpagePanel;
 	// private AnalysisPanel analysisTreePanel;
 	// private ReportPanel reportTreePanel;
 
@@ -60,9 +65,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	private final CytoscapeDesktop cytoscapeDesktop;
 
 	/**
-	 * Constructor for the Network Panel.
+	 * Constructor for the Workspaces Panel.
 	 * 
-	 * @param desktop
 	 */
 	public WorkspacesPanel() {
 		super();
@@ -139,6 +143,18 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	 */
 	public static CriteriasetPanel getCriteriaTreePanel() {
 		return criteriaPanel;
+	}
+
+	public static BackpagePanel getBackpagePanel() {
+		if (backpagePanel == null) {
+			CytoPanel cytoPanel3 = Cytoscape.getDesktop().getCytoPanel(
+					SwingConstants.EAST);
+
+			backpagePanel = new BackpagePanel();
+			cytoPanel3.add("Backpage", backpagePanel);
+			cytoPanel3.setState(CytoPanelState.DOCK);
+		}
+		return backpagePanel;
 	}
 
 	protected static void clearAllDatasets() {

@@ -55,6 +55,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
@@ -534,17 +535,25 @@ public class NetworkPanel extends JPanel
 	}
 
 	/**
-	 * DOCUMENT ME!
+	 * This method is called when nodes/edges are selected.
 	 * 
 	 * @param event
 	 *            DOCUMENT ME!
 	 */
 	public void onSelectEvent(SelectEvent event) {
-		// THIS METHOD IS NEVER CALLED!?
 		if (event.getTargetType() == SelectEvent.SINGLE_NODE
 				|| event.getTargetType() == SelectEvent.NODE_SET) {
-			final Set<Node> selectedNodes = (Set<Node>) Cytoscape
-					.getCurrentNetwork().getSelectedNodes();
+			final Set<Node> selectedNodes = (Set<Node>) event.getTarget();
+
+			if (selectedNodes.size() == 1) {
+				// update backpage
+				CyNode firstNode = (CyNode) selectedNodes.iterator().next();
+				WorkspacesPanel.getBackpagePanel().updateBackpage(firstNode);
+			} else {
+				WorkspacesPanel.getBackpagePanel().clearBackpage();
+			}
+
+			// process nested network stuff
 			final List<String> selectedNestedNetworkIDs = new ArrayList<String>();
 			for (final Node node : selectedNodes) {
 				final CyNetwork nestedNetwork = (CyNetwork) node
@@ -756,7 +765,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups() != null){
+								} else if (cn.getGroups() != null) {
 									// child node selected from expanded view
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
@@ -810,7 +819,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups() != null){
+								} else if (cn.getGroups() != null) {
 									// child node selected
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
@@ -869,7 +878,7 @@ public class NetworkPanel extends JPanel
 							for (CyNode cn : nodes) {
 								if (cn.isaGroup()) { // group node selected
 									gnlist.add(cn);
-								} else if (cn.getGroups() != null){
+								} else if (cn.getGroups() != null) {
 									// child node selected
 									for (CyGroup gn : cn.getGroups()) {
 										gnlist.add(gn.getGroupNode());
