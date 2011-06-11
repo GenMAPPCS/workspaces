@@ -80,7 +80,8 @@ public abstract class DatasetMapping {
 		 * Set metanode attr overrides and appearance settings per dataset
 		 * before creating any groups
 		 */
-		metanodeSettings(d);
+		if (!networkList.isEmpty())
+			metanodeSettings(d);
 
 		/*
 		 * For every node in dataset...
@@ -662,25 +663,11 @@ public abstract class DatasetMapping {
 	 */
 	public static String getSecKeyType() {
 		String type = null;
-		Map<String, Object> noargs = new HashMap<String, Object>();
-		CyCommandResult result = null;
-		try {
-			result = CyCommandManager.execute("idmapping",
-					"get target id types", noargs);
-		} catch (CyCommandException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if (null != result) {
-			Set<String> idTypes = (Set<String>) result.getResult();
-			for (String t : idTypes) {
-				if (t.contains("Ensembl"))
-					// System.out.println("Hits: "+t);
-					type = t;
-			}
+		Set<String> idTypes = WorkspacesCommandHandler.getTargetIdTypes();
+		for (String t : idTypes) {
+			if (t.contains("Ensembl"))
+				// System.out.println("Hits: "+t);
+				type = t;
 		}
 		return type;
 	}
@@ -719,36 +706,6 @@ public abstract class DatasetMapping {
 	}
 
 	/**
-	 * @param st
-	 * @param tt
-	 * @return
-	 */
-	private Boolean checkMappingSupported(String st, String tt) {
-		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("sourcetype", st);
-		args.put("targettype", tt);
-		try {
-			CyCommandResult result = CyCommandManager.execute("idmapping",
-					"check mapping supported", args);
-			if (null != result) {
-				Boolean b = (Boolean) result.getResult();
-				return b;
-			} else {
-				return false;
-			}
-		} catch (CyCommandException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// if all else fails
-		return false;
-	}
-
-	/**
 	 * @param l
 	 * @param pkt
 	 * @param skt
@@ -764,38 +721,6 @@ public abstract class DatasetMapping {
 		try {
 			result = CyCommandManager.execute("idmapping", "general mapping",
 					args);
-		} catch (CyCommandException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		for (String msg : result.getMessages()) {
-			// System.out.println(msg);
-		}
-		return result;
-	}
-
-	/**
-	 * @param net
-	 * @param pkt
-	 * @param skt
-	 * @return
-	 */
-	private static CyCommandResult mapIdentifiersByAttr(CyNetwork net,
-			String pkt, String skt) {
-		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("networklist", net);
-		args.put("sourceattr", "ID");
-		args.put("sourcetype", pkt);
-		args.put("targetattr", "__" + skt);
-		args.put("targettype", skt);
-		CyCommandResult result = null;
-		try {
-			result = CyCommandManager.execute("idmapping",
-					"attribute based mapping", args);
 		} catch (CyCommandException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

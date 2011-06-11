@@ -5,10 +5,10 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.JOptionPane;
+import java.util.Set;
 
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -92,6 +92,15 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_CHARTATTR = "chartattribute";
 	public static final String ARG_NODECHART = "nodechart";
 	public static final String ARG_NETWORKVIEW = "networkview";
+	
+	private static final String CYTHESAURUS = "idmapping";
+	private static final String GET_TARGET_TYPES = "get target id types";
+	private static final String CHECK_MAPPING = "check mapping supported";
+	private static final String PERFORM_MAPPING = "general mapping";
+	private static final String ARG_SOURCE_ID = "sourceid";
+	private static final String ARG_SOURCE_TYPE = "sourcetype";
+	private static final String ARG_TARGET_TYPE = "targettype";
+	private static final String ARG_FIRST_ONLY = "firstonly";
 
 	private final static String ADD_GOELITE_JOB = "add job";
 	private final static String ARG_GOELITE_JOB = "jobid";
@@ -719,6 +728,10 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * @param net
+	 * @return
+	 */
 	public static List<String> listMetanodes(CyNetwork net) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		if (null != net)
@@ -740,6 +753,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		return null;
 	}
 
+	/**
+	 * @param network
+	 */
 	public static void clearCombinedCriteria(CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("nodelist", "all");
@@ -756,6 +772,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * @param nodelist
+	 * @param colorlist
+	 * @param network
+	 */
 	public static void pieCriteria(String nodelist, String colorlist,
 			CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
@@ -788,6 +809,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * @param nodelist
+	 * @param colorlist
+	 * @param network
+	 */
 	public static void stripeCriteria(String nodelist, String colorlist,
 			CyNetwork network) {
 		Map<String, Object> args = new HashMap<String, Object>();
@@ -816,12 +842,19 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * @param list
+	 * @return
+	 */
 	private static String trimListStrings(String list) {
 		String str = list.replaceAll("\\[|\\]", "");
 		str = str.replaceAll("\\s+", "");
 		return str;
 	}
 
+	/**
+	 * 
+	 */
 	public static void selectedCircleLayout() {
 		CyCommandHandler handler = CyCommandManager.getCommand("layout",
 				"circular");
@@ -835,4 +868,83 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		} catch (CyCommandException e) {
 		}
 	}
+	
+
+	/**
+	 * @return
+	 */
+	public static Set<String> getTargetIdTypes() {
+		Map<String, Object> args = new HashMap<String, Object>();
+
+		try {
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, GET_TARGET_TYPES,
+					args);
+			return (Set<String>) re.getResult();
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return new HashSet<String>();
+	}
+	
+
+	/**
+	 * @param sourcetype
+	 * @param targettype
+	 * @return
+	 */
+	public static boolean checkMappingSupported(String sourcetype, String targettype) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_SOURCE_TYPE, sourcetype);
+		args.put(ARG_TARGET_TYPE, targettype);
+		try {
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, CHECK_MAPPING,
+					args);
+			if (null != re) {
+				Boolean b = (Boolean) re.getResult();
+				return b;
+			} else {
+				return false;
+			}
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return false;
+	}
+	
+	/**
+	 * @param firstonly
+	 * @param sourceid
+	 * @param sourcetype
+	 * @param targettype
+	 * @return
+	 */
+	public static CyCommandResult performGeneralMapping(String firstonly, String sourceid, String sourcetype, String targettype) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put(ARG_SOURCE_ID, sourceid);
+		args.put(ARG_FIRST_ONLY, firstonly);
+		args.put(ARG_SOURCE_TYPE, sourcetype);
+		args.put(ARG_TARGET_TYPE, targettype);
+		try {
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, PERFORM_MAPPING,
+					args);
+			return re;
+		} catch (CyCommandException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return null;
+	}
+
+
 }
