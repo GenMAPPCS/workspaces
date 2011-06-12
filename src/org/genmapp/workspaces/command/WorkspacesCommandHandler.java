@@ -245,7 +245,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			}
 
 		} else if (GET_ALL_DATASET_NODES.equals(command)) {
-			result.addResult(CyDataset.getAllDatasetNodes());
+			result.addResult(CyDataset.getAllDatasetNodeIndexes());
 
 		} else {
 
