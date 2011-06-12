@@ -123,9 +123,14 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		} else {
 			List<String> sklist = (List<String>) Cytoscape.getNodeAttributes()
 					.getListAttribute(nodeid, "__" + sourcetype);
+			if (sklist.size() > 0){
 			// just take first for now
 			// TODO: be smarter
 			sourceid = sklist.get(0);
+			} else {
+				sourceid = nodeid;
+				//sourcetype = ??
+			}
 		}
 
 		if (null == sourceid) {
@@ -218,7 +223,7 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		// TODO: table of criteria per node/chidren
 		if (CyCriteriaset.criteriaNameMap.size() > 0 || node.isaGroup()) {
 			html = html.concat("<br />" + div2 + table);
-			html = html.concat("<th></th>");
+			html = html.concat("<td empty-cells:hide></td>");
 
 			List<String> nodeids = new ArrayList<String>();
 			nodeids.add(nodeid);
@@ -232,16 +237,16 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 			for (String id : nodeids) {
 				if (id.equals(nodeid))
 					html = html
-							.concat("<th colspan='2' style='font-family:Arial Black;'>"
-									+ id + "</th>");
+							.concat("<td colspan='2' style='font-family:Arial Black;'><b>"
+									+ id + "</b></td>");
 				else
 					html = html
-							.concat("<th colspan='2'><i>" + id + "</i></th>");
+							.concat("<td colspan='2'><i>" + id + "</i></td>");
 			}
 			for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
 				String csetname = cset.getName();
-				html = html.concat("<tr><td nowrap='nowrap'>" + csetname
-						+ "</td>");
+				html = html.concat("<tr><td nowrap='nowrap'><b>" + csetname
+						+ "</b></td>");
 				for (String id : nodeids) {
 					String attr = Cytoscape.getNodeAttributes()
 							.getStringAttribute(id, cset.getNodeAttribute());
