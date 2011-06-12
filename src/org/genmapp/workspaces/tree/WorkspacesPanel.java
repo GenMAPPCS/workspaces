@@ -210,11 +210,6 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 		} else if (prop.equals(Cytoscape.SESSION_LOADED)) {
 			for (CyNetwork network : Cytoscape.getNetworkSet()) {
-				/*
-				 * force each network to refresh is visual styles (including
-				 * criteriaset mappings) by simulating panel selection
-				 */
-				networkPanel.focusNetworkNode(network.getIdentifier());
 
 				/*
 				 * for backward compatibility, so folks can start using
@@ -232,7 +227,18 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 					WorkspacesCommandHandler.criteriaMapperApplySet(cset,
 							network);
 				}
+
+				/*
+				 * force each network to refresh is visual styles (including
+				 * criteriaset mappings) by simulating panel selection
+				 */
+				networkPanel.focusNetworkNode(network.getIdentifier());
+
 			}
+			
+			// Repaint panel to force display of loaded Network and Datasets
+			this.repaint();
+			
 		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {
 			// listen for last network destroyed and check session state in
 			// order to determine if new session is being loaded... awkward!

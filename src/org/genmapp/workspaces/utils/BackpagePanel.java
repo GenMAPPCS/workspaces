@@ -223,7 +223,7 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		// TODO: table of criteria per node/chidren
 		if (CyCriteriaset.criteriaNameMap.size() > 0 || node.isaGroup()) {
 			html = html.concat("<br />" + div2 + table);
-			html = html.concat("<td empty-cells:hide></td>");
+			html = html.concat("<td><b>ID</b></td>");
 
 			List<String> nodeids = new ArrayList<String>();
 			nodeids.add(nodeid);

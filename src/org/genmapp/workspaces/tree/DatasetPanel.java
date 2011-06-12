@@ -266,7 +266,7 @@ public class DatasetPanel extends JPanel implements
 			treeTable.doLayout();
 
 			// this is necessary because valueChanged is not fired above
-			focusNode(id);
+			focusDatasetNode(id);
 		}
 	}
 
@@ -291,7 +291,7 @@ public class DatasetPanel extends JPanel implements
 	 * @param id
 	 *            DOCUMENT ME!
 	 */
-	public void focusNode(String id) {
+	public void focusDatasetNode(String id) {
 		// logger.info("NetworkPanel: focus network node");
 		DefaultMutableTreeNode node = getTreeNode(id);
 

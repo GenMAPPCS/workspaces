@@ -55,6 +55,7 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.utils.Downloader;
 
 import cytoscape.Cytoscape;
@@ -182,6 +183,9 @@ public class SpeciesPanel extends JPanel
 				}
 				// AFTER worker1 is done
 				try {
+					//refresh panel sizing
+					//TODO: how?
+
 					initializeLatestDatabases();
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
@@ -283,6 +287,7 @@ public class SpeciesPanel extends JPanel
 	 */
 	private static void initializeSupportedSpecies() {
 		List<String> lines = readUrl(bridgedbSpecieslist);
+		List<String> lines2 = readUrl(bridgedbDatasourcelist);
 
 		/*
 		 * If readUrl fails (for whatever reason), then just read local files to
@@ -329,7 +334,6 @@ public class SpeciesPanel extends JPanel
 		}
 
 		// Now collect supported datasources
-		List<String> lines2 = readUrl(bridgedbDatasourcelist);
 		if (null == lines2 || lines2.size() < 1) {
 			//null taken care of above, just ignore here
 		} else {
