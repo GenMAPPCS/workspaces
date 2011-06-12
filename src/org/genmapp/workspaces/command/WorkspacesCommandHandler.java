@@ -480,7 +480,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		CyCommandResult result;
 		try {
 			result = CyCommandManager.execute(CRITERIA_MAPPER, APPLY_SET, args);
-			System.out.println(result.getMessages());
+//			System.out.println(result.getMessages());
 		} catch (CyCommandException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
