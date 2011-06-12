@@ -156,18 +156,17 @@ public class CyDataset {
 	 * 
 	 * @return
 	 */
-	public static int[] getAllDatasetNodes() {
+	public static int[] getAllDatasetNodeIndexes() {
 		List<Integer> temp = new ArrayList<Integer>();
 		for (CyDataset dset : datasetNameMap.values()) {
 			temp.addAll(dset.getNodes());
 		}
 		int[] dsetNodes = new int[temp.size()];
-	    Iterator<Integer> iterator = temp.iterator();
-	    for (int i = 0; i < dsetNodes.length; i++)
-	    {
-	    	dsetNodes[i] = iterator.next().intValue();
-	    }
-	    return dsetNodes;
+		Iterator<Integer> iterator = temp.iterator();
+		for (int i = 0; i < dsetNodes.length; i++) {
+			dsetNodes[i] = iterator.next().intValue();
+		}
+		return dsetNodes;
 	}
 
 	/**
@@ -215,8 +214,10 @@ public class CyDataset {
 	 * Clears all dataset info, including dataset-specific nodes and attributes,
 	 * network attributes, Workspaces panel and internal HashMap.
 	 * 
+	 * @param self
+	 *            also delete reference in name map?
 	 */
-	public void deleteCyDataset() {
+	public void deleteCyDatasetInfo(boolean self) {
 		String dname = this.getName();
 
 		/*
@@ -275,8 +276,10 @@ public class CyDataset {
 		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().removeItem(
 				this.getName());
 
-		// remove internal representation
-		datasetNameMap.remove(this.getName());
+		if (self) {
+			// remove internal representation
+			datasetNameMap.remove(this.getName());
+		}
 
 	}
 }
