@@ -27,6 +27,7 @@ import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.JEditorPane;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolTip;
@@ -40,13 +41,13 @@ import org.genmapp.workspaces.tree.SpeciesPanel;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.command.CyCommandResult;
-import cytoscape.groups.CyGroup;
 import cytoscape.groups.CyGroupManager;
 
 public class BackpagePanel extends JPanel implements HyperlinkListener {
 
 	private JEditorPane htmlPane;
-	private JToolTip toolTip;
+	private JToolTip toolTip = new JToolTip();
+	private JLabel jlabel;
 	private Desktop desktop;
 
 	private CyNode node;
@@ -219,11 +220,6 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 			html = html.concat("<br />" + div2 + table);
 			html = html.concat("<th>ID</th>");
 
-			for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
-				String csetname = cset.getName();
-				html = html.concat("<th colspan='1'>" + csetname + "</th>");
-			}
-
 			List<String> nodeids = new ArrayList<String>();
 			nodeids.add(nodeid);
 
@@ -236,47 +232,55 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 			for (String id : nodeids) {
 				if (id.equals(nodeid))
 					html = html
-							.concat("<tr style='outline:black solid 1px'><td><b>"
-									+ id + "</b></td>");
+							.concat("<th colspan='2' style='font-family:Arial Black;'>"
+									+ id + "</th>");
 				else
-					html = html.concat("<tr><td><i>" + id + "</i></td>");
-				for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
-						.values()) {
+					html = html
+							.concat("<th colspan='2'><i>" + id + "</i></th>");
+			}
+			for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
+				String csetname = cset.getName();
+				html = html.concat("<tr><td nowrap='nowrap'>" + csetname
+						+ "</td>");
+				for (String id : nodeids) {
 					String attr = Cytoscape.getNodeAttributes()
 							.getStringAttribute(id, cset.getNodeAttribute());
 					// defaults for "false" and "null"
-					String label = "";
-					String criteria = "No data";
+					String criteria = "";
+					String label = "No data";
 					String color = "#FFFFFF";
 					if (null == attr) {
 						// null defaults
-					} else if (attr.equals("")) {
+					} else if (attr.equals("null")) {
 						// null defaults
 					} else if (attr.equals("false")) {
-						criteria = "No criteria met";
+						label = "No criteria met";
 						color = "#C0C0C0";
 					} else if (attr.equals("true")) {
 						color = cset.getCriteriaParams()[1].split("::")[2];
-						label = cset.getCriteriaParams()[1].split("::")[1]
-								+ ": ";
+						label = cset.getCriteriaParams()[1].split("::")[1];
 						criteria = cset.getCriteriaParams()[1].split("::")[0];
 					} else if (attr.startsWith("#")) {
 						color = attr;
 						for (int i = cset.getCriteriaParams().length - 1; i >= 1; i--) {
 							if (color.equals(cset.getCriteriaParams()[i]
 									.split("::")[2])) {
-								label = cset.getCriteriaParams()[i].split("::")[1]
-										+ ": ";
+								label = cset.getCriteriaParams()[i].split("::")[1];
 								criteria = cset.getCriteriaParams()[i]
 										.split("::")[0];
 							}
 
 						}
 					}
+					/*
+					 * <td> hacks: "nowrap" and "&nbsp;" characters set minimum
+					 * width to produce a square-ish color cell.
+					 */
 					html = html
-							.concat("<td style='background-color:"
+							.concat("<td nowrap='nowrap' style='background-color:"
 									+ color
-									+ ";'><a href='\" + label + criteria + \"'>&nbsp;</a></td>");
+									+ "; '>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </td><td nowrap='nowrap'>"
+									+ label + "</td>");
 
 				}
 			}
@@ -310,8 +314,7 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 			if (Desktop.isDesktopSupported()) {
 				desktop = Desktop.getDesktop();
 				// Now enable buttons for actions that are supported.
-				if (desktop.isSupported(Desktop.Action.BROWSE)
-						&& event.getURL().toString().startsWith("http")) {
+				if (desktop.isSupported(Desktop.Action.BROWSE)) {
 					try {
 						desktop.browse(event.getURL().toURI());
 					} catch (IOException ioe) {
