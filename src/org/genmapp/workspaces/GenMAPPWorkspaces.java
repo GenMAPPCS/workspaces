@@ -306,7 +306,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * simply store all the nodes in the rootgraph and allow
 			 * mergers/collisions to happen naturally.
 			 */
-
+			//TODO: this can be improved
 			CyAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
 					nodeAttributeFile);
 			fileList.add(nodeAttributeFile);
