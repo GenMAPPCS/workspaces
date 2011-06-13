@@ -69,8 +69,13 @@ public abstract class DatasetMapping {
 		String datasetName = d.getName();
 		List<CyNetwork> networkList = nl;
 		if (null == networkList) {
-			// null means all unmapped networks
-			networkList = collectVirginNetworks(datasetName);
+			// null means all, duh!
+			networkList = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
+		}
+
+		// Now, screen out previously mapped networks, unless forced
+		if (!force) {
+			networkList = screenNetworkList(networkList, datasetName);
 		}
 
 		List<String> attrs = d.getAttrs();
@@ -92,10 +97,7 @@ public abstract class DatasetMapping {
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
 
 			if (force && secKeys != null) {
-				List<String> secKeyList = new ArrayList<String>();
-				for (String sk : secKeys) {
-					secKeyList.add(sk);
-				}
+				List<String> secKeyList = new ArrayList<String>(secKeys);
 
 				/*
 				 * First, annotate every datanode with it's secondary key
@@ -275,6 +277,10 @@ public abstract class DatasetMapping {
 							cnid,
 							DatasetMapping.NET_ATTR_DATASET_PREFIX
 									+ d.getName());
+			if (null == attr) {
+				// ah, we've been fooled! This is not a grouping situation.
+				return false;
+			}
 			for (String priordnid : attr) {
 				if (priordnid.equals(dnid))
 					return false; // TODO: report: skipped due to duplicate key
@@ -627,13 +633,18 @@ public abstract class DatasetMapping {
 	}
 
 	/**
+	 * Screens out networks that have already been mapped for this dataset,
+	 * as well as metanode-generated nested networks
+	 * 
+	 * @param networkList
 	 * @param title
 	 * @return
 	 */
-	private static List<CyNetwork> collectVirginNetworks(String title) {
+	private static List<CyNetwork> screenNetworkList(
+			List<CyNetwork> networkList, String title) {
 		// collect list of virgin networks
 		List<CyNetwork> netList = new ArrayList<CyNetwork>();
-		for (CyNetwork network : Cytoscape.getNetworkSet()) {
+		for (CyNetwork network : networkList) {
 			String netid = network.getIdentifier();
 			if (Cytoscape.viewExists(netid)) {
 				// check network attributes for dataset tag
@@ -649,7 +660,6 @@ public abstract class DatasetMapping {
 						"parent_nodes")) {
 					// also exclude metanode-generated nested networks
 				} else {
-
 					netList.add(network);
 				}
 
@@ -694,10 +704,7 @@ public abstract class DatasetMapping {
 			for (String id : nodeIds) {
 				List<String> sklist = nodeAttrs
 						.getListAttribute(id, "__" + skt);
-				Set<String> secKeys = new HashSet<String>();
-				for (String sk : sklist) {
-					secKeys.add(sk);
-				}
+				Set<String> secKeys = new HashSet<String>(sklist);
 				secondaryKeyMap.put(id, secKeys);
 			}
 

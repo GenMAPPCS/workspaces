@@ -128,10 +128,7 @@ public abstract class NetworkMapping {
 					Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
 							.getResult();
 					for (String pkey : keyMappings.keySet()) {
-						List<String> slist = new ArrayList<String>();
-						for (String skey : keyMappings.get(pkey)) {
-							slist.add(skey);
-						}
+						List<String> slist = new ArrayList<String>(keyMappings.get(pkey));
 
 						for (String node : keyNodesMap.get(pkey)) {
 							try {
