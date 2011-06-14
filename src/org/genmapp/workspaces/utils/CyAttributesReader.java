@@ -56,8 +56,13 @@ import java.net.URLDecoder;
 import java.text.MessageFormat;
 import java.io.FileReader;
 
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
-
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
 public class CyAttributesReader {
 	public static final String DECODE_PROPERTY = "cytoscape.decode.attributes";
 	private static final String badDecodeMessage =
@@ -85,6 +90,24 @@ public class CyAttributesReader {
 		//		"", 
 		//		JOptionPane.ERROR_MESSAGE ); 
 	  }
+	public static void showMessageLarge( String message )
+	{
+      showMessage( "show message large" );
+      JPanel panel = new JPanel();
+	  //JScrollPane pane = new JScrollPane();
+	  //pane.add( new JTextArea( message ) );
+	  //pane.setVisible( true );
+	  //pane.setSize( 400, 400 );
+	  //panel.add( pane );
+	  panel.setVisible( true );
+	  panel.setSize( 400, 400 );
+	  panel.add( new JButton( "test") );
+      panel.add( new JTextArea( message ) );
+      PopupFactory factory = PopupFactory.getSharedInstance();
+	  Popup popup = factory.getPopup( Cytoscape.getDesktop(), panel, 100, 100);
+	  popup.show(); 
+      showMessage( "show message large end" );
+	}
 	// XXX - how do we handle null values?
 	/**
 	 *  DOCUMENT ME!
@@ -129,7 +152,7 @@ public class CyAttributesReader {
 		 }
 		  masterValuesContents  += "\n";
 	  }
-	  showMessage( masterValuesContents );		    
+	  //showMessageLarge( masterValuesContents );		    
 	  int numCols = masterValues.get( org.genmapp.workspaces.utils.CyAttributesWriter.headerRowDummyNodeName ).length;
 	  // done reading file into mastervalues: now, write out a column at a time into a temp file
 	  //   so that core CyAttrReader can read it ( yes, this qualifies as a hack )
@@ -193,7 +216,7 @@ public class CyAttributesReader {
 		}
 		s += "\n";  
       }
-	  showMessage( s );
+	  //showMessageLarge( s );
 	}
 		      	
 }
