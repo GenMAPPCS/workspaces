@@ -319,7 +319,7 @@ public class DatasetPanel extends JPanel implements
 			GenericTreeNode node = (GenericTreeNode) tree_node_enum
 					.nextElement();
 
-			if ((String) node.getID() == id) {
+			if (((String) node.getID()).equals(id)) {
 				return node;
 			}
 		}

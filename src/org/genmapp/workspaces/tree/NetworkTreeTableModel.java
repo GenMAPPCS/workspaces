@@ -48,7 +48,7 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 			DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree_node_enum
 					.nextElement();
 
-			if (node == parent) {
+			if (node.equals(parent)) {
 				return node.getChildAt(index);
 			}
 		}
@@ -64,7 +64,7 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 			DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree_node_enum
 					.nextElement();
 
-			if (node == parent) {
+			if (node.equals( parent)) {
 				return node.getChildCount();
 			}
 		}

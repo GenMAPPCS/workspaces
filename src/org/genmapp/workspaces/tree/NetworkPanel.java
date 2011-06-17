@@ -409,7 +409,7 @@ public class NetworkPanel extends JPanel
 			GenericTreeNode node = (GenericTreeNode) tree_node_enum
 					.nextElement();
 
-			if ((String) node.getID() == network_id) {
+			if (((String) node.getID()).equals(network_id)) {
 				return node;
 			}
 		}

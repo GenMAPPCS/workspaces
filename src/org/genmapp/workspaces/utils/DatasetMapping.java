@@ -128,7 +128,7 @@ public abstract class DatasetMapping {
 					/*
 					 * First, check if datanode == existing network node
 					 */
-					if (dn.getIdentifier() == cn.getIdentifier()) {
+					if (dn.getIdentifier().equals(cn.getIdentifier())) {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
@@ -594,7 +594,7 @@ public abstract class DatasetMapping {
 	 */
 	private List buildList(final String entry, final Byte dataType,
 			final String listDel) {
-		if (entry == null) {
+		if ( null == entry) {
 			return null;
 		}
 
