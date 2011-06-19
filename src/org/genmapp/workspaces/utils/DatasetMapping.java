@@ -246,12 +246,6 @@ public abstract class DatasetMapping {
 		String dnid = dn.getIdentifier();
 		String cnid = cn.getIdentifier();
 
-		// If cn is a gn, then we know to continue with grouping strategy
-		if (cn.isaGroup()) {
-			// System.out.println("GROUP: "+cn.getIdentifier());
-			return relateNodes(dn, cn, network);
-		}
-
 		// Node attr will tell us if this cn has already been mapped-to from
 		// this dataset
 		List<String> attr = (List<String>) Cytoscape.getNodeAttributes()
@@ -259,14 +253,29 @@ public abstract class DatasetMapping {
 						DatasetMapping.NET_ATTR_DATASETS);
 		// System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier());
 		if (null == attr || attr.size() == 0) {
+			if (cn.isaGroup()) {
+				/*
+				 * This is a pre-existing group node! We can not merge our
+				 * metanode dataset mapping strategy with other group uses. So
+				 * this case is skipped (and reported).
+				 */
+				//TODO: report it!
+				return false;
+			}
 			// System.out.println("MAP1");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
 		if (attr.contains(d.getName())) {
+			// If cn is a gn, then we know to continue with grouping strategy
+			if (cn.isaGroup()) {
+				System.out.println("GROUP: "+cn.getIdentifier()+":"+dn.getIdentifier());
+				return relateNodes(dn, cn, network);
+			}
+
 			/*
-			 * This is the first time switching to group strategy, so we need to
-			 * retrieve prior mapped dn from this dataset and process both the
-			 * prior and the new dn as a group.
+			 * Otherwise, this is the first time switching to group strategy, so
+			 * we need to retrieve prior mapped dn from this dataset and process
+			 * both the prior and the new dn as a group.
 			 * 
 			 * Note: if prior === new, then we just skip it (and report it!).
 			 * This is a case where user is loading multiple values per dnid,
@@ -282,8 +291,10 @@ public abstract class DatasetMapping {
 				return false;
 			}
 			for (String priordnid : attr) {
-				if (priordnid.equals(dnid))
-					return false; // TODO: report: skipped due to duplicate key
+				if (priordnid.equals(dnid)) {
+					// TODO: report: skipped due to duplicate key
+					return false;
+				}
 				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
 				if (d.getNodes().contains(priordn.getRootGraphIndex())) {
 					// System.out.println("GROUP2a: " + priordnid);
@@ -326,15 +337,25 @@ public abstract class DatasetMapping {
 		// check if group node already exists
 		if (CyGroupManager.isaGroup(cn)) {
 			gn = CyGroupManager.getCyGroup(cn);
-			gn.addNode(dn);
+			if (gn.getViewer().equals("metaNode")) {
+				gn.addNode(dn);
 
-			/*
-			 * We have to expand (int=1) in order to "recapture" added nodes.
-			 * this is basically functioning as the first half of
-			 * MetaNode.recollapse().
-			 */
-			gn.setState(1);
-
+				/*
+				 * We have to expand (int=1) in order to "recapture" added
+				 * nodes. this is basically functioning as the first half of
+				 * MetaNode.recollapse().
+				 */
+				gn.setState(1);
+			} else {
+				/*
+				 * This is a non-metanode group node, meaning it's not ours! We
+				 * can not merge our metanode dataset mapping strategy with
+				 * pre-existing group nodes. So, this mapping gets skipped (and
+				 * reported).
+				 */
+				//TODO: report it!
+				return false;
+			}
 		} else {
 			// else, then create group node and add dn as "nodelist"
 			List<CyNode> nodelist = new ArrayList<CyNode>();
@@ -594,7 +615,7 @@ public abstract class DatasetMapping {
 	 */
 	private List buildList(final String entry, final Byte dataType,
 			final String listDel) {
-		if ( null == entry) {
+		if (null == entry) {
 			return null;
 		}
 
@@ -633,8 +654,8 @@ public abstract class DatasetMapping {
 	}
 
 	/**
-	 * Screens out networks that have already been mapped for this dataset,
-	 * as well as metanode-generated nested networks
+	 * Screens out networks that have already been mapped for this dataset, as
+	 * well as metanode-generated nested networks
 	 * 
 	 * @param networkList
 	 * @param title
