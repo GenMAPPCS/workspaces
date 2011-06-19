@@ -118,6 +118,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		// add(split);
 
 		add(wsPanel);
+		logger.debug("workspace panel constructed");
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
@@ -158,26 +159,28 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		return backpagePanel;
 	}
 
-	protected static void clearAllDatasets() {
-		// clear out datasets
+	protected void clearAllDatasets() {
+		logger.debug("clearing all datasets...");
 		for (CyDataset dset : CyDataset.datasetNameMap.values()) {
 			dset.deleteCyDatasetInfo(false);
 		}
+		logger.debug("clearing dataset name map");
 		CyDataset.datasetNameMap.clear();
 
 	}
 
-	protected static void clearAllCriteriasets() {
-		// clear out criteriasets
+	protected void clearAllCriteriasets() {
+		logger.debug("clearing all criteriasets...");
 		for (String csetname : CyCriteriaset.criteriaNameMap.keySet()) {
 			CytoscapeInit.getProperties().remove(
 					WorkspacesCommandHandler.PROPERTY_SET_PREFIX + csetname);
 			WorkspacesPanel.getCriteriaTreePanel().removeItem(csetname);
 		}
-
+		logger.debug("clearing criteriaset prop from cytoscape preferences");
 		CytoscapeInit.getProperties().remove(
 				WorkspacesCommandHandler.PROPERTY_SETS);
 
+		logger.debug("clearing criteriaset maps");
 		CyCriteriaset.criteriaNetworkNodesMap.clear();
 		CyCriteriaset.criteriaRowsMap.clear();
 		CyCriteriaset.networkCriteriasetMap.clear();
@@ -188,18 +191,20 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	public void propertyChange(PropertyChangeEvent evt) {
 		String prop = evt.getPropertyName();
 		if (prop.equals(Cytoscape.CYTOSCAPE_INITIALIZED)) {
-			// nothing
-
+			logger.debug("cytoscape initialized");
 		} else if (prop.equals(Cytoscape.NETWORK_LOADED)) {
+			logger.debug("network loaded...");
 			// handle new sessions separately below
 			if (evt.getNewValue() != null) {
 				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
 						.getNewValue())[0];
+				logger.info("CyNetwork "+newNetwork.getTitle()+" loaded.");
 				NetworkMapping.performNetworkAnnotation(newNetwork, false);
 				NetworkMapping.performNetworkMapping(newNetwork, false);
 				if (Cytoscape.viewExists(newNetwork.getIdentifier())) {
 					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
 							.values()) {
+						logger.debug("applying criteriaset: "+cset.getName());
 						WorkspacesCommandHandler.criteriaMapperApplySet(cset,
 								newNetwork);
 						// track last applied cset per network
@@ -210,6 +215,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 			}
 
 		} else if (prop.equals(Cytoscape.SESSION_LOADED)) {
+			logger.debug("session loaded...");
 			for (CyNetwork network : Cytoscape.getNetworkSet()) {
 
 				/*
@@ -225,6 +231,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 						.getNetworkCriteriaset(network);
 				if (null != cset
 						&& Cytoscape.viewExists(network.getIdentifier())) {
+					logger.debug("applying "+cset.getName()+" to "+ network.getTitle());
 					WorkspacesCommandHandler.criteriaMapperApplySet(cset,
 							network);
 				}
@@ -233,6 +240,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 * force each network to refresh is visual styles (including
 				 * criteriaset mappings) by simulating panel selection
 				 */
+				logger.debug("refreshing "+network.getTitle());
 				networkPanel.focusNetworkNode(network.getIdentifier());
 
 			}
@@ -241,10 +249,12 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 			this.repaint();
 			
 		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {
+			logger.debug("network destroyed");
 			// listen for last network destroyed and check session state in
 			// order to determine if new session is being loaded... awkward!
 			if ((Cytoscape.getNetworkSet().size() <= 1)
 					&& (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
+				logger.debug("last network destroyed... new session being loaded!");
 				clearAllDatasets();
 				clearAllCriteriasets();
 			}

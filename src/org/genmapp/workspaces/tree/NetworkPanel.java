@@ -126,7 +126,7 @@ public class NetworkPanel extends JPanel
 	// public final JPanel oriNetworkPanel = (JPanel)
 	// Cytoscape.getDesktop().getCytoPanel(
 	// SwingConstants.WEST).getComponentAt(1);
-	
+
 	private CyLogger logger;
 
 	/**
@@ -159,9 +159,8 @@ public class NetworkPanel extends JPanel
 			}
 		}
 
-		pcs = Cytoscape.getSwingPropertyChangeSupport(); // new
-		// SwingPropertyChangeSupport
-		// (this);
+		pcs = Cytoscape.getSwingPropertyChangeSupport();
+		// or new SwingPropertyChangeSupport(this); ?
 
 		// Make this a prop change listener for Cytoscape global events.
 		Cytoscape.getPropertyChangeSupport().addPropertyChangeListener(this);
@@ -190,9 +189,7 @@ public class NetworkPanel extends JPanel
 		JScrollPane scroll = new JScrollPane(treeTable);
 		this.add(scroll);
 
-		// this mouse listener listens for the right-click event and will show
-		// the pop-up
-		// window when that occurrs
+		// listener for context menu
 		treeTable.addMouseListener(new PopupListener());
 
 		// NETWORKS: create and populate the popup window
@@ -259,6 +256,7 @@ public class NetworkPanel extends JPanel
 	 * @param network_id
 	 */
 	public void removeNetwork(final String network_id) {
+		logger.debug("removing " + network_id + " from panel");
 		final GenericTreeNode node = getNetworkTreeNode(network_id);
 		if (node == null)
 			return;
@@ -284,20 +282,21 @@ public class NetworkPanel extends JPanel
 
 		// reset view and network-dependent actions
 		if (networkTreeTableModel.getChildCount(root) < 1) {
-			this.setVisible(false);
+			logger
+					.debug("last network removed... resetting network-dependent actions");
+			// this.setVisible(false);
 			CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER).setDoable(
 					false);
 			CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(
 					false);
 		}
-
 	}
 
 	/**
 	 * update a network title
 	 */
 	public void updateTitle(final CyNetwork network) {
-		// updates the title in the network or dataset panel
+		// updates the title in the network panel
 		if (treeTable.getTree().getSelectionPath() != null) {
 			// user has selected a network
 			networkTreeTableModel.setValueAt(network.getTitle(), treeTable
@@ -324,22 +323,24 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void addNetwork(String network_id, String parent_id) {
+		logger.debug("adding " + network_id + " to network panel...");
 		// activate panel
 		this.setVisible(true);
 		// activate network-dependent actions
+		logger.debug("updating network-dependent actions");
 		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER)
 				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.LAYOUT_FORCE_DIRECTED2)
 				.setDoable(true);
-		// prompt next action
-		if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
-					.get(ActionPanel.NEW_DATASET_TABLE));
+
+		// // prompt next action
+		// if (CyDataset.datasetNameMap.isEmpty() && !ActionPanel.workflowState)
+		// ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
+		// .get(ActionPanel.NEW_DATASET_TABLE));
 
 		// first see if it exists
 		if (getNetworkTreeNode(network_id) == null) {
-			// logger.info("NetworkPanel: addNetwork " + network_id);
 			GenericTreeNode dmtn = new GenericTreeNode(Cytoscape.getNetwork(
 					network_id).getTitle(), network_id);
 			Cytoscape.getNetwork(network_id).addSelectEventListener(this);
@@ -372,7 +373,7 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void focusNetworkNode(String network_id) {
-		// logger.info("NetworkPanel: focus network node");
+		logger.debug("focus on " + network_id);
 		DefaultMutableTreeNode node = getNetworkTreeNode(network_id);
 
 		if (node != null) {
@@ -432,6 +433,7 @@ public class NetworkPanel extends JPanel
 		if (doNotEnterValueChanged)
 			return;
 
+		logger.debug("selection changed in network panel");
 		JTree mtree = treeTable.getTree();
 
 		// sets the "current" network based on last node in the tree selected
@@ -440,10 +442,8 @@ public class NetworkPanel extends JPanel
 		if (node == null || node.getUserObject() == null)
 			return;
 
-		// System.out.println("NET_FOCUS: "+node.getID());
 		pcs.firePropertyChange(new PropertyChangeEvent(this,
 				CytoscapeDesktop.NETWORK_VIEW_FOCUS, null, node.getID()));
-		// Cytoscape.getDesktop().setFocus(node.getID());
 
 		// creates a list of all selected networks
 		final List<String> networkList = new LinkedList<String>();
@@ -457,12 +457,10 @@ public class NetworkPanel extends JPanel
 					networkList.add(n.getID());
 			}
 		} catch (Exception ex) {
-			CyLogger.getLogger().warn(
-					"Exception handling network panel change: "
-							+ ex.getMessage());
-			ex.printStackTrace();
+			logger.error("Exception handling network panel change", ex);
 		}
 
+		logger.debug(networkList.size() + " networks selected");
 		if (networkList.size() > 0) {
 			Cytoscape.setSelectedNetworks(networkList);
 			Cytoscape.setSelectedNetworkViews(networkList);
@@ -476,10 +474,13 @@ public class NetworkPanel extends JPanel
 					.getListAttribute(net, DatasetMapping.NET_ATTR_DATASETS);
 			if (null != datasetList) {
 				for (String dataset : CyDataset.datasetNameMap.keySet()) {
-					if (datasetList.contains(dataset))
+					if (datasetList.contains(dataset)) {
+						logger.debug(dataset + " is mapped to " + net);
 						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = true;
-					else
+					} else {
+						logger.debug(dataset + " is not mapped to " + net);
 						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = false;
+					}
 				}
 				DatasetPanel.getTreeTable().getTree().updateUI();
 			}
@@ -488,22 +489,23 @@ public class NetworkPanel extends JPanel
 			CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(Cytoscape
 					.getNetwork(net));
 			if (null != cset) {
+				logger.debug(cset.getName() + " is applied to " + net);
 				WorkspacesPanel.getCriteriaTreePanel().focusCriteriasetNode(
 						cset.getName());
 			}
 			// CriteriasetPanel.getTreeTable().getTree().updateUI();
 
-			// and manually update network view / vizmapper
 			/*
 			 * Note: the native Cytoscape handling of view update appears to
 			 * ignore selections when the prior selection shares the same visual
-			 * style.
+			 * style. Ugh.
 			 */
 			Cytoscape.getNetworkView(net).redrawGraph(true, true);
 		} else {
 			// do nothing... or maybe deselect datasets and criteriaset?
 		}
 	}
+
 	/**
 	 * DOCUMENT ME!
 	 * 
@@ -511,16 +513,20 @@ public class NetworkPanel extends JPanel
 	 *            DOCUMENT ME!
 	 */
 	public void propertyChange(PropertyChangeEvent e) {
-		// System.out.println("HEARD: " +e.getPropertyName());
+
 		if (Cytoscape.NETWORK_CREATED.equals(e.getPropertyName())) {
+			logger.debug("NetworkPanel: " + e.getPropertyName());
 			addNetwork((String) e.getNewValue(), (String) e.getOldValue());
 		} else if (Cytoscape.NETWORK_DESTROYED.equals(e.getPropertyName())) {
+			logger.debug("NetworkPanel: " + e.getPropertyName());
 			removeNetwork((String) e.getNewValue());
 		} else if (CytoscapeDesktop.NETWORK_VIEW_FOCUSED.equals(e
 				.getPropertyName())) {
+			logger.debug("NetworkPanel: " + e.getPropertyName());
 			if (e.getSource() != this)
 				focusNetworkNode((String) e.getNewValue());
 		} else if (Cytoscape.NETWORK_TITLE_MODIFIED.equals(e.getPropertyName())) {
+			logger.debug("NetworkPanel: " + e.getPropertyName());
 			CyNetworkTitleChange cyNetworkTitleChange = (CyNetworkTitleChange) e
 					.getNewValue();
 			String newID = cyNetworkTitleChange.getNetworkIdentifier();
@@ -530,6 +536,7 @@ public class NetworkPanel extends JPanel
 			if (_network != null && !_network.getIdentifier().equals("0"))
 				updateTitle(_network);
 		} else if (Cytoscape.CYTOSCAPE_INITIALIZED.equals(e.getPropertyName())) {
+			logger.debug("NetworkPanel: " + e.getPropertyName());
 			updateVSMenu();
 		}
 
@@ -549,14 +556,17 @@ public class NetworkPanel extends JPanel
 			final Set<Node> selectedNodes = (Set<Node>) event.getTarget();
 
 			if (selectedNodes.size() == 1) {
+				logger
+						.debug("NetworkPanel: single node selected... update backpage");
 				// update backpage
 				CyNode firstNode = (CyNode) selectedNodes.iterator().next();
 				WorkspacesPanel.getBackpagePanel().updateBackpage(firstNode);
 			} else {
+				logger.debug("NetworkPanel: more than one node selected");
 				WorkspacesPanel.getBackpagePanel().clearBackpage();
 			}
 
-			// process nested network stuff
+			// process selection of nested networks
 			final List<String> selectedNestedNetworkIDs = new ArrayList<String>();
 			for (final Node node : selectedNodes) {
 				final CyNetwork nestedNetwork = (CyNetwork) node
@@ -605,17 +615,12 @@ public class NetworkPanel extends JPanel
 	 * view, and destroying network (this is platform specific apparently)
 	 */
 	protected class PopupListener extends MouseAdapter {
-		/**
-		 * Don't know why you need both of these, but this is how they did it in
-		 * the example
+		/*
+		 * On windows, popup is triggered by "release", not "pressed"
 		 */
 		public void mousePressed(MouseEvent e) {
 			maybeShowPopup(e);
 		}
-
-		/*
-		 * On windows, popup is triggered by this method, not the above one
-		 */
 		public void mouseReleased(MouseEvent e) {
 			maybeShowPopup(e);
 		}
@@ -627,6 +632,7 @@ public class NetworkPanel extends JPanel
 		private void maybeShowPopup(MouseEvent e) {
 			// check for the popup type
 			if (e.isPopupTrigger()) {
+				logger.debug("network context menu triggered");
 				// get the selected rows
 				final int[] nselected = treeTable.getSelectedRows();
 
@@ -648,6 +654,9 @@ public class NetworkPanel extends JPanel
 						}
 					}
 
+					logger.debug(selectedItemCount
+							+ " networks selected, with view?: "
+							+ enableViewRelatedMenu);
 					/*
 					 * Edit title command will be enabled only when ONE network
 					 * is selected.
@@ -724,6 +733,7 @@ public class NetworkPanel extends JPanel
 		 */
 		public void actionPerformed(ActionEvent ae) {
 			final String label = ((JMenuItem) ae.getSource()).getText();
+			logger.debug(label + " triggered");
 
 			if (DESTROY_VIEW.equals(label)) {
 				final List<CyNetwork> selected = Cytoscape
@@ -838,6 +848,9 @@ public class NetworkPanel extends JPanel
 											network.getIdentifier(), gn
 													.getIdentifier(),
 											WorkspacesCommandHandler.EXPAND);
+									
+//									layoutMetanodeChildren(network);
+									
 									WorkspacesCommandHandler.metanodeOperation(
 											network.getIdentifier(), gn
 													.getIdentifier(),
@@ -851,20 +864,18 @@ public class NetworkPanel extends JPanel
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
+							/*
+							 * View on nested may be destroyed during this
+							 * operation
+							 */
 							if (Cytoscape.viewExists(network.getIdentifier())) {
-								// view on nested may be destroyed during this
-								// operation
+								
+//								layoutMetanodeChildren(network);
+								
 								WorkspacesCommandHandler.allMetanodesOperation(
 										network.getIdentifier(),
 										WorkspacesCommandHandler.COLLAPSE_ALL);
 							}
-
-							/*
-							 * TODO: fix bug related to independent layout of //
-							 * nested and // expanded states //
-							 * layoutMetanodeChildren(network);
-							 */
-
 						}
 					}
 				}
@@ -898,6 +909,7 @@ public class NetworkPanel extends JPanel
 													.getIdentifier(),
 											WorkspacesCommandHandler.EXPAND);
 
+//									layoutMetanodeChildren(network);
 								}
 							}
 						} else { // operate on all metanodes
@@ -905,10 +917,7 @@ public class NetworkPanel extends JPanel
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
 
-							/*
-							 * TODO: add support to handle layout of expanded //
-							 * children layoutMetanodeChildren(network);
-							 */
+//							layoutMetanodeChildren(network);
 						}
 					}
 				}
@@ -918,7 +927,12 @@ public class NetworkPanel extends JPanel
 			}
 		}
 
+		/**
+		 * @param net
+		 */
 		private void layoutMetanodeChildren(CyNetwork net) {
+			//TODO: fix this!
+			logger.debug("layout metanode children nodes... currently broken :(");
 			List<String> metanodeList = WorkspacesCommandHandler
 					.listMetanodes(net);
 			for (String mn : metanodeList) {
