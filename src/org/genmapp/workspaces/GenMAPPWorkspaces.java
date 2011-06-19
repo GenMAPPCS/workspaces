@@ -32,8 +32,8 @@ import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
-import org.genmapp.workspaces.utils.CyAttributesReader;
-import org.genmapp.workspaces.utils.CyAttributesWriter;
+import org.genmapp.workspaces.utils.DatasetAttributesReader;
+import org.genmapp.workspaces.utils.DatasetAttributesWriter;
 import org.pathvisio.core.model.ConverterException;
 import org.pathvisio.core.model.Pathway;
 import org.pathvisio.cytoscape.GpmlPlugin;
@@ -201,7 +201,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * attributes structure, (hopefully) overwriting any duplicates
 			 */
 			logger.info("Loading node attributes for CyDataset nodes");
-			CyAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
+			DatasetAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
 					new FileReader(nodeAttributeFile), logger);
 
 			/*
@@ -375,7 +375,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * mergers/collisions to happen naturally.
 			 */
 			// TODO: this can be improved
-			CyAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
+			DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
 					nodeAttributeFile);
 			fileList.add(nodeAttributeFile);
 
