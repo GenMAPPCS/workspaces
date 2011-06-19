@@ -68,10 +68,8 @@ public class DatasetAttributesReader {
 		while (null != (line = fileReader.readLine())) {
 			String[] values = line.split(",");
 			if (row == 0) {
-				masterValues
-						.put(
-								org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName,
-								values);
+				masterValues.put(
+						DatasetAttributesWriter.headerRowDummyNodeName, values);
 			} else {
 				// skip null value rows
 				if (values[0].equals("null")) {
@@ -94,7 +92,7 @@ public class DatasetAttributesReader {
 		}
 		// logger.debugLarge( masterValuesContents );
 		int numCols = masterValues
-				.get(org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName).length;
+				.get(DatasetAttributesWriter.headerRowDummyNodeName).length;
 		// done reading file into mastervalues: now, write out a column at a
 		// time into a temp file
 		// so that core CyAttrReader can read it ( yes, this qualifies as a hack
@@ -104,9 +102,10 @@ public class DatasetAttributesReader {
 		// and we want to reuse it as cleanly as we can. Surprisingly this is
 		// the best way I see
 		for (int col = 0; col < numCols; col++) {
-			logger.debug("processing "
-					+ masterValues
-							.get(org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName)[col]);
+			logger
+					.debug("processing "
+							+ masterValues
+									.get(DatasetAttributesWriter.headerRowDummyNodeName)[col]);
 
 			// criteriaSet/criteria were selected
 			String pluginDir = PluginManager.getPluginManager()
@@ -128,11 +127,11 @@ public class DatasetAttributesReader {
 			// can read
 			tempWriter
 					.println(masterValues
-							.get(org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName)[col]);
+							.get(DatasetAttributesWriter.headerRowDummyNodeName)[col]);
 
 			for (String nodeId : masterValues.keySet()) {
 				if (nodeId
-						.equals(org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName)) {
+						.equals(DatasetAttributesWriter.headerRowDummyNodeName)) {
 					continue;
 				}
 				tempWriter.println(nodeId + " = "
@@ -153,7 +152,7 @@ public class DatasetAttributesReader {
 
 		for (String nodeId : masterValues.keySet()) {
 			if (nodeId
-					.equals(org.genmapp.workspaces.utils.DatasetAttributesWriter.headerRowDummyNodeName)) {
+					.equals(DatasetAttributesWriter.headerRowDummyNodeName)) {
 				continue;
 			}
 			for (String a : cyAttrs.getAttributeNames()) {
