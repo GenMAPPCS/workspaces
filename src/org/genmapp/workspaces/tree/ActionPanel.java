@@ -37,6 +37,7 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.layout.CyLayouts;
 import cytoscape.layout.LayoutTask;
+import cytoscape.logger.CyLogger;
 import cytoscape.task.util.TaskManager;
 import cytoscape.view.CyNetworkView;
 
@@ -69,12 +70,15 @@ public class ActionPanel extends JPanel
 
 	public static CyAction[] currentActionsList;
 	public static CyAction[] availableActionsList;
+	
+	private CyLogger logger;
 
 	/**
 	 * 
 	 */
-	public ActionPanel() {
+	public ActionPanel(CyLogger cyLogger) {
 		super();
+		this.logger = cyLogger;
 
 		// initialize all actions and prepare default set
 		initializeActions();

@@ -55,7 +55,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToolTipUI;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.utils.Downloader;
 
 import cytoscape.Cytoscape;
@@ -63,6 +62,8 @@ import cytoscape.CytoscapeInit;
 import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
+import cytoscape.logger.CyLogger;
+
 
 public class SpeciesPanel extends JPanel
 		implements
@@ -96,6 +97,8 @@ public class SpeciesPanel extends JPanel
 	private Color red = new Color(200, 50, 50);
 	private Color blue = new Color(50, 50, 180);
 	private Color grey = new Color(230, 230, 230);
+	
+	private CyLogger logger;
 
 	/**
 	 * Hash of latin name keys mapped to latest databases available for
@@ -115,8 +118,9 @@ public class SpeciesPanel extends JPanel
 	 */
 	public static Map<String, String[]> supportedDatasources = new HashMap<String, String[]>();
 
-	public SpeciesPanel() {
+	public SpeciesPanel(CyLogger cyLogger) {
 		super();
+		this.logger = cyLogger;
 
 		/*
 		 * Species Selection Panel

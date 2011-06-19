@@ -20,13 +20,11 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -36,6 +34,7 @@ import org.genmapp.workspaces.utils.NetworkMapping;
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
+import cytoscape.logger.CyLogger;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.CytoPanel;
 import cytoscape.view.cytopanels.CytoPanelState;
@@ -63,23 +62,25 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	// BirdsEyeView bev;
 	// private BiModalJSplitPane split;
 	private final CytoscapeDesktop cytoscapeDesktop;
+	private CyLogger logger;
 
 	/**
 	 * Constructor for the Workspaces Panel.
 	 * 
 	 */
-	public WorkspacesPanel() {
+	public WorkspacesPanel(CyLogger cyLogger) {
 		super();
 		this.cytoscapeDesktop = Cytoscape.getDesktop();
+		this.logger = cyLogger;
 
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(PANEL_PREFFERED_WIDTH, 700));
 
-		speciesPanel = new SpeciesPanel();
-		actionPanel = new ActionPanel();
-		networkPanel = new NetworkPanel();
-		datasetPanel = new DatasetPanel();
-		criteriaPanel = new CriteriasetPanel();
+		speciesPanel = new SpeciesPanel(logger);
+		actionPanel = new ActionPanel(logger);
+		networkPanel = new NetworkPanel(logger);
+		datasetPanel = new DatasetPanel(logger);
+		criteriaPanel = new CriteriasetPanel(logger);
 		// analysisTreePanel = new AnalysisPanel();
 		// reportTreePanel = new ReportPanel();
 

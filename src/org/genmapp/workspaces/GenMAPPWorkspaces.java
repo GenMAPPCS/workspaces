@@ -44,6 +44,7 @@ import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
 import cytoscape.data.CyAttributes;
 import cytoscape.data.attr.CountedIterator;
+import cytoscape.logger.CyLogger;
 import cytoscape.plugin.CytoscapePlugin;
 import cytoscape.view.cytopanels.CytoPanel;
 import cytoscape.visual.VisualPropertyDependency;
@@ -51,14 +52,74 @@ import cytoscape.visual.VisualPropertyDependency;
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 	public static WorkspacesPanel wsPanel;
-	public static void showMessage(String message) {
-		// System.out.println(message);
-		// JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
-		// JOptionPane.ERROR_MESSAGE );
-	}
+	private CyLogger logger;
 	final static String propFileName = "GenMAPPWorkspaces.props";
 	final static String nodeAttributeFileName = "GenMAPPWorkspaces.nodeAttr";
 	public static final String ATTR_PATHWAY_URL = "wikipathways.url";
+
+	/**
+	 * 
+	 */
+	public GenMAPPWorkspaces() {
+
+		logger = CyLogger.getLogger(GenMAPPWorkspaces.class);
+		logger.setDebug(true);
+		logger.debug("debug");
+		logger.info("info");
+		logger.error("error");
+		logger.warn("warn");
+
+		// create workspaces panel
+		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(
+				SwingConstants.WEST);
+
+		wsPanel = new WorkspacesPanel(logger);
+
+		cytoPanel1.add("GenMAPP-CS", new ImageIcon(getClass().getResource(
+				"images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);
+		cytoPanel1.setSelectedIndex(0);
+		// cytoPanel.remove(1);
+
+		// set properties
+		// set view thresholds to handle "overview" xGMMLs
+		CytoscapeInit.getProperties().setProperty("viewThreshold", "100000");
+		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold",
+				"120000");
+		// set default node width/height lock to avoid dependency issues
+		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency()
+				.set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED,
+						false);
+
+		/*
+		 * Clear out all org.genmapp.criteriaset properties that may have been
+		 * "saved as default." This happens right after the plugin is loaded,
+		 * well before properties are added from session files. This way we can
+		 * utilize props for storing criteriasets with sessions without allowing
+		 * them to be recalled from .cytoscape/cytoscape.props
+		 */
+		Properties props = CytoscapeInit.getProperties();
+		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
+			CytoscapeInit.getProperties().remove(
+					WorkspacesCommandHandler.PROPERTY_SETS);
+			List<String> keylist = new ArrayList<String>();
+			for (Object key : props.keySet()) {
+				if (((String) key)
+						.startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
+					keylist.add((String) key);
+
+				}
+			}
+			logger
+					.debug("Clearing org.genmapp.criteriaset properties from saved defaults...");
+			for (String key : keylist) {
+				CytoscapeInit.getProperties().remove(key);
+				logger.debug(key + " removed");
+			}
+		}
+
+		// cycommands
+		new WorkspacesCommandHandler(logger);
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -66,7 +127,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * @see cytoscape.plugin.CytoscapePlugin#restoreSessionState(java.util.List)
 	 */
 	public void restoreSessionState(List<File> fileList) {
-		showMessage("loadSessionState");
+		logger.debug("loadSessionState");
 		final String tmpDir = System.getProperty("java.io.tmpdir");
 		File propFile = null;
 		// TODO: can there be more than one?
@@ -75,16 +136,18 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		try {
 			for (File f : fileList) {
-				showMessage(f.getName());
+				logger.debug(f.getName());
 				if (f.getName().contains(propFileName)) {
-					showMessage("propfile = " + f);
+					logger.debug("propfile = " + f);
 					propFile = f;
 				} else if (f.getName().contains(nodeAttributeFileName)) {
-					showMessage("node attribute file = " + f);
+					logger.debug("node attribute file = " + f);
 					nodeAttributeFile = f;
 				} else if (f.getName().endsWith(".gpml")) {
-					showMessage("gpml file = " + f);
+					logger.debug("gpml file = " + f);
 					gpmlFileList.add(f);
+				} else {
+					logger.warn("Ignored " + f.getName());
 				}
 			}
 
@@ -117,9 +180,15 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						//Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
 						// null, new_value);
 
+						logger.info("GPML file " + title
+								+ " restored from session file.");
+
 					} catch (ConverterException e) {
-						e.printStackTrace();
+						logger.error("Error reading GPML file: ", e);
 					}
+				} else {
+					logger.warn("GPML plugin not detected. "
+							+ gpmlFile.getName() + " not restored.");
 				}
 
 			}
@@ -131,44 +200,40 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * this will read the properties directly into the Cytoscape node
 			 * attributes structure, (hopefully) overwriting any duplicates
 			 */
+			logger.info("Loading node attributes for CyDataset nodes");
 			CyAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
-					new FileReader(nodeAttributeFile));
+					new FileReader(nodeAttributeFile), logger);
 
-			// ***** for debugging: display a mini table of node attributes
-			// *****
-			CyAttributes nodeAttr = Cytoscape.getNodeAttributes();
-			String s = "object keys: ";
-			HashMap<String, String> display = new HashMap<String, String>();
-			for (String n : nodeAttr.getAttributeNames()) {
-				CountedIterator i = nodeAttr.getMultiHashMap().getObjectKeys(n);
-				while (i.hasNext()) {
-					String id = (String) i.next();
-					String existingStr = "";
-					if (display.get(id) != null) {
-						existingStr = (String) display.get(id);
+			/*
+			 * Display a mini table of node attributes, if in debug mode
+			 */
+			if (logger.isDebugging()) {
+				CyAttributes nodeAttr = Cytoscape.getNodeAttributes();
+				String s = "object keys: ";
+
+				HashMap<String, String> display = new HashMap<String, String>();
+				for (String n : nodeAttr.getAttributeNames()) {
+					CountedIterator i = nodeAttr.getMultiHashMap()
+							.getObjectKeys(n);
+					while (i.hasNext()) {
+						String id = (String) i.next();
+						String existingStr = "";
+						if (display.get(id) != null) {
+							existingStr = (String) display.get(id);
+						}
+
+						existingStr += nodeAttr.getAttribute(id, n) + "---";
+						display.put(id, existingStr);
 					}
-
-					existingStr += nodeAttr.getAttribute(id, n) + "---";
-					display.put(id, existingStr);
 				}
+
+				String displayStr = "";
+				for (String k : display.keySet()) {
+					displayStr += display.get(k) + "\n";
+				}
+
+				logger.debug("DISPLAY: " + displayStr);
 			}
-
-			String displayStr = "";
-			for (String k : display.keySet()) {
-				displayStr += display.get(k) + "\n";
-			}
-
-			showMessage("DISPLAY: " + displayStr);
-			// **************** end debugging display code *******************
-
-			// create actual CyNodes, and implicitly their Nodes
-			// no explicit mapping needs to be done as it has been handled
-			// already by loading of all the nodeAttributes
-			for (String nodeID : display.keySet()) {
-				Cytoscape.getCyNode(nodeID, true);
-			}
-
-			showMessage("loading CyDatasets");
 
 			// now, you can create your CyDatasets
 			Properties props = new Properties();
@@ -176,9 +241,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 			int numCyDatasets = new Integer(props.getProperty("numCyDatasets"))
 					.intValue();
-			showMessage("numCyDatasets:" + numCyDatasets);
+			logger.debug("loading " + numCyDatasets + " CyDatasets");
 
-			Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
 			for (int i = 0; i < numCyDatasets; i++) {
 				String name = props.getProperty("ds." + i + ".name");
 				String keyType = props.getProperty("ds." + i + ".keyType");
@@ -190,24 +254,25 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				String[] nodeIdsAsStr = nodeIdListString.split(",");
 				List<Integer> nodeRootIdList = new ArrayList<Integer>();
 				for (String cyNodeID : nodeIdsAsStr) {
-					showMessage("id: "+cyNodeID);
 					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true)
 							.getRootGraphIndex());
 				}
-				showMessage(nodeRootIdList + "");
-				// create a new CyDataset object, but with no automatic mapping
-				// ( that has been done already at the attribute level )
-				CyDataset ds = new CyDataset(name, keyType, nodeRootIdList,
+				logger.debug(nodeRootIdList + "");
+				/*
+				 * Create a new CyDataset object, but with no automatic mapping
+				 * since that has already been done and loaded directly as node
+				 * attributes.
+				 */
+				new CyDataset(name, keyType, nodeRootIdList,
 						attrList, false);
-				showMessage(name);
-				datasetNameMap.put(name, ds);
+				logger.info("CyDataset " + name
+						+ " restored from session file.");
 			}
-			showMessage("replacing cydataset map");
-			CyDataset.datasetNameMap = datasetNameMap;
 
 			/*
 			 * Load Criteriasets
 			 */
+			logger.debug("loading CyCriteriasets");
 			String setsString = CytoscapeInit.getProperties().getProperty(
 					WorkspacesCommandHandler.PROPERTY_SETS);
 			// extract cset names
@@ -219,6 +284,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 				for (String cs : temp) {
 					full.add(cs);
+					logger.debug(cs+" to be restored...");
 				}
 			}
 			// create csets
@@ -228,6 +294,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 								WorkspacesCommandHandler.PROPERTY_SET_PREFIX
 										+ csetname);
 				new CyCriteriaset(csetname, setParameters);
+				logger.info("CyCriteriaset "+csetname+" restored from session file.");
 			}
 			// restore network-criteria map from prop file
 			for (CyNetwork net : Cytoscape.getNetworkSet()) {
@@ -236,14 +303,15 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						.get(csetname);
 				// track last applied cset per network
 				CyCriteriaset.setNetworkCriteriaset(net, cset);
+				logger.debug("setting "+csetname+" for "+net.getTitle());
 				// apply them after SESSION_LOADED
 			}
 			// end try read files
 		} catch (Exception e) {
-			showMessage("Exception: " + e);
+			logger.debug("Exception: " + e);
 		}
-
 	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -251,7 +319,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * cytoscape.plugin.CytoscapePlugin#saveSessionStateFiles(java.util.List)
 	 */
 	public void saveSessionStateFiles(List<File> fileList) {
-		showMessage("saveSessionState");
+		logger.debug("saveSessionState");
 
 		final String tmpDir = System.getProperty("java.io.tmpdir");
 		final File propFile = new File(tmpDir, propFileName);
@@ -306,13 +374,13 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * simply store all the nodes in the rootgraph and allow
 			 * mergers/collisions to happen naturally.
 			 */
-			//TODO: this can be improved
+			// TODO: this can be improved
 			CyAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
 					nodeAttributeFile);
 			fileList.add(nodeAttributeFile);
 
 		} catch (IOException ex) {
-			showMessage("saveSessionState: IOException " + ex);
+			logger.debug("saveSessionState: IOException " + ex);
 
 		}
 
@@ -338,61 +406,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			}
 
 		}
-		showMessage("done");
-	}
-
-	/**
-	 * 
-	 */
-	public GenMAPPWorkspaces() {
-
-		// create workspaces panel
-		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(
-				SwingConstants.WEST);
-
-		wsPanel = new WorkspacesPanel();
-
-		cytoPanel1.add("GenMAPP-CS", new ImageIcon(getClass().getResource(
-				"images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);
-		cytoPanel1.setSelectedIndex(0);
-		// cytoPanel.remove(1);
-
-		// set properties
-		// set view thresholds to handle "overview" xGMMLs
-		CytoscapeInit.getProperties().setProperty("viewThreshold", "100000");
-		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold",
-				"120000");
-		// set default node width/height lock to avoid dependency issues
-		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency()
-				.set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED,
-						false);
-
-		/*
-		 * Clear out all org.genmapp.criteriaset properties that may have been
-		 * "saved as default." This happens right after the plugin is loaded,
-		 * well before properties are added from session files. This way we can
-		 * utilize props for storing criteriasets with sessions without allowing
-		 * them to be recalled from .cytoscape/cytoscape.props
-		 */
-		Properties props = CytoscapeInit.getProperties();
-		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
-			CytoscapeInit.getProperties().remove(
-					WorkspacesCommandHandler.PROPERTY_SETS);
-			List<String> keylist = new ArrayList<String>();
-			for (Object key : props.keySet()) {
-				if (((String) key)
-						.startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
-					keylist.add((String) key);
-
-				}
-			}
-			for (String key : keylist) {
-				CytoscapeInit.getProperties().remove(key);
-			}
-		}
-
-		// cycommands
-		new WorkspacesCommandHandler();
+		logger.debug("done");
 	}
 
 }

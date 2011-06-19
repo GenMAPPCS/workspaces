@@ -126,14 +126,17 @@ public class NetworkPanel extends JPanel
 	// public final JPanel oriNetworkPanel = (JPanel)
 	// Cytoscape.getDesktop().getCytoPanel(
 	// SwingConstants.WEST).getComponentAt(1);
+	
+	private CyLogger logger;
 
 	/**
 	 * Constructor for the Network Panel.
 	 * 
 	 * @param desktop
 	 */
-	public NetworkPanel() {
+	public NetworkPanel(CyLogger cyLogger) {
 		super();
+		this.logger = cyLogger;
 
 		root = new GenericTreeNode("Network Root", "nroot");
 		networkTreeTableModel = new NetworkTreeTableModel(root);

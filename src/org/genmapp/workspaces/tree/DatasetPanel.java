@@ -91,14 +91,17 @@ public class DatasetPanel extends JPanel implements
 	private BiModalJSplitPane split;
 
 	private final DatasetTreeTableModel datasetTreeTableModel;
+	
+	private CyLogger logger;
 
 	/**
 	 * Constructor for the Network Panel.
 	 * 
 	 * @param desktop
 	 */
-	public DatasetPanel() {
+	public DatasetPanel(CyLogger cyLogger) {
 		super();
+		this.logger = cyLogger;
 
 		root = new GenericTreeNode("Dataset Root", "droot");
 		datasetTreeTableModel = new DatasetTreeTableModel(root);

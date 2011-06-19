@@ -109,14 +109,17 @@ public class CriteriasetPanel extends JPanel
 	private BiModalJSplitPane split;
 
 	private final CriteriasetTreeTableModel criteriaTreeTableModel;
+	
+	private CyLogger logger;
 
 	/**
 	 * Constructor for the Network Panel.
 	 * 
 	 * @param desktop
 	 */
-	public CriteriasetPanel() {
+	public CriteriasetPanel(CyLogger cyLogger) {
 		super();
+		this.logger = cyLogger;
 
 		root = new GenericTreeNode("Criteria Root", "croot");
 		criteriaTreeTableModel = new CriteriasetTreeTableModel(root);

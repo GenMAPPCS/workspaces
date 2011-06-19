@@ -23,6 +23,7 @@ import cytoscape.command.CyCommandHandler;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 import cytoscape.layout.Tunable;
+import cytoscape.logger.CyLogger;
 
 public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String NAMESPACE = "workspaces";
@@ -105,9 +106,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ADD_GOELITE_JOB = "add job";
 	private final static String ARG_GOELITE_JOB = "jobid";
 	private final static String ARG_GOELITE_TABLABEL = "tablabel";
+	
+	private CyLogger logger;
 
-	public WorkspacesCommandHandler() {
+	public WorkspacesCommandHandler(CyLogger cyLogger) {
 		super(CyCommandManager.reserveNamespace(NAMESPACE));
+		this.logger = cyLogger;
 
 		// addDescription(ADD_DATASET, "Add dataset to workspaces panel");
 		// addArgument(ADD_DATASET, ARG_DATASET_URL);
