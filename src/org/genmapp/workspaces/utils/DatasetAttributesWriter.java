@@ -6,39 +6,27 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
-import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.data.CyAttributes;
+import cytoscape.logger.CyLogger;
 import cytoscape.plugin.PluginManager;
 
 // we wrap the core library of the same name to do the dirty work
 public class DatasetAttributesWriter {
 
   public static String headerRowDummyNodeName = "CyAttributesWriter.ColumnHeader.DummyNode";
-  private static List<String> allNetworkNodeIds = new ArrayList<String>();
 
-  public static void showMessage(String message) {
-		// System.out.println(message);
-		// JOptionPane.showMessageDialog( Cytoscape.getDesktop(),
-		// message,
-		// "",
-		// JOptionPane.ERROR_MESSAGE );
-  }
-  public static void writeAttributes( CyAttributes attrib, File attribFile ) throws IOException
+
+  public static void writeAttributes( CyAttributes attrib, File attribFile, CyLogger logger ) throws IOException
   {	
     int cols = attrib.getAttributeNames().length;
-	showMessage( "write Attributes to " + attribFile + " cols = " + cols );
-	
-
-	
+	logger.debug( "write Attributes to " + attribFile + " cols = " + cols );
+		
     Set< String > allNetworkNodeIds = new HashSet< String >();
     
 	// generate list of network nodes to skip
@@ -63,7 +51,7 @@ public class DatasetAttributesWriter {
 		int col = 0;
 	
 	    masterValues.put( headerRowDummyNodeName, new String[ cols ] );
-	    showMessage( "setting header row" );
+	    logger.debug( "setting header row" );
 	    
 
 		// store attr names on first row of masterValues table
@@ -94,7 +82,7 @@ public class DatasetAttributesWriter {
 		new File( pluginDir ).mkdir();
 	}
 	File tempFile = new File( pluginDir + "/dummy.temp" ); // XXX put in proper path
-    showMessage( "tempFile = " + tempFile );
+    logger.debug( "tempFile = " + tempFile );
     
     tempFile.delete();
 	
@@ -121,7 +109,7 @@ public class DatasetAttributesWriter {
 	// pertains to the current attribute
 	for (int attrCol = 0; attrCol < cols; attrCol++) {
 		String a = masterValues.get(headerRowDummyNodeName)[attrCol];
-		showMessage("writing attrib " + a);
+		logger.debug("writing attrib " + a);
 		// for some reason the cyattributewriter closes the file at the end
 		// of each write operation so we must reopen each time
 		// write for append
@@ -142,7 +130,7 @@ public class DatasetAttributesWriter {
 			// to reconstruct attributes
 			if (!bHeaderProcessed) {
 				bHeaderProcessed = true;
-				showMessage("replacing header for attrib " + a + "[ " + l
+				logger.debug("replacing header for attrib " + a + "[ " + l
 						+ "]");
 				masterValues.get(headerRowDummyNodeName)[attrCol] = l;
 				continue;
@@ -150,6 +138,9 @@ public class DatasetAttributesWriter {
 
 			// format: <nodeID> = <attribValue>
 			String[] s = l.split(" = ");
+			// skip blank entries
+			if (s.length != 2)
+				continue;
 			String nodeId = s[0];
 			String attrValue = s[1];
 
@@ -160,20 +151,16 @@ public class DatasetAttributesWriter {
 			if (masterValues.get(nodeId) == null)
 				masterValues.put(nodeId, new String[cols]);
 
-			showMessage("setting " + nodeId + ", " + attrCol + " = "
-					+ attrValue);
 			masterValues.get(nodeId)[attrCol] = attrValue;
-			// showMessage( "done setting " + nodeId + ", " + attrCol +
-			// " = " + attrValue );
-
 		}
+		
 		tempReader.close();
-		showMessage("done with attr " + a);
+		logger.debug("done with attr " + a);
 		tempFile.delete();
 	}
 
 	// Now dump to csv file
-	showMessage("Dumpying csv to " + attribFile);
+	logger.debug("Dumpying csv to " + attribFile);
 	{
 		String s = "[";
 
@@ -185,7 +172,7 @@ public class DatasetAttributesWriter {
 		for (String nodeId : masterValues.keySet()) {
 			s += nodeId + " - ";
 
-			showMessage("key: " + nodeId);
+//			logger.debug("key: " + nodeId);
 			if (nodeId.equals(headerRowDummyNodeName)) {
 				continue;
 			}
@@ -194,13 +181,14 @@ public class DatasetAttributesWriter {
 			}
 			s += "\n";
 		}
-		showMessage(s);
+		logger.debug(s);
 	}
 	PrintWriter csvWriter = new PrintWriter(new FileWriter(attribFile));
 	java.util.Iterator<String> i = masterValues.keySet().iterator();
 	String nodeID = headerRowDummyNodeName; // first, write the header to
 	// csv
 	boolean bIsProcessingInitialHeader = true;
+	logger.debug("printing to cvsWriter...");
 	while (i.hasNext()) {
 		// processing a single 'row' of the masterValues hash
 		if (!bIsProcessingInitialHeader) {
@@ -212,21 +200,21 @@ public class DatasetAttributesWriter {
 			// nodeID.equals(
 			// "Target" ) )
 			{
-				showMessage("skip row for ID " + nodeID);
+//				logger.debug("skip row for ID " + nodeID);
 				continue;
 			}
 		} else {
 			assert (nodeID.equals(headerRowDummyNodeName));
 		}
 
-		showMessage("processing " + nodeID);
+//		logger.debug("processing " + nodeID);
 		String csvLine = "";
 
 		// iterate over all the columns of the given row
 		for (int col2 = 0; col2 < attrib.getAttributeNames().length; col2++) {
-			// showMessage( "getting " + nodeID + " col= " + col2 );
+			// logger.debug( "getting " + nodeID + " col= " + col2 );
 			String x = masterValues.get(nodeID)[col2];
-			// showMessage( "getting " + nodeID + " col= " + col2 + " = " +
+			// logger.debug( "getting " + nodeID + " col= " + col2 + " = " +
 			// x );
 
 			csvLine += x;

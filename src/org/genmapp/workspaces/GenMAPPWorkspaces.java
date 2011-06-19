@@ -64,10 +64,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		logger = CyLogger.getLogger(GenMAPPWorkspaces.class);
 		logger.setDebug(true);
-		logger.debug("debug");
-		logger.info("info");
-		logger.error("error");
-		logger.warn("warn");
 
 		// create workspaces panel
 		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(
@@ -308,8 +304,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			}
 			// end try read files
 		} catch (Exception e) {
-			logger.debug("Exception: " + e);
+			logger.debug("restoreSessionState Exception: " + e);
 		}
+		logger.debug("done with all session restoring tasks");
 	}
 	
 	/*
@@ -337,6 +334,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 					+ "");
 			int i = 0;
 			for (String name : CyDataset.datasetNameMap.keySet()) {
+				logger.debug(name+" to be saved...");
 				CyDataset ds = (CyDataset) CyDataset.datasetNameMap.get(name);
 				props.setProperty("ds." + i + ".name", name);
 				props.setProperty("ds." + i + ".keyType", ds.getKeyType());
@@ -357,10 +355,12 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(net);
 				if (null != cset) {
 					props.setProperty("cs." + net.getTitle(), cset.getName());
+					logger.debug("saving " +cset.getName()+" for "+ net.getTitle());
 				}
 			}
 
 			// writes property file to disk
+			logger.debug("writing props to file: "+propFile.getName());
 			props.store(new FileOutputStream(propFile), null);
 			fileList.add(propFile);
 
@@ -375,8 +375,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * mergers/collisions to happen naturally.
 			 */
 			// TODO: this can be improved
+			logger.debug("writing node attribtues");
 			DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
-					nodeAttributeFile);
+					nodeAttributeFile, logger);
 			fileList.add(nodeAttributeFile);
 
 		} catch (IOException ex) {
@@ -391,22 +392,24 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			if (null != wpurl) {
 				final File gpmlFile = new File(tmpDir, net.getTitle() + ".gpml");
 				GpmlPlugin gp = GpmlPlugin.getInstance();
-
+				logger.debug("detected gpml network to be saved");
+				
 				// if GPML plugin is loaded, then attempt save pathway
 				if (null != gp) {
 					try {
 						gp.writeToFile(Cytoscape.getNetworkView(net
 								.getIdentifier()), gpmlFile);
+						logger.debug("Saved "+gpmlFile.getName());
 					} catch (ConverterException e) {
-						e.printStackTrace();
+						logger.error("gpml writeToFile ConverterException: "+e);
 					}
 					fileList.add(gpmlFile);
 				}
-
+				logger.warn("Ignored saving "+gpmlFile.getName()+ " as GPML in session file.");
 			}
 
 		}
-		logger.debug("done");
+		logger.debug("done with all session saving tasks");
 	}
 
 }
