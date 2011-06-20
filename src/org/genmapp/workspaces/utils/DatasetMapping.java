@@ -273,8 +273,7 @@ public abstract class DatasetMapping {
 		if (attr.contains(d.getName())) {
 			// If cn is a gn, then we know to continue with grouping strategy
 			if (cn.isaGroup()) {
-				System.out.println("GROUP: " + cn.getIdentifier() + ":"
-						+ dn.getIdentifier());
+				logger.debug("add "+ dn.getIdentifier()+" to group " + cn.getIdentifier());
 				return relateNodes(dn, cn, network);
 			}
 
@@ -431,7 +430,7 @@ public abstract class DatasetMapping {
 		WorkspacesCommandHandler.setMetanodeAggregation("true");
 		List<String> attrs = d.getAttrs();
 		for (String attr : attrs) {
-			System.out.println("OVERRIDE: " + attr);
+			logger.debug("set aggregation override for: " + attr);
 			Byte aType = Cytoscape.getNodeAttributes().getType(attr);
 			switch (aType) {
 				case CyAttributes.TYPE_STRING :
