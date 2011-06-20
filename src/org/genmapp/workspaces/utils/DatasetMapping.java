@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyDataset;
 
@@ -20,6 +21,7 @@ import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
 import cytoscape.groups.CyGroup;
 import cytoscape.groups.CyGroupManager;
+import cytoscape.logger.CyLogger;
 import cytoscape.view.CyNetworkView;
 
 public abstract class DatasetMapping {
@@ -31,6 +33,8 @@ public abstract class DatasetMapping {
 	public static final String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 	public static final String ID = "GeneID";
 	public static final String CODE = "SystemCode";
+	
+	private static CyLogger logger;
 
 	/**
 	 * Gather secondary key mappings for every datanode. Then match key and
@@ -46,7 +50,8 @@ public abstract class DatasetMapping {
 	 *            force re-annotation of dataset nodes?
 	 */
 	public static void performDatasetMapping(CyDataset d, List<CyNetwork> nl,
-			boolean force) {
+			boolean force, CyLogger cyLogger) {
+		logger = cyLogger;
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
 		System.out.println("Dataset primary key (" + dnKeyType
@@ -259,7 +264,7 @@ public abstract class DatasetMapping {
 				 * metanode dataset mapping strategy with other group uses. So
 				 * this case is skipped (and reported).
 				 */
-				//TODO: report it!
+				// TODO: report it!
 				return false;
 			}
 			// System.out.println("MAP1");
@@ -268,7 +273,8 @@ public abstract class DatasetMapping {
 		if (attr.contains(d.getName())) {
 			// If cn is a gn, then we know to continue with grouping strategy
 			if (cn.isaGroup()) {
-				System.out.println("GROUP: "+cn.getIdentifier()+":"+dn.getIdentifier());
+				System.out.println("GROUP: " + cn.getIdentifier() + ":"
+						+ dn.getIdentifier());
 				return relateNodes(dn, cn, network);
 			}
 
@@ -327,7 +333,8 @@ public abstract class DatasetMapping {
 		CyGroup gn;
 		/*
 		 * We have to create dn views on relevant network centered on or around
-		 * cn location in order to inform final group node position
+		 * cn location in order to inform final group node position when
+		 * collapsed
 		 */
 		network.addNode(dn);
 		CyNetworkView cnv = Cytoscape.getNetworkView(network.getIdentifier());
@@ -340,12 +347,35 @@ public abstract class DatasetMapping {
 			if (gn.getViewer().equals("metaNode")) {
 				gn.addNode(dn);
 
+				// collect some measurements
+				double h = cnv.getNodeView(cn).getHeight();
+				double w = cnv.getNodeView(cn).getWidth();
+
 				/*
 				 * We have to expand (int=1) in order to "recapture" added
 				 * nodes. this is basically functioning as the first half of
 				 * MetaNode.recollapse().
 				 */
 				gn.setState(1);
+				/*
+				 * Now, reposition all children nodes around original cn.
+				 */
+				int n = gn.getNodes().size();
+				double d = (n / 2)
+						* Math
+								.sqrt(Math.pow((h / 2), 2)
+										+ Math.pow((w / 2), 2));
+				double t = 360 / n;
+				int i = 0;
+				logger.debug("height: "+h+" width: "+w+" count: "+n+" distance: "+d+" theta: "+t);
+				for (CyNode child : gn.getNodes()) {
+					double y = Math.cos(t * i) * d;
+					double x = Math.sin(t * i) * d;
+					logger.debug(child.getIdentifier()+": x="+x+" y="+y);
+					cnv.getNodeView(child)
+							.setOffset(o.getX() - x, o.getY() - y);
+					i++;
+				}
 			} else {
 				/*
 				 * This is a non-metanode group node, meaning it's not ours! We
@@ -353,7 +383,9 @@ public abstract class DatasetMapping {
 				 * pre-existing group nodes. So, this mapping gets skipped (and
 				 * reported).
 				 */
-				//TODO: report it!
+				// TODO: report it!
+				// undo dataset node addition to network
+				network.removeNode(dn.getRootGraphIndex(), false);
 				return false;
 			}
 		} else {

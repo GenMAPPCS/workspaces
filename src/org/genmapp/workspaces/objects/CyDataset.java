@@ -18,6 +18,7 @@ import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.groups.CyGroup;
 import cytoscape.groups.CyGroupManager;
+import cytoscape.logger.CyLogger;
 
 public class CyDataset {
 
@@ -33,6 +34,8 @@ public class CyDataset {
 
 	public static Map<String, CyDataset> datasetNameMap = new HashMap<String, CyDataset>();
 	// public static List<String> selectedDatasets = new ArrayList<String>();
+	
+	private static CyLogger logger;
 
 	/**
 	 * Analogous to CyNetwork, this is the base class of all dataset objects in
@@ -43,16 +46,17 @@ public class CyDataset {
 	 * @param nl
 	 * @param al
 	 */
-	public CyDataset(String n, String t, List<Integer> nl, List<String> al) {
-		this(n, t, nl, al, true);
+	public CyDataset(String n, String t, List<Integer> nl, List<String> al, CyLogger cyLogger) {
+		this(n, t, nl, al, true, cyLogger);
 	}
 
 	public CyDataset(String n, String t, List<Integer> nl, List<String> al,
-			boolean performDatasetMapping) {
-		this.name = n;
+			boolean performDatasetMapping, CyLogger cyLogger) {
+		name = n;
 		this.keyType = t;
 		this.nodes = nl;
 		this.attrs = al;
+		logger = cyLogger;
 
 		datasetNameMap.put(n, this);
 
@@ -63,7 +67,7 @@ public class CyDataset {
 
 		// perform dataset mapping
 		if (performDatasetMapping) {
-			DatasetMapping.performDatasetMapping(this, null, true);
+			DatasetMapping.performDatasetMapping(this, null, true, logger);
 		}
 		// set color of entry in panel
 		setCurrentHighlight();

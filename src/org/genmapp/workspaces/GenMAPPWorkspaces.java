@@ -260,7 +260,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				 * attributes.
 				 */
 				new CyDataset(name, keyType, nodeRootIdList,
-						attrList, false);
+						attrList, false, logger);
 				logger.info("CyDataset " + name
 						+ " restored from session file.");
 			}

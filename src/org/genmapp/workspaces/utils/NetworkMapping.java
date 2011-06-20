@@ -15,6 +15,7 @@ import cytoscape.command.CyCommandException;
 import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 import cytoscape.data.CyAttributes;
+import cytoscape.logger.CyLogger;
 
 public abstract class NetworkMapping {
 
@@ -33,7 +34,7 @@ public abstract class NetworkMapping {
 	 * @param force
 	 *            force re-annotation of network
 	 */
-	public static void performNetworkAnnotation(CyNetwork network, Boolean force) {
+	public static void performNetworkAnnotation(CyNetwork network, Boolean force, CyLogger logger) {
 		String netid = network.getIdentifier();
 		String secKeyType = DatasetMapping.getSecKeyType();
 		// check network-level system code
@@ -150,11 +151,11 @@ public abstract class NetworkMapping {
 	 * @param force
 	 *            force re-annotation of dataset nodes
 	 */
-	public static void performNetworkMapping(CyNetwork network, Boolean force) {
+	public static void performNetworkMapping(CyNetwork network, Boolean force, CyLogger logger) {
 		List<CyNetwork> networklist = new ArrayList<CyNetwork>();
 		networklist.add(network);
 		for (CyDataset d : CyDataset.datasetNameMap.values()) {
-			DatasetMapping.performDatasetMapping(d, networklist, force);
+			DatasetMapping.performDatasetMapping(d, networklist, force, logger);
 		}
 		CyDataset.setCurrentHighlight();
 	}

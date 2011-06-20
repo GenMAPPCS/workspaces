@@ -199,8 +199,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
 						.getNewValue())[0];
 				logger.info("CyNetwork "+newNetwork.getTitle()+" loaded.");
-				NetworkMapping.performNetworkAnnotation(newNetwork, false);
-				NetworkMapping.performNetworkMapping(newNetwork, false);
+				NetworkMapping.performNetworkAnnotation(newNetwork, false, logger);
+				NetworkMapping.performNetworkMapping(newNetwork, false, logger);
 				if (Cytoscape.viewExists(newNetwork.getIdentifier())) {
 					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
 							.values()) {
@@ -222,7 +222,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 * for backward compatibility, so folks can start using
 				 * GenMAPP-CS on previously generated session files
 				 */
-				NetworkMapping.performNetworkAnnotation(network, false);
+				NetworkMapping.performNetworkAnnotation(network, false, logger);
 
 				/*
 				 * and restore network-criteria map from prop file

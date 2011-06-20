@@ -557,9 +557,9 @@ public class DatasetPanel extends JPanel implements
 				// set "force" = true to support re-annotation of ds nodes
 				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
 				for (CyNetwork network : netlist) {
-					NetworkMapping.performNetworkAnnotation(network, true);
+					NetworkMapping.performNetworkAnnotation(network, true, logger);
 				}
-				DatasetMapping.performDatasetMapping(ds, netlist, true);
+				DatasetMapping.performDatasetMapping(ds, netlist, true, logger);
 				// force update of highlight
 				ds.setCurrentHighlight();
 			} else if (SELECT_ATTRIBUTES.equals(label)) {

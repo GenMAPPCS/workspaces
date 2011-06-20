@@ -244,7 +244,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Dataset " + name
 						+ " already listed in Workspaces.");
 			} else {
-				CyDataset dataset = new CyDataset(name, type, nodes, attrs);
+				CyDataset dataset = new CyDataset(name, type, nodes, attrs, logger);
 				result.addMessage("Dataset " + name + " added to Workspaces.");
 			}
 

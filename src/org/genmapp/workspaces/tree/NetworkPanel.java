@@ -848,9 +848,7 @@ public class NetworkPanel extends JPanel
 											network.getIdentifier(), gn
 													.getIdentifier(),
 											WorkspacesCommandHandler.EXPAND);
-									
-//									layoutMetanodeChildren(network);
-									
+
 									WorkspacesCommandHandler.metanodeOperation(
 											network.getIdentifier(), gn
 													.getIdentifier(),
@@ -869,9 +867,6 @@ public class NetworkPanel extends JPanel
 							 * operation
 							 */
 							if (Cytoscape.viewExists(network.getIdentifier())) {
-								
-//								layoutMetanodeChildren(network);
-								
 								WorkspacesCommandHandler.allMetanodesOperation(
 										network.getIdentifier(),
 										WorkspacesCommandHandler.COLLAPSE_ALL);
@@ -908,16 +903,12 @@ public class NetworkPanel extends JPanel
 											network.getIdentifier(), gn
 													.getIdentifier(),
 											WorkspacesCommandHandler.EXPAND);
-
-//									layoutMetanodeChildren(network);
 								}
 							}
 						} else { // operate on all metanodes
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
-
-//							layoutMetanodeChildren(network);
 						}
 					}
 				}
@@ -927,33 +918,6 @@ public class NetworkPanel extends JPanel
 			}
 		}
 
-		/**
-		 * @param net
-		 */
-		private void layoutMetanodeChildren(CyNetwork net) {
-			//TODO: fix this!
-			logger.debug("layout metanode children nodes... currently broken :(");
-			List<String> metanodeList = WorkspacesCommandHandler
-					.listMetanodes(net);
-			for (String mn : metanodeList) {
-				CyNode cn = Cytoscape.getCyNode(mn, false);
-				CyGroup gn = CyGroupManager.getCyGroup(cn);
-				CyNetwork gnet = (CyNetwork) gn.getGroupNode()
-						.getNestedNetwork();
-				CyNetworkView gnv = Cytoscape.getNetworkView(gnet
-						.getIdentifier());
-				Cytoscape.setCurrentNetworkView(gnv.getIdentifier());
-
-				TaskManager.executeTask(new LayoutTask(CyLayouts
-						.getLayout("circular"), gnv), LayoutTask
-						.getDefaultTaskConfig());
-
-				// TODO: what we really want is vertical stack applied to nested
-				// or expanded children
-
-			}
-
-		}
 
 		/**
 		 * Right before the popup menu is displayed, this function is called so
