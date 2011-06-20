@@ -33,7 +33,7 @@ public abstract class DatasetMapping {
 	public static final String NET_ATTR_DATASET_PREFIX = "org.genmapp.dataset.";
 	public static final String ID = "GeneID";
 	public static final String CODE = "SystemCode";
-	
+
 	private static CyLogger logger;
 
 	/**
@@ -361,17 +361,20 @@ public abstract class DatasetMapping {
 				 * Now, reposition all children nodes around original cn.
 				 */
 				int n = gn.getNodes().size();
-				double d = (n / 2)
-						* Math
-								.sqrt(Math.pow((h / 2), 2)
-										+ Math.pow((w / 2), 2));
-				double t = 360 / n;
+				double d = Math.sqrt(Math.pow((h / 2), 2)
+						+ Math.pow((w / 2), 2));
+				d = d * n /3;
+				double t = (360 / n);
 				int i = 0;
-				logger.debug("height: "+h+" width: "+w+" count: "+n+" distance: "+d+" theta: "+t);
+
 				for (CyNode child : gn.getNodes()) {
-					double y = Math.cos(t * i) * d;
-					double x = Math.sin(t * i) * d;
-					logger.debug(child.getIdentifier()+": x="+x+" y="+y);
+//					System.out.println("height: " + h + " width: " + w
+//							+ " count: " + n + " distance: " + d + " theta: "
+//							+ t + " i:" + i);
+					double y = Math.cos(Math.toRadians(t * i)) * d;
+					double x = Math.sin(Math.toRadians(t * i)) * d;
+//					System.out.println(child.getIdentifier() + ": x=" + x
+//							+ " y=" + y);
 					cnv.getNodeView(child)
 							.setOffset(o.getX() - x, o.getY() - y);
 					i++;
