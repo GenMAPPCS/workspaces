@@ -71,7 +71,7 @@ import org.genmapp.workspaces.tree.ActionPanel;
 public class CyActionConfigDialog extends JDialog {
 
 	private static final long serialVersionUID = 5106703609005644456L;
-	
+
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private JButton okBtn;
 	private JButton loadBtn;
@@ -79,6 +79,8 @@ public class CyActionConfigDialog extends JDialog {
 	private JButton cancelBtn;
 	private JButton leftButton;
 	private JButton rightButton;
+	private JButton upButton;
+	private JButton downButton;
 	private JList selectedActionsList;
 	private OrderedActionsListModel selectedActionsData = new OrderedActionsListModel();
 	private JList availableActionsList;
@@ -128,9 +130,16 @@ public class CyActionConfigDialog extends JDialog {
 		JPanel selectActionsPanel = new JPanel();
 		JScrollPane availableActionsScrollPane = new JScrollPane();
 		JScrollPane selectedActionsScrollPane = new JScrollPane();
-		JPanel lrButtonPanel = new JPanel();
+		JPanel leftRightPanel = new JPanel();
 		rightButton = new JButton();
+		rightButton.setToolTipText("Add action to workflow");
 		leftButton = new JButton();
+		leftButton.setToolTipText("Remove action from workflow");
+		JPanel upDownPanel = new JPanel();
+		upButton = new JButton();
+		upButton.setToolTipText("Move action up");
+		downButton = new JButton();
+		downButton.setToolTipText("Move action down");
 		JPanel workflowPanel = new JPanel();
 		description = new JLabel(" ");
 		requirements = new JLabel(" ");
@@ -206,8 +215,7 @@ public class CyActionConfigDialog extends JDialog {
 
 		availableActionsList
 				.addListSelectionListener(new ListSelectionListener() {
-					public void valueChanged(
-							ListSelectionEvent evt) {
+					public void valueChanged(ListSelectionEvent evt) {
 						int index = availableActionsList.getMinSelectionIndex();
 						if (index > -1) {
 							selectedActionsList.getSelectionModel()
@@ -250,7 +258,7 @@ public class CyActionConfigDialog extends JDialog {
 		gridBagConstraints.insets = new java.awt.Insets(0, 0, 3, 3);
 		selectActionsPanel.add(workflowPanel, gridBagConstraints);
 
-		lrButtonPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
+		leftRightPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
 
 		rightButton.setIcon(new ImageIcon(getClass().getResource(
 				"../images/right.png")));
@@ -258,9 +266,10 @@ public class CyActionConfigDialog extends JDialog {
 		rightButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				int[] indices = availableActionsList.getSelectedIndices();
-				if (indices == null || indices.length == 0) {
+				if (indices == null)
 					return;
-				}
+				if (indices.length == 0)
+					return;
 
 				for (int i = indices.length - 1; i >= 0; i--) {
 					CyAction selected = availableActionsData
@@ -285,7 +294,7 @@ public class CyActionConfigDialog extends JDialog {
 				updateOKButtonEnable();
 			}
 		});
-		lrButtonPanel.add(rightButton);
+		leftRightPanel.add(rightButton);
 
 		leftButton.setIcon(new ImageIcon(getClass().getResource(
 				"../images/left.png")));
@@ -293,9 +302,10 @@ public class CyActionConfigDialog extends JDialog {
 		leftButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				int[] indices = selectedActionsList.getSelectedIndices();
-				if (indices == null || indices.length == 0) {
+				if (indices == null)
 					return;
-				}
+				if (indices.length == 0)
+					return;
 
 				for (int i = indices.length - 1; i >= 0; i--) {
 					CyAction removed = selectedActionsData
@@ -320,13 +330,54 @@ public class CyActionConfigDialog extends JDialog {
 
 			}
 		});
-		lrButtonPanel.add(leftButton);
+		leftRightPanel.add(leftButton);
 
 		gridBagConstraints = new java.awt.GridBagConstraints();
 		gridBagConstraints.gridx = 1;
 		gridBagConstraints.gridy = 1;
 		gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
-		selectActionsPanel.add(lrButtonPanel, gridBagConstraints);
+		selectActionsPanel.add(leftRightPanel, gridBagConstraints);
+
+		// Up-Down Panel
+		upDownPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
+
+		upButton.setIcon(new ImageIcon(getClass().getResource(
+				"../images/up.png")));
+		upButton.setEnabled(false);
+		upButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				int index = selectedActionsList.getSelectedIndex();
+				if (index != 0) {
+					swap(index, index - 1);
+					selectedActionsList.setSelectedIndex(index - 1);
+					selectedActionsList.ensureIndexIsVisible(index - 1);
+				}
+				selectedActionsList.repaint();
+			}
+		});
+		upDownPanel.add(upButton);
+
+		downButton.setIcon(new ImageIcon(getClass().getResource(
+				"../images/down.png")));
+		downButton.setEnabled(false);
+		downButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				int index = selectedActionsList.getSelectedIndex();
+				if (index != selectedActionsData.getSize() - 1) {
+					swap(index, index + 1);
+					selectedActionsList.setSelectedIndex(index + 1);
+					selectedActionsList.ensureIndexIsVisible(index + 1);
+				}
+				selectedActionsList.repaint();
+			}
+		});
+		upDownPanel.add(downButton);
+
+		gridBagConstraints = new java.awt.GridBagConstraints();
+		gridBagConstraints.gridx = 3;
+		gridBagConstraints.gridy = 1;
+		gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
+		selectActionsPanel.add(upDownPanel, gridBagConstraints);
 
 		selectedActionsScrollPane.setPreferredSize(new java.awt.Dimension(300,
 				150));
@@ -350,20 +401,38 @@ public class CyActionConfigDialog extends JDialog {
 		});
 		selectedActionsList
 				.addListSelectionListener(new ListSelectionListener() {
-					public void valueChanged(
-							ListSelectionEvent evt) {
+					public void valueChanged(ListSelectionEvent evt) {
 						int index = selectedActionsList.getMinSelectionIndex();
 						if (index > -1) {
 							availableActionsList.getSelectionModel()
 									.clearSelection();
 							leftButton.setEnabled(true);
-							CyAction action = availableActionsData
+							CyAction action = selectedActionsData
 									.getElementAt(index);
 							description.setText(DESC + action.getDescription());
 							requirements.setText(REQS
 									+ action.getRequirements());
 						} else {
 							leftButton.setEnabled(false);
+						}
+						int[] indices = selectedActionsList
+								.getSelectedIndices();
+						if (indices != null) {
+							if (indices.length == 1) {
+								if (indices[0] != 0) {
+									upButton.setEnabled(true);
+								} else {
+									upButton.setEnabled(false);
+								}
+								if (indices[0] != selectedActionsData.getSize() - 1) {
+									downButton.setEnabled(true);
+								} else {
+									downButton.setEnabled(false);
+								}
+							} else {
+								upButton.setEnabled(false);
+								downButton.setEnabled(false);
+							}
 						}
 					}
 				});
@@ -398,6 +467,15 @@ public class CyActionConfigDialog extends JDialog {
 
 		pack();
 	}
+
+	// Swap two elements in the list.
+	private void swap(int a, int b) {
+		CyAction aAction = selectedActionsData.getElementAt(a);
+		CyAction bAction = selectedActionsData.getElementAt(b);
+		selectedActionsData.setElementAt(a, bAction);
+		selectedActionsData.setElementAt(b, aAction);
+	}
+
 	private void checkboxActionPerformed(ActionEvent evt) {
 		// toggle values
 		ActionPanel.workflowState = !ActionPanel.workflowState;
@@ -412,7 +490,7 @@ public class CyActionConfigDialog extends JDialog {
 	private void loadBtnActionPerformed(ActionEvent evt) {
 		// TODO
 	}
-	
+
 	private void saveBtnActionPerformed(ActionEvent evt) {
 		// TODO
 	}
@@ -479,6 +557,11 @@ public class CyActionConfigDialog extends JDialog {
 
 		public CyAction getElementAt(int index) {
 			return (CyAction) model.get(index);
+		}
+
+		public void setElementAt(int index, CyAction action) {
+			model.set(index, action);
+			fireContentsChanged(this, 0, getSize());
 		}
 
 		public void add(CyAction action) {
