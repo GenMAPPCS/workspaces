@@ -185,7 +185,7 @@ public class ActionPanel extends JPanel
 		newCriteriaSet.setDoable(false);
 		newCriteriaSet
 				.setDescription("Define criteria based on imported data to set node color");
-		newCriteriaSet.setRequirements("You must first import a dataset");
+		newCriteriaSet.setRequirements("You must first import a dataset or a network with data");
 
 		CyAction runClustermaker = new CyAction(RUN_CLUSTERMAKER);
 		runClustermaker.setDoable(false);
