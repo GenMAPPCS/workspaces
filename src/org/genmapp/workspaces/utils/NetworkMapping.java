@@ -42,7 +42,8 @@ public abstract class NetworkMapping {
 
 		String netid = network.getIdentifier();
 
-		progress.setString("Annotating: " + netid.substring(0,20) + "...");
+		int tail = netid.length() > 20 ? 20 : netid.length();
+		progress.setString("Annotating: " + netid.substring(0, tail) + "...");
 		progress.setValue(10);
 
 		String secKeyType = DatasetMapping.getSecKeyType();
@@ -81,7 +82,7 @@ public abstract class NetworkMapping {
 						type = t;
 					}
 					logger.debug("system code found: " + type);
-					progress.setString("Using \"" + type + "\"");
+					progress.setString("using \"" + type + "\"");
 					Cytoscape.getNetworkAttributes().setAttribute(netid, CODE,
 							type);
 
@@ -119,7 +120,7 @@ public abstract class NetworkMapping {
 			if (i % 100 == 0) { // every 100 nodes
 				int prog = 20 + 70 * i / cnList.size(); // 20->90
 				progress.setValue(prog);
-				progress.setString("Using \"" + secKeyType + "\"");
+				progress.setString("using \"" + secKeyType + "\"");
 			}
 
 			List<String> sk = (List<String>) Cytoscape.getNodeAttributes()
@@ -135,7 +136,7 @@ public abstract class NetworkMapping {
 					cn.getIdentifier(), CODE);
 			if (pk != null && pkt != null) {
 				logger.debug("has explicit ID and SYSTEM CODE");
-				progress.setString("Using \"" + pkt + "\"");
+				progress.setString("using \"" + pkt + "\"");
 
 				List<String> keys = typeKeysMap.get(pkt);
 				if (null == keys) {
@@ -160,7 +161,7 @@ public abstract class NetworkMapping {
 			}
 		}
 		progress.setValue(90);
-		progress.setString("Using \""+ CODE +"\"");
+		progress.setString("using \"" + CODE + "\"");
 
 		// Finally, take collection of nodes to be mapped and map them
 		for (String type : typeKeysMap.keySet()) {

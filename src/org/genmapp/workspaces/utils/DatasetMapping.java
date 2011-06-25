@@ -74,8 +74,8 @@ public abstract class DatasetMapping {
 		for (Integer dni : datanodeIndices) {
 			nodeIds.add(Cytoscape.getRootGraph().getNode(dni).getIdentifier());
 		}
-		
-		progress.setString("Mapping: " + d.getName().substring(0,20) + "...");
+		int tail = d.getName().length() > 20 ? 20 : d.getName().length();
+		progress.setString("Mapping: " + d.getName().substring(0,tail) + "...");
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
 				nodeIds, dnKeyType, secKeyType, force);
 		progress.setValue(10);
@@ -108,10 +108,10 @@ public abstract class DatasetMapping {
 		for (Integer dni : datanodeIndices) {
 			int i = 0;
 			i++;
-			if (i % 500 == 0) { // every 500 ds nodes
+			if (i % 100 == 0) { // every 100 ds nodes
 				int prog = 10 + 80 * i / datanodeIndices.size(); // 10->90
 				progress.setValue(prog);
-				progress.setString("Using \"" + secKeyType + "\"");
+				progress.setString("using \"" + secKeyType + "\"");
 			}
 			
 			CyNode dn = (CyNode) Cytoscape.getRootGraph().getNode(dni);
