@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.genmapp.workspaces.GenMAPPWorkspaces;
+import javax.swing.JProgressBar;
+import javax.swing.ProgressMonitor;
+
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyDataset;
 
@@ -35,6 +37,8 @@ public abstract class DatasetMapping {
 	public static final String CODE = "SystemCode";
 
 	private static CyLogger logger;
+	
+	private static JProgressBar progress;
 
 	/**
 	 * Gather secondary key mappings for every datanode. Then match key and
@@ -50,26 +54,31 @@ public abstract class DatasetMapping {
 	 *            force re-annotation of dataset nodes?
 	 */
 	public static void performDatasetMapping(CyDataset d, List<CyNetwork> nl,
-			boolean force, CyLogger cyLogger) {
+			boolean force, CyLogger cyLogger, JProgressBar progressBar) {
+		progress = progressBar;
 		logger = cyLogger;
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
 		System.out.println("Dataset primary key (" + dnKeyType
 				+ ") and secondary key (" + secKeyType + ")");
+		
 		/*
 		 * Don't do the following, because it will skip the manual annotation of
 		 * Ensembl ID columns, e.g., in the case of Yeast ORFs
 		 */
 		// if (dnKeyType.equals(secKeyType))
 		// return;
+		
 		List<Integer> datanodeIndices = d.getNodes();
 		List<String> nodeIds = new ArrayList<String>();
 		for (Integer dni : datanodeIndices) {
 			nodeIds.add(Cytoscape.getRootGraph().getNode(dni).getIdentifier());
 		}
-
+		
+		progress.setString("Mapping: " + d.getName().substring(0,20) + "...");
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
 				nodeIds, dnKeyType, secKeyType, force);
+		progress.setValue(10);
 
 		String datasetName = d.getName();
 		List<CyNetwork> networkList = nl;
@@ -97,6 +106,14 @@ public abstract class DatasetMapping {
 		 * For every node in dataset...
 		 */
 		for (Integer dni : datanodeIndices) {
+			int i = 0;
+			i++;
+			if (i % 500 == 0) { // every 500 ds nodes
+				int prog = 10 + 80 * i / datanodeIndices.size(); // 10->90
+				progress.setValue(prog);
+				progress.setString("Using \"" + secKeyType + "\"");
+			}
+			
 			CyNode dn = (CyNode) Cytoscape.getRootGraph().getNode(dni);
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
@@ -127,8 +144,7 @@ public abstract class DatasetMapping {
 			 */
 			for (CyNetwork network : networkList) {
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
-					// flag to track whe
-					boolean group = false;
+
 					String nodeKey = cn.getIdentifier();
 					/*
 					 * First, check if datanode == existing network node
@@ -211,6 +227,8 @@ public abstract class DatasetMapping {
 			} // end for each network
 
 		} // end for each node in dataset
+		progress.setValue(90);
+		progress.setString("Tagging networks");
 
 		// tag networks
 		for (CyNetwork network : mappedToNetworks) {
@@ -233,7 +251,7 @@ public abstract class DatasetMapping {
 			Cytoscape.getNetworkAttributes().setListAttribute(netid,
 					NET_ATTR_DATASET_PREFIX + datasetName, attrs);
 		}
-
+		progress.setValue(100);
 	}
 
 	/**
@@ -265,15 +283,23 @@ public abstract class DatasetMapping {
 				 * this case is skipped (and reported).
 				 */
 				// TODO: report it!
+				logger
+						.warn("Can not map data to pre-existing group node! Failed to map data from "
+								+ dn.getIdentifier()
+								+ " on to "
+								+ cn.getIdentifier() + ".");
 				return false;
 			}
-			// System.out.println("MAP1");
+			// logger.debug("Mapping data from "
+			// +dn.getIdentifier()+" to "+cn.getIdentifier
+			// ()+" as node attributes");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
 		if (attr.contains(d.getName())) {
 			// If cn is a gn, then we know to continue with grouping strategy
 			if (cn.isaGroup()) {
-				logger.debug("add "+ dn.getIdentifier()+" to group " + cn.getIdentifier());
+				logger.debug("add " + dn.getIdentifier() + " to group "
+						+ cn.getIdentifier());
 				return relateNodes(dn, cn, network);
 			}
 
@@ -293,23 +319,35 @@ public abstract class DatasetMapping {
 									+ d.getName());
 			if (null == attr) {
 				// ah, we've been fooled! This is not a grouping situation.
+				logger.warn("Got confused when trying to map data from "
+						+ dn.getIdentifier() + " on to " + cn.getIdentifier()
+						+ ". Skipped it, moving on.");
 				return false;
 			}
 			for (String priordnid : attr) {
 				if (priordnid.equals(dnid)) {
-					// TODO: report: skipped due to duplicate key
+					logger
+							.warn("We've seen this data key before... Sorry, we can only map one row of data from "
+									+ dn.getIdentifier()
+									+ " per network node ("
+									+ cn.getIdentifier() + ").");
 					return false;
 				}
 				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
 				if (d.getNodes().contains(priordn.getRootGraphIndex())) {
-					// System.out.println("GROUP2a: " + priordnid);
+					logger.debug("Remapping " + priordn.getIdentifier()
+							+ " into new metanode version of "
+							+ cn.getIdentifier());
 					relateNodes(priordn, cn, network);
 				}
 			}
-			// System.out.println("GROUP2b: " + dnid);
+			logger.debug("Mapping " + dn.getIdentifier() + " into metanode "
+					+ cn.getIdentifier());
 			return relateNodes(dn, cn, network);
 		} else {
-			// System.out.println("MAP2");
+			// logger.debug("Mapping data from "
+			// +dn.getIdentifier()+" to "+cn.getIdentifier
+			// ()+" as node attributes");
 			return mapAttributes(d, dn, dnType, attrs, cn);
 		}
 
@@ -346,38 +384,8 @@ public abstract class DatasetMapping {
 			if (gn.getViewer().equals("metaNode")) {
 				gn.addNode(dn);
 
-				// collect some measurements
-				double h = cnv.getNodeView(cn).getHeight();
-				double w = cnv.getNodeView(cn).getWidth();
+				CyDataset.arrangeChildren(gn, cnv);
 
-				/*
-				 * We have to expand (int=1) in order to "recapture" added
-				 * nodes. this is basically functioning as the first half of
-				 * MetaNode.recollapse().
-				 */
-				gn.setState(1);
-				/*
-				 * Now, reposition all children nodes around original cn.
-				 */
-				int n = gn.getNodes().size();
-				double d = Math.sqrt(Math.pow((h / 2), 2)
-						+ Math.pow((w / 2), 2));
-				d = d * n /3;
-				double t = (360 / n);
-				int i = 0;
-
-				for (CyNode child : gn.getNodes()) {
-//					System.out.println("height: " + h + " width: " + w
-//							+ " count: " + n + " distance: " + d + " theta: "
-//							+ t + " i:" + i);
-					double y = Math.cos(Math.toRadians(t * i)) * d;
-					double x = Math.sin(Math.toRadians(t * i)) * d;
-//					System.out.println(child.getIdentifier() + ": x=" + x
-//							+ " y=" + y);
-					cnv.getNodeView(child)
-							.setOffset(o.getX() - x, o.getY() - y);
-					i++;
-				}
 			} else {
 				/*
 				 * This is a non-metanode group node, meaning it's not ours! We
@@ -386,6 +394,11 @@ public abstract class DatasetMapping {
 				 * reported).
 				 */
 				// TODO: report it!
+				logger
+						.warn("Can not map data to pre-existing group node! Failed to map data from "
+								+ dn.getIdentifier()
+								+ " on to "
+								+ cn.getIdentifier() + ".");
 				// undo dataset node addition to network
 				network.removeNode(dn.getRootGraphIndex(), false);
 				return false;
@@ -394,23 +407,17 @@ public abstract class DatasetMapping {
 			// else, then create group node and add dn as "nodelist"
 			List<CyNode> nodelist = new ArrayList<CyNode>();
 			nodelist.add(dn);
+			logger.debug("creating new metanode: " + cn.getIdentifier()
+					+ "; adding " + dn.getIdentifier());
 
 			gn = CyGroupManager.createGroup(cn, nodelist, "metaNode", network);
 
-			// System.out.print(cn.getIdentifier() + ":" + dn.getIdentifier()
-			// + "=");
-			// if (null != gn) {
-			// System.out.println(gn.getGroupName());
-			// } else {
-			// System.out.println("null");
-			// }
 		}
 		/*
-		 * This is the second half of MetaNode.recollapse(). Without this,
-		 * CyNodeViews on new group nodes go to 'null' and the next attempt to
-		 * add a child crashes with NPE.
+		 * Without this, CyNodeViews on new group nodes go to 'null' and the
+		 * next attempt to add a child crashes with NPE.
 		 */
-		collapseAllMetanodes(network);
+		gn.setState(2);
 
 		return true;
 	}

@@ -31,6 +31,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
@@ -46,6 +47,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.genmapp.workspaces.GenMAPPWorkspaces;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
@@ -91,7 +93,7 @@ public class DatasetPanel extends JPanel implements
 	private BiModalJSplitPane split;
 
 	private final DatasetTreeTableModel datasetTreeTableModel;
-	
+
 	private CyLogger logger;
 
 	/**
@@ -418,10 +420,10 @@ public class DatasetPanel extends JPanel implements
 					destroyDatasetItem.setEnabled(true);
 					createNetwork.setEnabled(true);
 
-//					if (!ds.isMappedToNetwork)
-						remapDataset.setEnabled(true);
-//					else
-//						remapDataset.setEnabled(false);
+					// if (!ds.isMappedToNetwork)
+					remapDataset.setEnabled(true);
+					// else
+					// remapDataset.setEnabled(false);
 
 					popup.show(e.getComponent(), e.getX(), e.getY());
 					// }
@@ -554,12 +556,22 @@ public class DatasetPanel extends JPanel implements
 				}
 
 			} else if (REMAP_DATA.equals(label)) {
+				JProgressBar progress =  GenMAPPWorkspaces.wsPanel.getProgressBar();
+				progress.setVisible(true);
+				progress.setValue(0);
+				progress.setStringPainted(true);
+				
 				// set "force" = true to support re-annotation of ds nodes
-				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
+				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape
+						.getNetworkSet());
 				for (CyNetwork network : netlist) {
-					NetworkMapping.performNetworkAnnotation(network, true, logger);
+					
+					NetworkMapping.performNetworkAnnotation(network, true,
+							logger, progress);
 				}
-				DatasetMapping.performDatasetMapping(ds, netlist, true, logger);
+				DatasetMapping.performDatasetMapping(ds, netlist, true, logger, progress);
+				
+				progress.setVisible(false);
 				// force update of highlight
 				ds.setCurrentHighlight();
 			} else if (SELECT_ATTRIBUTES.equals(label)) {

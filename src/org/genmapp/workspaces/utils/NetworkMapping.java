@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JProgressBar;
+import javax.swing.ProgressMonitor;
+
 import org.genmapp.workspaces.objects.CyDataset;
 
 import cytoscape.CyNetwork;
@@ -34,18 +37,27 @@ public abstract class NetworkMapping {
 	 * @param force
 	 *            force re-annotation of network
 	 */
-	public static void performNetworkAnnotation(CyNetwork network, Boolean force, CyLogger logger) {
+	public static void performNetworkAnnotation(CyNetwork network,
+			Boolean force, CyLogger logger, JProgressBar progress) {
+
 		String netid = network.getIdentifier();
+
+		progress.setString("Annotating: " + netid.substring(0,20) + "...");
+		progress.setValue(10);
+
 		String secKeyType = DatasetMapping.getSecKeyType();
+		logger.debug("mapping to " + secKeyType);
 		// check network-level system code
 		String networkCode = Cytoscape.getNetworkAttributes()
 				.getStringAttribute(netid, CODE);
 		if (networkCode != null && !force) {
 			// skip this network; it's already been id mapped
+			logger.debug("system code known: " + networkCode);
+			progress.setValue(100);
 			return;
 		}
 		// determine if there *is* a network-level system code
-		// collect first 10 nodes
+		// check first 10 nodes
 		List<String> keyList = new ArrayList<String>();
 		int j = 10;
 		if (network.nodesList().size() < 10)
@@ -60,33 +72,61 @@ public abstract class NetworkMapping {
 					"guess id type", args);
 			if (null != result) {
 				// we only trust unique hits
-				if (((Set<String>) result.getResult()).size() == 1) {
+				if (((Set<String>) result.getResult()).size() < 1) {
+					logger.debug("no system code found");
+					// TODO: pop up user selector
+				} else if (((Set<String>) result.getResult()).size() == 1) {
 					String type = null;
 					for (String t : (Set<String>) result.getResult()) {
 						type = t;
 					}
+					logger.debug("system code found: " + type);
+					progress.setString("Using \"" + type + "\"");
 					Cytoscape.getNetworkAttributes().setAttribute(netid, CODE,
 							type);
-					// skip special cases, which will be mapped
-					// naturally
+
 					CyCommandResult result2 = mapIdentifiersByAttr(network,
 							type, secKeyType);
+					logger.info(result2.getMessages().toString());
+					progress.setValue(20);
+				} else {
+					logger.debug("found more than one system code:");
+					// TODO: pop up user selector
+					if (logger.isDebugging()) {
+						for (String t : (Set<String>) result.getResult()) {
+							logger.debug("    ==>" + t);
+						}
+					}
 				}
+			} else {
+				logger.debug("null result from guessing system code");
 			}
 		} catch (CyCommandException e) {
 			// TODO Auto-generated catch block
+			logger.error("Trying to guess system code: CyCommandException", e);
 			e.printStackTrace();
 		} catch (RuntimeException e) {
 			// TODO Auto-generated catch block
+			logger.error("Trying to guess system code: RuntimeException", e);
 			e.printStackTrace();
 		}
 
 		// check node-level system codes
-		for (CyNode cn : (List<CyNode>) network.nodesList()) {
+		List<CyNode> cnList = (List<CyNode>) network.nodesList();
+		for (CyNode cn : cnList) {
+			int i = 0;
+			i++;
+			if (i % 100 == 0) { // every 100 nodes
+				int prog = 20 + 70 * i / cnList.size(); // 20->90
+				progress.setValue(prog);
+				progress.setString("Using \"" + secKeyType + "\"");
+			}
+
 			List<String> sk = (List<String>) Cytoscape.getNodeAttributes()
 					.getListAttribute(cn.getIdentifier(), "__" + secKeyType);
 			if (sk != null)
 				if (sk.size() > 0) {
+					logger.debug("has secondary key");
 					continue; // next node
 				}
 			String pk = Cytoscape.getNodeAttributes().getStringAttribute(
@@ -94,6 +134,9 @@ public abstract class NetworkMapping {
 			String pkt = Cytoscape.getNodeAttributes().getStringAttribute(
 					cn.getIdentifier(), CODE);
 			if (pk != null && pkt != null) {
+				logger.debug("has explicit ID and SYSTEM CODE");
+				progress.setString("Using \"" + pkt + "\"");
+
 				List<String> keys = typeKeysMap.get(pkt);
 				if (null == keys) {
 					keys = new ArrayList<String>();
@@ -111,9 +154,13 @@ public abstract class NetworkMapping {
 						MIXED);
 
 			} else {
+				logger.warn("failed to identify node: " + cn.getIdentifier()
+						+ ". No ID mapping performed.");
 				// screw it! They need to try harder!
 			}
 		}
+		progress.setValue(90);
+		progress.setString("Using \""+ CODE +"\"");
 
 		// Finally, take collection of nodes to be mapped and map them
 		for (String type : typeKeysMap.keySet()) {
@@ -122,40 +169,54 @@ public abstract class NetworkMapping {
 			boolean greenLight = checkMappingSupported(type, secKeyType);
 
 			if (greenLight) {
+				logger.debug("mapping from " + type + " to " + secKeyType
+						+ " is supported...");
 				CyCommandResult result = mapIdentifiers(typeKeysMap.get(type),
 						type, secKeyType);
+				logger.info(result.getMessages().toString());
 
 				if (null != result) {
 					Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
 							.getResult();
 					for (String pkey : keyMappings.keySet()) {
-						List<String> slist = new ArrayList<String>(keyMappings.get(pkey));
+						List<String> slist = new ArrayList<String>(keyMappings
+								.get(pkey));
 
 						for (String node : keyNodesMap.get(pkey)) {
 							try {
 								nodeAttrs.setListAttribute(node, "__"
 										+ secKeyType, slist);
+								logger.debug("annotated " + node
+										+ " with ID mapping result");
 							} catch (Exception e) {
+								logger.warn("failed annotate " + node
+										+ " with ID mapping result");
 								invalid.put(pkey, slist);
 							}
 						}
 
 					}
+				} else {
+					logger.warn("No result for ID mapping from " + type
+							+ " to " + secKeyType);
 				}
 			}
 		}
+		progress.setValue(100);
 	}
-
 	/**
 	 * @param network
 	 * @param force
 	 *            force re-annotation of dataset nodes
 	 */
-	public static void performNetworkMapping(CyNetwork network, Boolean force, CyLogger logger) {
+	public static void performNetworkMapping(CyNetwork network, Boolean force,
+			CyLogger logger, JProgressBar progress) {
 		List<CyNetwork> networklist = new ArrayList<CyNetwork>();
 		networklist.add(network);
 		for (CyDataset d : CyDataset.datasetNameMap.values()) {
-			DatasetMapping.performDatasetMapping(d, networklist, force, logger);
+			progress.setValue(0);
+			DatasetMapping.performDatasetMapping(d, networklist, force, logger,
+					progress);
 		}
 		CyDataset.setCurrentHighlight();
 	}
@@ -209,9 +270,6 @@ public abstract class NetworkMapping {
 			e.printStackTrace();
 		}
 
-		for (String msg : result.getMessages()) {
-			// System.out.println(msg);
-		}
 		return result;
 	}
 
@@ -236,9 +294,6 @@ public abstract class NetworkMapping {
 			e.printStackTrace();
 		}
 
-		for (String msg : result.getMessages()) {
-			// System.out.println(msg);
-		}
 		return result;
 	}
 

@@ -16,6 +16,7 @@
 package org.genmapp.workspaces.utils;
 
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -93,6 +94,8 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		JScrollPane scrollPane = new JScrollPane(htmlPane);
 		this.add(scrollPane);
+		
+		this.setPreferredSize(new Dimension(150, 150));
 
 	}
 
@@ -123,13 +126,15 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		} else {
 			List<String> sklist = (List<String>) Cytoscape.getNodeAttributes()
 					.getListAttribute(nodeid, "__" + sourcetype);
-			if (sklist.size() > 0){
-			// just take first for now
-			// TODO: be smarter
-			sourceid = sklist.get(0);
+			if (null == sklist)
+				return;
+			if (sklist.size() > 0) {
+				// just take first for now
+				// TODO: be smarter
+				sourceid = sklist.get(0);
 			} else {
 				sourceid = nodeid;
-				//sourcetype = ??
+				// sourcetype = ??
 			}
 		}
 

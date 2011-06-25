@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.ProgressMonitor;
 import javax.swing.SwingConstants;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
@@ -46,8 +48,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 	private static final long serialVersionUID = 3500704003585438431L;
 
-	private static final int DEF_DEVIDER_LOCATION = 280;
-	private static final int PANEL_PREFFERED_WIDTH = 250;
+	private static final int PANEL_PREFFERED_WIDTH = 320;
 
 	private SpeciesPanel speciesPanel;
 	private ActionPanel actionPanel;
@@ -63,6 +64,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	// private BiModalJSplitPane split;
 	private final CytoscapeDesktop cytoscapeDesktop;
 	private CyLogger logger;
+	private static JProgressBar progress;
 
 	/**
 	 * Constructor for the Workspaces Panel.
@@ -81,6 +83,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		networkPanel = new NetworkPanel(logger);
 		datasetPanel = new DatasetPanel(logger);
 		criteriaPanel = new CriteriasetPanel(logger);
+		progress = new JProgressBar(0,100);
 		// analysisTreePanel = new AnalysisPanel();
 		// reportTreePanel = new ReportPanel();
 
@@ -88,6 +91,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		networkPanel.setVisible(true);
 		datasetPanel.setVisible(false);
 		criteriaPanel.setVisible(false);
+		progress.setVisible(false);
 
 		navigatorPanel = new JPanel();
 		navigatorPanel.setMinimumSize(new Dimension(40, 40));
@@ -107,6 +111,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		wsPanel.add(speciesPanel);
 		wsPanel.add(actionPanel);
 		wsPanel.add(main);
+		wsPanel.add(progress);
+
 		// wsPanel.add(analysisTreePanel);
 		// wsPanel.add(reportTreePanel);
 
@@ -158,6 +164,10 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		}
 		return backpagePanel;
 	}
+	
+	public static JProgressBar getProgressBar() {
+		return progress;
+	}
 
 	protected void clearAllDatasets() {
 		logger.debug("clearing all datasets...");
@@ -198,13 +208,22 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 			if (evt.getNewValue() != null) {
 				CyNetwork newNetwork = (CyNetwork) ((Object[]) evt
 						.getNewValue())[0];
-				logger.info("CyNetwork "+newNetwork.getTitle()+" loaded.");
-				NetworkMapping.performNetworkAnnotation(newNetwork, false, logger);
-				NetworkMapping.performNetworkMapping(newNetwork, false, logger);
+				logger.info("CyNetwork " + newNetwork.getTitle() + " loaded.");
+
+				progress.setVisible(true);
+				progress.setValue(0);
+				progress.setStringPainted(true);
+
+				NetworkMapping.performNetworkAnnotation(newNetwork, false,
+						logger, progress);
+				NetworkMapping.performNetworkMapping(newNetwork, false, logger,
+						progress);
+				progress.setVisible(false);
+				
 				if (Cytoscape.viewExists(newNetwork.getIdentifier())) {
 					for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap
 							.values()) {
-						logger.debug("applying criteriaset: "+cset.getName());
+						logger.debug("applying criteriaset: " + cset.getName());
 						WorkspacesCommandHandler.criteriaMapperApplySet(cset,
 								newNetwork);
 						// track last applied cset per network
@@ -216,13 +235,22 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 
 		} else if (prop.equals(Cytoscape.SESSION_LOADED)) {
 			logger.debug("session loaded...");
+//			ProgressMonitor progress = new ProgressMonitor(Cytoscape
+//					.getDesktop(), "Processing session networks", "", 0, 100);
+//			progress.setProgress(1);
+
+			progress.setVisible(true);
+			progress.setValue(0);
+			progress.setStringPainted(true);
+			
 			for (CyNetwork network : Cytoscape.getNetworkSet()) {
 
 				/*
 				 * for backward compatibility, so folks can start using
 				 * GenMAPP-CS on previously generated session files
 				 */
-				NetworkMapping.performNetworkAnnotation(network, false, logger);
+				NetworkMapping.performNetworkAnnotation(network, false, logger,
+						progress);
 
 				/*
 				 * and restore network-criteria map from prop file
@@ -231,7 +259,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 						.getNetworkCriteriaset(network);
 				if (null != cset
 						&& Cytoscape.viewExists(network.getIdentifier())) {
-					logger.debug("applying "+cset.getName()+" to "+ network.getTitle());
+					logger.debug("applying " + cset.getName() + " to "
+							+ network.getTitle());
 					WorkspacesCommandHandler.criteriaMapperApplySet(cset,
 							network);
 				}
@@ -240,21 +269,23 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 * force each network to refresh is visual styles (including
 				 * criteriaset mappings) by simulating panel selection
 				 */
-				logger.debug("refreshing "+network.getTitle());
+				logger.debug("refreshing " + network.getTitle());
 				networkPanel.focusNetworkNode(network.getIdentifier());
 
 			}
-			
+			progress.setVisible(false);
+
 			// Repaint panel to force display of loaded Network and Datasets
 			this.repaint();
-			
+
 		} else if (prop.equals(Cytoscape.NETWORK_DESTROYED)) {
 			logger.debug("network destroyed");
 			// listen for last network destroyed and check session state in
 			// order to determine if new session is being loaded... awkward!
 			if ((Cytoscape.getNetworkSet().size() <= 1)
 					&& (Cytoscape.getSessionstate() == Cytoscape.SESSION_OPENED)) {
-				logger.debug("last network destroyed... new session being loaded!");
+				logger
+						.debug("last network destroyed... new session being loaded!");
 				clearAllDatasets();
 				clearAllCriteriasets();
 			}
