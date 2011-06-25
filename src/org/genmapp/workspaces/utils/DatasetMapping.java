@@ -37,7 +37,7 @@ public abstract class DatasetMapping {
 	public static final String CODE = "SystemCode";
 
 	private static CyLogger logger;
-	
+
 	private static JProgressBar progress;
 
 	/**
@@ -59,23 +59,23 @@ public abstract class DatasetMapping {
 		logger = cyLogger;
 		String dnKeyType = d.getKeyType();
 		String secKeyType = getSecKeyType();
-		System.out.println("Dataset primary key (" + dnKeyType
+		logger.info("Dataset primary key (" + dnKeyType
 				+ ") and secondary key (" + secKeyType + ")");
-		
+
 		/*
 		 * Don't do the following, because it will skip the manual annotation of
 		 * Ensembl ID columns, e.g., in the case of Yeast ORFs
 		 */
 		// if (dnKeyType.equals(secKeyType))
 		// return;
-		
 		List<Integer> datanodeIndices = d.getNodes();
 		List<String> nodeIds = new ArrayList<String>();
 		for (Integer dni : datanodeIndices) {
 			nodeIds.add(Cytoscape.getRootGraph().getNode(dni).getIdentifier());
 		}
 		int tail = d.getName().length() > 20 ? 20 : d.getName().length();
-		progress.setString("Mapping: " + d.getName().substring(0,tail) + "...");
+		progress
+				.setString("Mapping: " + d.getName().substring(0, tail) + "...");
 		Map<String, Set<String>> secondaryKeyMap = collectTableMappings(
 				nodeIds, dnKeyType, secKeyType, force);
 		progress.setValue(10);
@@ -83,14 +83,13 @@ public abstract class DatasetMapping {
 		String datasetName = d.getName();
 		List<CyNetwork> networkList = nl;
 		if (null == networkList) {
-			// null means all, duh!
 			networkList = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
 		}
 
 		// Now, screen out previously mapped networks, unless forced
-		if (!force) {
-			networkList = screenNetworkList(networkList, datasetName);
-		}
+		networkList = screenNetworkList(networkList, datasetName, force);
+
+		logger.debug("mapping to " + networkList.size() + " networks");
 
 		List<String> attrs = d.getAttrs();
 		List<CyNetwork> mappedToNetworks = new ArrayList<CyNetwork>();
@@ -113,7 +112,7 @@ public abstract class DatasetMapping {
 				progress.setValue(prog);
 				progress.setString("using \"" + secKeyType + "\"");
 			}
-			
+
 			CyNode dn = (CyNode) Cytoscape.getRootGraph().getNode(dni);
 			String dnKey = dn.getIdentifier();
 			Set<String> secKeys = secondaryKeyMap.get(dnKey);
@@ -143,6 +142,7 @@ public abstract class DatasetMapping {
 			 * datasets
 			 */
 			for (CyNetwork network : networkList) {
+
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
 
 					String nodeKey = cn.getIdentifier();
@@ -153,8 +153,9 @@ public abstract class DatasetMapping {
 						// mapping has already been performed, naturally,
 						// so just tag network
 						mappedToNetworks.add(network);
-						// System.out.println(network.getIdentifier() + ":"
-						// + dn.getIdentifier() + " - mapped naturally");
+						logger.debug(network.getTitle() + ": "
+								+ dn.getIdentifier() + "=>"
+								+ cn.getIdentifier() + " mapping naturally");
 						continue;
 					}
 
@@ -170,9 +171,10 @@ public abstract class DatasetMapping {
 							mapData(d, dn, dnKeyType, attrs, cn, network);
 							// mapAttributes(dn, dnKeyType, attrs, cn);
 							mappedToNetworks.add(network);
-							// System.out.println(network.getIdentifier() + ":"
-							// + dn.getIdentifier()
-							// + " - mapped via ID/CODE");
+							logger.debug(network.getTitle() + ": "
+									+ dn.getIdentifier() + "=>"
+									+ cn.getIdentifier()
+									+ " mapping by ID/CODE: " + pkt);
 							continue;
 						}
 					}
@@ -189,10 +191,11 @@ public abstract class DatasetMapping {
 								mapData(d, dn, dnKeyType, attrs, cn, network);
 								// mapAttributes(dn, dnKeyType, attrs, cn);
 								mappedToNetworks.add(network);
-								// System.out
-								// .println(network.getIdentifier()
-								// + " - mapped via dataset secondary key: "
-								// + secondaryKey);
+								logger.debug(network.getTitle() + ": "
+										+ dn.getIdentifier() + "=>"
+										+ cn.getIdentifier()
+										+ " mapping by dataset secondary key: "
+										+ secKeyType);
 								break; // skip remaining secondary keys
 							}
 
@@ -210,12 +213,14 @@ public abstract class DatasetMapping {
 										// mapAttributes(dn, dnKeyType, attrs,
 										// cn);
 										mappedToNetworks.add(network);
-										// System.out
-										// .println(network
-										// .getIdentifier()
-										// +
-										// " - mapped via network-dataset secondary key: "
-										// + secondaryKey);
+										logger
+												.debug(network.getTitle()
+														+ ": "
+														+ dn.getIdentifier()
+														+ "=>"
+														+ cn.getIdentifier()
+														+ " mapping by network-dataset secondary keys: "
+														+ secKeyType);
 										break; // skip remaining secondary keys
 									}
 								}
@@ -327,10 +332,10 @@ public abstract class DatasetMapping {
 			for (String priordnid : attr) {
 				if (priordnid.equals(dnid)) {
 					logger
-							.warn("We've seen this data key before... Sorry, we can only map one row of data from "
+							.warn("We've seen this data identifier before... Sorry, we can only map one row of data from "
 									+ dn.getIdentifier()
-									+ " per network node ("
-									+ cn.getIdentifier() + ").");
+									+ " to "
+									+ cn.getIdentifier() + ".");
 					return false;
 				}
 				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
@@ -695,15 +700,17 @@ public abstract class DatasetMapping {
 	}
 
 	/**
-	 * Screens out networks that have already been mapped for this dataset, as
-	 * well as metanode-generated nested networks
+	 * Screens out networks that have already been mapped for this dataset
+	 * (unless forced), as well as metanode-generated nested networks and
+	 * networks without views.
 	 * 
 	 * @param networkList
 	 * @param title
+	 * @param force
 	 * @return
 	 */
 	private static List<CyNetwork> screenNetworkList(
-			List<CyNetwork> networkList, String title) {
+			List<CyNetwork> networkList, String title, boolean force) {
 		// collect list of virgin networks
 		List<CyNetwork> netList = new ArrayList<CyNetwork>();
 		for (CyNetwork network : networkList) {
@@ -715,12 +722,20 @@ public abstract class DatasetMapping {
 					List<String> sourcelist = (List<String>) Cytoscape
 							.getNetworkAttributes().getListAttribute(netid,
 									NET_ATTR_DATASETS);
-					if (!sourcelist.contains(title)) {
+					if (!sourcelist.contains(title) || force) {
 						netList.add(network);
 					}
 				} else if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
 						"parent_nodes")) {
-					// also exclude metanode-generated nested networks
+					/*
+					 * This only excludes metanode-generated nested networks
+					 * that are currently with view. Collapsed metanodes with
+					 * prior nested views have an empty "parent_nodes" attr and
+					 * will still be mapped!
+					 * 
+					 * Thus, addition reason for the initial exclusion based on
+					 * viewExists()
+					 */
 				} else {
 					netList.add(network);
 				}
@@ -752,6 +767,7 @@ public abstract class DatasetMapping {
 		Map<String, Set<String>> secondaryKeyMap = new HashMap<String, Set<String>>();
 
 		if (isNew) {
+			logger.debug("collecting secondary keys from CyThesaurus");
 			CyCommandResult result = mapIdentifiers(nodeIds, pkt, skt);
 			if (null != result) {
 				Map<String, Set<String>> keyMappings = (Map<String, Set<String>>) result
@@ -762,7 +778,8 @@ public abstract class DatasetMapping {
 				}
 			}
 		} else {
-			// collect from prior mapping
+			logger.debug("collecting secondary keys from node attribute: __"
+					+ skt);
 			for (String id : nodeIds) {
 				List<String> sklist = nodeAttrs
 						.getListAttribute(id, "__" + skt);

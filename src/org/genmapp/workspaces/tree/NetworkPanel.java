@@ -40,6 +40,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
@@ -331,7 +332,8 @@ public class NetworkPanel extends JPanel
 		CyAction.actionNameMap.get(ActionPanel.RUN_CLUSTERMAKER)
 				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.EXPORT_GRAPHICS).setDoable(true);
-		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET).setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET)
+				.setDoable(true);
 		CyAction.actionNameMap.get(ActionPanel.LAYOUT_FORCE_DIRECTED2)
 				.setDoable(true);
 
@@ -764,6 +766,13 @@ public class NetworkPanel extends JPanel
 				CyNetworkNaming.editNetworkTitle(cyNetwork);
 				Cytoscape.getDesktop().getNetworkPanel().updateTitle(cyNetwork);
 			} else if (METANODES_COLLAPSED.equals(label)) {
+				JProgressBar progress = GenMAPPWorkspaces.wsPanel
+						.getProgressBar();
+				progress.setVisible(true);
+				progress.setValue(0);
+				progress.setStringPainted(true);
+
+				progress.setString("Collapsing metanodes");
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(false,
 						100.0, null, null);
 				final List<CyNetwork> selected = Cytoscape
@@ -791,6 +800,14 @@ public class NetworkPanel extends JPanel
 									continue;
 								}
 								for (CyNode gn : gnlist) {
+									int i = 0;
+									i++;
+									// 10 -> 100
+									int prog = 10 + 90 * i / gnlist.size();
+									progress.setValue(prog);
+									progress.setString("Collapsing metanodes: "
+											+ gn.getIdentifier());
+
 									WorkspacesCommandHandler.metanodeOperation(
 											network.getIdentifier(), gn
 													.getIdentifier(),
@@ -802,11 +819,13 @@ public class NetworkPanel extends JPanel
 								}
 							}
 						} else { // operate on all metanodes
+							progress.setValue(10);
 							WorkspacesCommandHandler
 									.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
+							progress.setValue(60);
 							if (Cytoscape.viewExists(network.getIdentifier())) {
 								// view on nested may be destroyed during this
 								// operation
@@ -814,10 +833,19 @@ public class NetworkPanel extends JPanel
 										network.getIdentifier(),
 										WorkspacesCommandHandler.COLLAPSE_ALL);
 							}
+							progress.setValue(100);
 						}
 					}
 				}
+				progress.setVisible(false);
 			} else if (METANODES_NESTED.equals(label)) {
+				JProgressBar progress = GenMAPPWorkspaces.wsPanel
+						.getProgressBar();
+				progress.setVisible(true);
+				progress.setValue(0);
+				progress.setStringPainted(true);
+
+				progress.setString("Nesting metanodes");
 				WorkspacesCommandHandler.setDefaultMetanodeAppearance(true,
 						0.0, null, null);
 				final List<CyNetwork> selected = Cytoscape
@@ -845,6 +873,13 @@ public class NetworkPanel extends JPanel
 									continue;
 								}
 								for (CyNode gn : gnlist) {
+									int i = 0;
+									i++;
+									// 10 -> 100
+									int prog = 10 + 90 * i / gnlist.size();
+									progress.setValue(prog);
+									progress.setString("Nesting metanodes: "
+											+ gn.getIdentifier());
 									WorkspacesCommandHandler.metanodeOperation(
 											network.getIdentifier(), gn
 													.getIdentifier(),
@@ -858,11 +893,13 @@ public class NetworkPanel extends JPanel
 
 							}
 						} else { // operate on all metanodes
+							progress.setValue(10);
 							WorkspacesCommandHandler
 									.applyMetanodeSettings(WorkspacesCommandHandler.ALL_METANODES);
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
+							progress.setValue(60);
 							/*
 							 * View on nested may be destroyed during this
 							 * operation
@@ -872,11 +909,19 @@ public class NetworkPanel extends JPanel
 										network.getIdentifier(),
 										WorkspacesCommandHandler.COLLAPSE_ALL);
 							}
+							progress.setValue(100);
 						}
 					}
 				}
-
+				progress.setVisible(false);
 			} else if (METANODES_EXPANDED.equals(label)) {
+				JProgressBar progress = GenMAPPWorkspaces.wsPanel
+						.getProgressBar();
+				progress.setVisible(true);
+				progress.setValue(0);
+				progress.setStringPainted(true);
+
+				progress.setString("Expanding metanodes");
 				final List<CyNetwork> selected = Cytoscape
 						.getSelectedNetworks();
 				for (final CyNetwork network : selected) {
@@ -900,6 +945,13 @@ public class NetworkPanel extends JPanel
 									continue;
 								}
 								for (CyNode gn : gnlist) {
+									int i = 0;
+									i++;
+									// 10 -> 100
+									int prog = 10 + 90 * i / gnlist.size();
+									progress.setValue(prog);
+									progress.setString("Expanding metanodes: "
+											+ gn.getIdentifier());
 									WorkspacesCommandHandler.metanodeOperation(
 											network.getIdentifier(), gn
 													.getIdentifier(),
@@ -907,18 +959,20 @@ public class NetworkPanel extends JPanel
 								}
 							}
 						} else { // operate on all metanodes
+							progress.setValue(10);
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
 						}
+						progress.setValue(100);
 					}
 				}
+				progress.setVisible(false);
 			} else {
 				CyLogger.getLogger().warn(
 						"Unexpected network panel popup option");
 			}
 		}
-
 
 		/**
 		 * Right before the popup menu is displayed, this function is called so

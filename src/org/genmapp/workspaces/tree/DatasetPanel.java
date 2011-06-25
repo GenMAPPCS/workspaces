@@ -500,7 +500,7 @@ public class DatasetPanel extends JPanel implements
 					nodes[i] = (int) nodesL.get(i);
 				}
 				boolean goForIt = false;
-				if (nodes.length > 20000) {
+				if (nodes.length > 10000) {
 					int n = JOptionPane.showConfirmDialog(Cytoscape
 							.getDesktop(),
 							"You are about to create a network of "
@@ -512,8 +512,16 @@ public class DatasetPanel extends JPanel implements
 					goForIt = true;
 				}
 				if (goForIt) {
+					JProgressBar progress =  GenMAPPWorkspaces.wsPanel.getProgressBar();
+					progress.setVisible(true);
+					progress.setValue(0);
+					progress.setStringPainted(true);
+
+					progress.setString("Creating network from dataset");
+					progress.setValue(10);
 					CyNetwork newNetwork = Cytoscape.createNetwork(nodes,
 							edges, ds.getName());
+					progress.setValue(90);
 					// set Network attributes to notify NetworkMapping that job
 					// is already done
 					Cytoscape.getNetworkAttributes().setAttribute(
@@ -553,6 +561,8 @@ public class DatasetPanel extends JPanel implements
 
 					// force update of highlight
 					ds.setCurrentHighlight();
+					progress.setValue(100);
+					progress.setVisible(false);
 				}
 
 			} else if (REMAP_DATA.equals(label)) {
