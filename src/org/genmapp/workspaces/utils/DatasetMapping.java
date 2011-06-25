@@ -142,6 +142,19 @@ public abstract class DatasetMapping {
 			 * datasets
 			 */
 			for (CyNetwork network : networkList) {
+				/*
+				 * Must collapse any expanded metanodes prior to collecting node
+				 * list, otherwise it will include children nodes (e.g., prior
+				 * dataset nodes) and produce an invalid group of groups.
+				 */
+				for (CyGroup gn : CyGroupManager.getGroupList(network)) {
+					if (CyGroupManager.getGroupList(
+							CyGroupManager.getGroupViewer("metaNode"))
+							.contains(gn)) {
+						if (gn.getState() == 1)
+							gn.setState(2);
+					}
+				}
 
 				for (CyNode cn : (List<CyNode>) network.nodesList()) {
 
