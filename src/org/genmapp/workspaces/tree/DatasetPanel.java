@@ -49,16 +49,15 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
-import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
-import org.genmapp.workspaces.tree.NetworkPanel.TreeCellRenderer;
 import org.genmapp.workspaces.utils.DatasetMapping;
 import org.genmapp.workspaces.utils.NetworkMapping;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
+import cytoscape.CytoscapeInit;
 import cytoscape.data.SelectEvent;
 import cytoscape.data.SelectEventListener;
 import cytoscape.logger.CyLogger;
@@ -504,7 +503,8 @@ public class DatasetPanel extends JPanel implements
 					nodes[i] = (int) nodesL.get(i);
 				}
 				boolean goForIt = false;
-				if (nodes.length > 10000) {
+				if (nodes.length > Integer.parseInt(CytoscapeInit
+						.getProperties().getProperty("secondaryViewThreshold"))) {
 					int n = JOptionPane.showConfirmDialog(Cytoscape
 							.getDesktop(),
 							"You are about to create a network of "
