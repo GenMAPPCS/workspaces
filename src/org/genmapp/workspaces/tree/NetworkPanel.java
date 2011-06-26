@@ -782,41 +782,28 @@ public class NetworkPanel extends JPanel
 						List<CyNode> nodes = new ArrayList<CyNode>(network
 								.getSelectedNodes());
 						if (nodes.size() > 0) { // operate on selected metanodes
-							WorkspacesCommandHandler
-									.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
-							List<CyNode> gnlist = new ArrayList<CyNode>();
-							for (CyNode cn : nodes) {
-								if (cn.isaGroup()) { // group node selected
-									gnlist.add(cn);
-								} else if (cn.getGroups() != null) {
-									// child node selected from expanded view
-									for (CyGroup gn : cn.getGroups()) {
-										gnlist.add(gn.getGroupNode());
-									}
-								} else if (cn.getNestedNetwork() != null) {
-									// group is selected as nested network node
-									gnlist.add(cn);
-								} else { // vanilla node selected
-									continue;
-								}
-								for (CyNode gn : gnlist) {
-									int i = 0;
-									i++;
-									// 10 -> 100
-									int prog = 10 + 90 * i / gnlist.size();
-									progress.setValue(prog);
-									progress.setString("Collapsing metanodes: "
-											+ gn.getIdentifier());
+							List<CyNode> mnlist = identifyMetanodes(nodes);
+							if (mnlist.size() > 0)
+								WorkspacesCommandHandler
+										.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
+							for (CyNode gn : mnlist) {
+								int i = 0;
+								i++;
+								// 10 -> 100
+								int prog = 10 + 90 * i / mnlist.size();
+								progress.setValue(prog);
+								progress.setString("Collapsing metanodes: "
+										+ gn.getIdentifier());
 
-									WorkspacesCommandHandler.metanodeOperation(
-											network.getIdentifier(), gn
-													.getIdentifier(),
-											WorkspacesCommandHandler.EXPAND);
-									WorkspacesCommandHandler.metanodeOperation(
-											network.getIdentifier(), gn
-													.getIdentifier(),
-											WorkspacesCommandHandler.COLLAPSE);
-								}
+								WorkspacesCommandHandler.metanodeOperation(
+										network.getIdentifier(), gn
+												.getIdentifier(),
+										WorkspacesCommandHandler.EXPAND);
+								WorkspacesCommandHandler.metanodeOperation(
+										network.getIdentifier(), gn
+												.getIdentifier(),
+										WorkspacesCommandHandler.COLLAPSE);
+
 							}
 						} else { // operate on all metanodes
 							progress.setValue(10);
@@ -855,41 +842,27 @@ public class NetworkPanel extends JPanel
 						List<CyNode> nodes = new ArrayList<CyNode>(network
 								.getSelectedNodes());
 						if (nodes.size() > 0) { // operate on selected metanodes
-							WorkspacesCommandHandler
-									.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
-							List<CyNode> gnlist = new ArrayList<CyNode>();
-							for (CyNode cn : nodes) {
-								if (cn.isaGroup()) { // group node selected
-									gnlist.add(cn);
-								} else if (cn.getGroups() != null) {
-									// child node selected
-									for (CyGroup gn : cn.getGroups()) {
-										gnlist.add(gn.getGroupNode());
-									}
-								} else if (cn.getNestedNetwork() != null) {
-									// group is selected as nested network node
-									gnlist.add(cn);
-								} else { // vanilla node selected
-									continue;
-								}
-								for (CyNode gn : gnlist) {
-									int i = 0;
-									i++;
-									// 10 -> 100
-									int prog = 10 + 90 * i / gnlist.size();
-									progress.setValue(prog);
-									progress.setString("Nesting metanodes: "
-											+ gn.getIdentifier());
-									WorkspacesCommandHandler.metanodeOperation(
-											network.getIdentifier(), gn
-													.getIdentifier(),
-											WorkspacesCommandHandler.EXPAND);
+							List<CyNode> mnlist = identifyMetanodes(nodes);
+							if (mnlist.size() > 0)
+								WorkspacesCommandHandler
+										.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
+							for (CyNode gn : mnlist) {
+								int i = 0;
+								i++;
+								// 10 -> 100
+								int prog = 10 + 90 * i / mnlist.size();
+								progress.setValue(prog);
+								progress.setString("Nesting metanodes: "
+										+ gn.getIdentifier());
+								WorkspacesCommandHandler.metanodeOperation(
+										network.getIdentifier(), gn
+												.getIdentifier(),
+										WorkspacesCommandHandler.EXPAND);
 
-									WorkspacesCommandHandler.metanodeOperation(
-											network.getIdentifier(), gn
-													.getIdentifier(),
-											WorkspacesCommandHandler.COLLAPSE);
-								}
+								WorkspacesCommandHandler.metanodeOperation(
+										network.getIdentifier(), gn
+												.getIdentifier(),
+										WorkspacesCommandHandler.COLLAPSE);
 
 							}
 						} else { // operate on all metanodes
@@ -929,42 +902,31 @@ public class NetworkPanel extends JPanel
 						List<CyNode> nodes = new ArrayList<CyNode>(network
 								.getSelectedNodes());
 						if (nodes.size() > 0) { // operate on selected metanodes
-							List<CyNode> gnlist = new ArrayList<CyNode>();
-							for (CyNode cn : nodes) {
-								if (cn.isaGroup()) { // group node selected
-									gnlist.add(cn);
-								} else if (cn.getGroups() != null) {
-									// child node selected
-									for (CyGroup gn : cn.getGroups()) {
-										gnlist.add(gn.getGroupNode());
-									}
-								} else if (cn.getNestedNetwork() != null) {
-									// group is selected as nested network node
-									gnlist.add(cn);
-								} else { // vanilla node selected
-									continue;
-								}
-								for (CyNode gn : gnlist) {
-									int i = 0;
-									i++;
-									// 10 -> 100
-									int prog = 10 + 90 * i / gnlist.size();
-									progress.setValue(prog);
-									progress.setString("Expanding metanodes: "
-											+ gn.getIdentifier());
-									WorkspacesCommandHandler.metanodeOperation(
-											network.getIdentifier(), gn
-													.getIdentifier(),
-											WorkspacesCommandHandler.EXPAND);
-								}
+							List<CyNode> mnlist = identifyMetanodes(nodes);
+							if (mnlist.size() > 0)
+								WorkspacesCommandHandler
+										.applyMetanodeSettings(WorkspacesCommandHandler.SELECTED_METANODES);
+							for (CyNode gn : mnlist) {
+								int i = 0;
+								i++;
+								// 10 -> 100
+								int prog = 10 + 90 * i / mnlist.size();
+								progress.setValue(prog);
+								progress.setString("Expanding metanodes: "
+										+ gn.getIdentifier());
+								WorkspacesCommandHandler.metanodeOperation(
+										network.getIdentifier(), gn
+												.getIdentifier(),
+										WorkspacesCommandHandler.EXPAND);
+
 							}
 						} else { // operate on all metanodes
 							progress.setValue(10);
 							WorkspacesCommandHandler.allMetanodesOperation(
 									network.getIdentifier(),
 									WorkspacesCommandHandler.EXPAND_ALL);
+							progress.setValue(100);
 						}
-						progress.setValue(100);
 					}
 				}
 				progress.setVisible(false);
@@ -972,6 +934,39 @@ public class NetworkPanel extends JPanel
 				CyLogger.getLogger().warn(
 						"Unexpected network panel popup option");
 			}
+		}
+
+		/**
+		 * @param nodes
+		 * @return
+		 */
+		private List<CyNode> identifyMetanodes(List<CyNode> nodes) {
+			List<CyNode> mnlist = new ArrayList<CyNode>();
+			for (CyNode cn : nodes) {
+				List<CyGroup> metanodelist = CyGroupManager
+						.getGroupList(CyGroupManager.getGroupViewer("metaNode"));
+				if (null == metanodelist)
+					return mnlist;
+				if (cn.isaGroup()) {
+					CyGroup gn = CyGroupManager.getCyGroup(cn);
+					if (metanodelist.contains(gn)) {
+						// metanode selected
+						mnlist.add(cn);
+					}
+				} else if (cn.getGroups() != null) {
+					// child node selected
+					for (CyGroup gn : cn.getGroups()) {
+						if (metanodelist.contains(gn))
+							mnlist.add(gn.getGroupNode());
+					}
+				} else if (cn.getNestedNetwork() != null) {
+					// metanode selected as nested network
+					mnlist.add(cn);
+				} else { // vanilla node selected
+					continue;
+				}
+			}
+			return mnlist;
 		}
 
 		/**
