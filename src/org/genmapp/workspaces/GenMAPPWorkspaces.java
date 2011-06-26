@@ -79,8 +79,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		// set properties
 		// set view thresholds to handle "overview" xGMMLs
 		CytoscapeInit.getProperties().setProperty("viewThreshold", "50000");
-		CytoscapeInit.getProperties().setProperty("secondaryViewThreshold",
-				"60000");
 		CytoscapeInit.getProperties().setProperty("render.coarseDetailThreshold", "100000");
 		CytoscapeInit.getProperties().setProperty("render.nodeLabelThreshold", "50000");
 
