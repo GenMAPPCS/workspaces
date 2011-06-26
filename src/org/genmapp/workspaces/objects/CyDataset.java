@@ -27,9 +27,8 @@ public class CyDataset {
 
 	private String commandString;
 	private String source;
-	public static boolean isMappedToNetwork;
 
-	private static String name;
+	private String name;
 	private String keyType;
 	private List<Integer> nodes;
 	private List<String> attrs;
@@ -56,14 +55,14 @@ public class CyDataset {
 
 	public CyDataset(String n, String t, List<Integer> nl, List<String> al,
 			boolean performDatasetMapping, CyLogger cyLogger) {
-		name = n;
+		this.name = n;
 		this.keyType = t;
 		this.nodes = nl;
 		this.attrs = al;
 		logger = cyLogger;
 
 		datasetNameMap.put(n, this);
-
+		
 		this.rows = nl.size();
 
 		// add to dataset panel
@@ -83,34 +82,9 @@ public class CyDataset {
 			progress.setVisible(false);
 		}
 		// set color of entry in panel
-		setCurrentHighlight();
-	}
-
-	/**
-	 * 
-	 */
-	public static void setCurrentHighlight() {
-
-		List<String> datasetList = Cytoscape.getNetworkAttributes()
-				.getListAttribute(
-						Cytoscape.getCurrentNetwork().getIdentifier(),
-						DatasetMapping.NET_ATTR_DATASETS);
-
-		if (datasetList != null) {
-			if (datasetList.contains(name))
-				isMappedToNetwork = true;
-			else
-				isMappedToNetwork = false;
-		} else if (Cytoscape.getNetworkSet().size() < 1) {
-			// go ahead and paint green if no networks loaded at all
-			isMappedToNetwork = true;
-		} else {
-			// current network has NO datasets mapped
-			isMappedToNetwork = false;
-		}
-
 		DatasetPanel.getTreeTable().getTree().updateUI();
 	}
+
 
 	/**
 	 * 
@@ -226,6 +200,7 @@ public class CyDataset {
 	public String getSource() {
 		return this.source;
 	}
+	
 
 	/**
 	 * Clears all dataset info, including dataset-specific nodes and attributes,

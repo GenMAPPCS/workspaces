@@ -232,7 +232,7 @@ public class CriteriasetPanel extends JPanel
 	 * @param id
 	 */
 	public void removeItem(final String id) {
-		final GenericTreeNode node = getTreeNode(id);
+		final GenericTreeNode node = getCriteriasetTreeNode(id);
 		if (node == null)
 			return;
 
@@ -267,22 +267,24 @@ public class CriteriasetPanel extends JPanel
 	/**
 	 * 
 	 * 
-	 * @param id
+	 * @param csetname
+	 * 				criteria set name
 	 * @param parent_id
+	 * 				parent node
 	 * 
 	 */
-	public void addItem(String id, String parent_id) {
+	public void addItem(String csetname, String parent_id) {
 		// activate panel
 		this.setVisible(true);
 		// activate criteria-dependent actions
 		CyAction.actionNameMap.get(ActionPanel.RUN_GOELITE).setDoable(true);
 
 		// first see if it exists
-		if (getTreeNode(id) == null) {
-			GenericTreeNode dmtn = new GenericTreeNode(id, id);
+		if (getCriteriasetTreeNode(csetname) == null) {
+			GenericTreeNode dmtn = new GenericTreeNode(csetname, csetname);
 
-			if (parent_id != null && getTreeNode(parent_id) != null) {
-				getTreeNode(parent_id).add(dmtn);
+			if (parent_id != null && getCriteriasetTreeNode(parent_id) != null) {
+				getCriteriasetTreeNode(parent_id).add(dmtn);
 			} else {
 				root.add(dmtn);
 			}
@@ -310,14 +312,13 @@ public class CriteriasetPanel extends JPanel
 	}
 
 	/**
-	 * DOCUMENT ME!
 	 * 
-	 * @param id
-	 *            DOCUMENT ME!
+	 * @param csetname
+	 *            criteria set name
 	 */
-	public void focusCriteriasetNode(String id) {
+	public void setSelectedCriteriaset(String csetname) {
 		// logger.info("CriteriasetPanel: focus criteriaset node");
-		DefaultMutableTreeNode node = getTreeNode(id);
+		DefaultMutableTreeNode node = getCriteriasetTreeNode(csetname);
 
 		if (node != null) {
 			// fires valueChanged if the criteriaset isn't already selected
@@ -329,21 +330,20 @@ public class CriteriasetPanel extends JPanel
 	}
 
 	/**
-	 * DOCUMENT ME!
 	 * 
-	 * @param id
-	 *            DOCUMENT ME!
+	 * @param csetname
+	 *            criteria set name
 	 * 
-	 * @return DOCUMENT ME!
+	 * @return tree node
 	 */
-	public GenericTreeNode getTreeNode(String id) {
+	public GenericTreeNode getCriteriasetTreeNode(String csetname) {
 		Enumeration tree_node_enum = root.breadthFirstEnumeration();
 
 		while (tree_node_enum.hasMoreElements()) {
 			GenericTreeNode node = (GenericTreeNode) tree_node_enum
 					.nextElement();
 
-			if (((String) node.getID()).equals(id)) {
+			if (((String) node.getID()).equals(csetname)) {
 				return node;
 			}
 		}
@@ -446,7 +446,7 @@ public class CriteriasetPanel extends JPanel
 		 * state to be in...
 		 */
 		String netname = WorkspacesPanel.getNetworkTreePanel()
-				.getFocusNetworkNode();
+				.getSelectedNetwork();
 		CyNetwork net = Cytoscape.getNetwork(netname);
 		CyNetworkView netview = Cytoscape.getNetworkView(net.getIdentifier());
 		Cytoscape.setCurrentNetwork(net.getIdentifier());

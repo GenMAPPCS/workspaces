@@ -10,6 +10,7 @@ import javax.swing.JProgressBar;
 import javax.swing.ProgressMonitor;
 
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.tree.DatasetPanel;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
@@ -219,7 +220,7 @@ public abstract class NetworkMapping {
 			DatasetMapping.performDatasetMapping(d, networklist, force, logger,
 					progress);
 		}
-		CyDataset.setCurrentHighlight();
+		DatasetPanel.getTreeTable().getTree().updateUI();
 	}
 
 	/**

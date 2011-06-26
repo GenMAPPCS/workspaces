@@ -270,7 +270,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 				 * criteriaset mappings) by simulating panel selection
 				 */
 				logger.debug("refreshing " + network.getTitle());
-				networkPanel.focusNetworkNode(network.getIdentifier());
+				networkPanel.setSelectedNetwork(network.getIdentifier());
 
 			}
 			progress.setVisible(false);

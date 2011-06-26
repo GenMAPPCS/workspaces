@@ -365,19 +365,18 @@ public class NetworkPanel extends JPanel
 			treeTable.doLayout();
 
 			// this is necessary because valueChanged is not fired above
-			focusNetworkNode(network_id);
+			setSelectedNetwork(network_id);
 		}
 	}
 
 	/**
-	 * DOCUMENT ME!
 	 * 
-	 * @param network_id
-	 *            DOCUMENT ME!
+	 * @param netid
+	 *            network id
 	 */
-	public void focusNetworkNode(String network_id) {
-		logger.debug("focus on " + network_id);
-		DefaultMutableTreeNode node = getNetworkTreeNode(network_id);
+	public void setSelectedNetwork(String netid) {
+		logger.debug("focus on " + netid);
+		DefaultMutableTreeNode node = getNetworkTreeNode(netid);
 
 		if (node != null) {
 			// fires valueChanged if the network isn't already selected
@@ -395,28 +394,31 @@ public class NetworkPanel extends JPanel
 	 * 
 	 * @return
 	 */
-	public String getFocusNetworkNode() {
+	public String getSelectedNetwork() {
 		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
 				.getLastSelectedPathComponent();
-		return node.getID();
+
+		if (null == node)
+			return null;
+		else
+			return node.getID();
 	}
 
 	/**
-	 * DOCUMENT ME!
 	 * 
-	 * @param network_id
-	 *            DOCUMENT ME!
+	 * @param netid
+	 *            network id
 	 * 
-	 * @return DOCUMENT ME!
+	 * @return tree node
 	 */
-	public GenericTreeNode getNetworkTreeNode(String network_id) {
+	public GenericTreeNode getNetworkTreeNode(String netid) {
 		Enumeration tree_node_enum = root.breadthFirstEnumeration();
 
 		while (tree_node_enum.hasMoreElements()) {
 			GenericTreeNode node = (GenericTreeNode) tree_node_enum
 					.nextElement();
 
-			if (((String) node.getID()).equals(network_id)) {
+			if (((String) node.getID()).equals(netid)) {
 				return node;
 			}
 		}
@@ -472,36 +474,26 @@ public class NetworkPanel extends JPanel
 		// Only update and refresh when single network selected
 		if (networkList.size() == 1) {
 			String net = networkList.get(0);
+
 			// update dataset highlighting
-			List<String> datasetList = Cytoscape.getNetworkAttributes()
-					.getListAttribute(net, DatasetMapping.NET_ATTR_DATASETS);
-			if (null != datasetList) {
-				for (String dataset : CyDataset.datasetNameMap.keySet()) {
-					if (datasetList.contains(dataset)) {
-						logger.debug(dataset + " is mapped to " + net);
-						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = true;
-					} else {
-						logger.debug(dataset + " is not mapped to " + net);
-						CyDataset.datasetNameMap.get(dataset).isMappedToNetwork = false;
-					}
-				}
-				DatasetPanel.getTreeTable().getTree().updateUI();
-			}
+			String selected = DatasetPanel.getSelectedDataset();
+			for (String dname : CyDataset.datasetNameMap.keySet())
+				WorkspacesPanel.getDatasetTreePanel().setSelectedDataset(dname);
+			WorkspacesPanel.getDatasetTreePanel().setSelectedDataset(selected);
 
 			// update criteriaset counts and selection
 			CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(Cytoscape
 					.getNetwork(net));
 			if (null != cset) {
 				logger.debug(cset.getName() + " is applied to " + net);
-				WorkspacesPanel.getCriteriaTreePanel().focusCriteriasetNode(
+				WorkspacesPanel.getCriteriaTreePanel().setSelectedCriteriaset(
 						cset.getName());
 			}
-			// CriteriasetPanel.getTreeTable().getTree().updateUI();
 
 			/*
 			 * Note: the native Cytoscape handling of view update appears to
 			 * ignore selections when the prior selection shares the same visual
-			 * style. Ugh.
+			 * style. >sigh<
 			 */
 			Cytoscape.getNetworkView(net).redrawGraph(true, true);
 		} else {
@@ -527,7 +519,7 @@ public class NetworkPanel extends JPanel
 				.getPropertyName())) {
 			logger.debug("NetworkPanel: " + e.getPropertyName());
 			if (e.getSource() != this)
-				focusNetworkNode((String) e.getNewValue());
+				setSelectedNetwork((String) e.getNewValue());
 		} else if (Cytoscape.NETWORK_TITLE_MODIFIED.equals(e.getPropertyName())) {
 			logger.debug("NetworkPanel: " + e.getPropertyName());
 			CyNetworkTitleChange cyNetworkTitleChange = (CyNetworkTitleChange) e
