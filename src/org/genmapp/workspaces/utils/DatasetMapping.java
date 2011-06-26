@@ -308,69 +308,97 @@ public abstract class DatasetMapping {
 								+ cn.getIdentifier() + ".");
 				return false;
 			}
-			// logger.debug("Mapping data from "
-			// +dn.getIdentifier()+" to "+cn.getIdentifier
-			// ()+" as node attributes");
+			// virgin node, so just map attributes
 			return mapAttributes(d, dn, dnType, attrs, cn);
-		}
-		if (attr.contains(d.getName())) {
+		} else {
+			/*
+			 * We have mapped to this node before. We need to check from which
+			 * dataset the prior mapping was performed and whether we've already
+			 * started using metanodes.
+			 */
+
 			// If cn is a gn, then we know to continue with grouping strategy
 			if (cn.isaGroup()) {
 				logger.debug("add " + dn.getIdentifier() + " to group "
 						+ cn.getIdentifier());
-				return relateNodes(dn, cn, network);
+				return relateNodes(dn, cn, network, d);
 			}
 
 			/*
 			 * Otherwise, this is the first time switching to group strategy, so
-			 * we need to retrieve prior mapped dn from this dataset and process
-			 * both the prior and the new dn as a group.
+			 * we need to retrieve the prior mapped dn from the prior dataset
+			 * and process both the prior and the new dn as a group.
 			 * 
 			 * Note: if prior === new, then we just skip it (and report it!).
 			 * This is a case where user is loading multiple values per dnid,
 			 * which is not supported.
 			 */
-			attr = (List<String>) Cytoscape.getNodeAttributes()
-					.getListAttribute(
-							cnid,
-							DatasetMapping.NET_ATTR_DATASET_PREFIX
-									+ d.getName());
-			if (null == attr) {
-				// ah, we've been fooled! This is not a grouping situation.
-				logger.warn("Got confused when trying to map data from "
-						+ dn.getIdentifier() + " on to " + cn.getIdentifier()
-						+ ". Skipped it, moving on.");
+			if (attr.size() > 1) {
+				// There should only be one prior dataset recorded
+				// or else it would already be a metanode!
+				logger
+						.warn("More than one prior dataset for a non-metanode?! Failed to comprehend mapping of "
+								+ dn.getIdentifier()
+								+ " to "
+								+ cn.getIdentifier()
+								+ ". Skipped it, moving on.");
 				return false;
 			}
-			for (String priordnid : attr) {
-				if (priordnid.equals(dnid)) {
-					logger
-							.warn("We've seen this data identifier before... Sorry, we can only map one row of data from "
-									+ dn.getIdentifier()
-									+ " to "
-									+ cn.getIdentifier() + ".");
-					return false;
-				}
-				CyNode priordn = Cytoscape.getCyNode(priordnid, false);
-				if (d.getNodes().contains(priordn.getRootGraphIndex())) {
-					logger.debug("Remapping " + priordn.getIdentifier()
-							+ " into new metanode version of "
-							+ cn.getIdentifier());
-					relateNodes(priordn, cn, network);
-				}
+
+			// get prior dataset name
+			String priordname = attr.get(0);
+			attr = (List<String>) Cytoscape
+					.getNodeAttributes()
+					.getListAttribute(cnid,
+							DatasetMapping.NET_ATTR_DATASET_PREFIX + priordname);
+
+			if (null == attr) {
+				// ah, we've been fooled! This is not a grouping situation.
+				logger
+						.warn("No node recorded for prior dataset mapping?! Failed to comprehend mapping of "
+								+ dn.getIdentifier()
+								+ " on to "
+								+ cn.getIdentifier()
+								+ ". Skipped it, moving on.");
+				return false;
+			} else if (attr.size() > 1) {
+				// There should only be one prior node recorded
+				// or else it would already be a metanode!
+				logger
+						.warn("More than one prior node for a non-metanode?! Failed to comprehend mapping of "
+								+ dn.getIdentifier()
+								+ " to "
+								+ cn.getIdentifier()
+								+ ". Skipped it, moving on.");
+				return false;
 			}
+
+			// OK. All is well. Proceed!
+			String priordnid = attr.get(0);
+			if (priordnid.equals(dnid)) {
+				logger
+						.warn("We've seen this data identifier before... Sorry, we can only map one row of data from "
+								+ dn.getIdentifier()
+								+ " to "
+								+ cn.getIdentifier() + ".");
+				return false;
+			}
+			// remap prior data node
+			CyNode priordn = Cytoscape.getCyNode(priordnid, false);
+			if (d.getNodes().contains(priordn.getRootGraphIndex())) {
+				logger
+						.debug("Remapping " + priordn.getIdentifier()
+								+ " into new metanode version of "
+								+ cn.getIdentifier());
+				relateNodes(priordn, cn, network, null);
+			}
+			// map this data node
 			logger.debug("Mapping " + dn.getIdentifier() + " into metanode "
 					+ cn.getIdentifier());
-			return relateNodes(dn, cn, network);
-		} else {
-			// logger.debug("Mapping data from "
-			// +dn.getIdentifier()+" to "+cn.getIdentifier
-			// ()+" as node attributes");
-			return mapAttributes(d, dn, dnType, attrs, cn);
+			return relateNodes(dn, cn, network, d);
 		}
 
 	}
-
 	/**
 	 * Declare network node to be a group node and add dataset nodes as
 	 * children. Attribute mapping (up to parent) will be handled globally by
@@ -384,7 +412,7 @@ public abstract class DatasetMapping {
 	 *            CyNetwork
 	 * @return
 	 */
-	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network) {
+	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network, CyDataset d) {
 		CyGroup gn;
 		/*
 		 * We have to create dn views on relevant network centered on or around
@@ -436,6 +464,10 @@ public abstract class DatasetMapping {
 		 * next attempt to add a child crashes with NPE.
 		 */
 		gn.setState(2);
+		
+		// and tag the node
+		if (d != null)
+			annotateNode(d, dn, cn);
 
 		return true;
 	}
@@ -535,20 +567,21 @@ public abstract class DatasetMapping {
 			mapAttribute(cnid, attr, entry, type, listsample);
 		}
 
-		// // add datanode key to list attribute
-		// List<String> plist = (List<String>) Cytoscape.getNodeAttributes()
-		// .getListAttribute(cnid, "__" + dnType);
-		// if (null == plist) {
-		// plist = new ArrayList<String>();
-		// }
-		// if (!plist.contains(dnid)) {
-		// plist.add(dnid);
-		// }
-		// try {
-		// nodeAttrs.setListAttribute(cnid, "__" + dnType, plist);
-		// } catch (Exception e) {
-		// invalid.put(cnid, plist);
-		// }
+		// and tag the node
+		annotateNode(d, dn, cn);
+
+		return true;
+	}
+	
+	/**
+	 * @param d
+	 * @param dn
+	 * @param cn
+	 * @return
+	 */
+	private static boolean annotateNode(CyDataset d, CyNode dn, CyNode cn) {
+		String dnid = dn.getIdentifier();
+		String cnid = cn.getIdentifier();
 
 		// add dataset to cynode attribute
 		List<String> attr = (List<String>) Cytoscape.getNodeAttributes()
