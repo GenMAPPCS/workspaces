@@ -298,7 +298,7 @@ public class DatasetPanel extends JPanel implements
 	 * @return dataset name
 	 */
 	public static String getSelectedDataset() {
-		GenericTreeNode dnode = (GenericTreeNode) DatasetPanel.getTreeTable()
+		GenericTreeNode dnode = (GenericTreeNode) treeTable
 				.getTree().getLastSelectedPathComponent();
 		if (null == dnode)
 			return null;
@@ -307,21 +307,20 @@ public class DatasetPanel extends JPanel implements
 	}
 
 	/**
-	 * DOCUMENT ME!
 	 * 
-	 * @param id
-	 *            DOCUMENT ME!
+	 * @param dname
+	 *            dataset name
 	 * 
-	 * @return DOCUMENT ME!
+	 * @return tree node
 	 */
-	public GenericTreeNode getDatasetTreeNode(String id) {
+	public GenericTreeNode getDatasetTreeNode(String dname) {
 		Enumeration tree_node_enum = root.breadthFirstEnumeration();
 
 		while (tree_node_enum.hasMoreElements()) {
 			GenericTreeNode node = (GenericTreeNode) tree_node_enum
 					.nextElement();
 
-			if (((String) node.getID()).equals(id)) {
+			if (((String) node.getID()).equals(dname)) {
 				return node;
 			}
 		}

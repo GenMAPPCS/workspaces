@@ -109,7 +109,7 @@ public class CriteriasetPanel extends JPanel
 	private BiModalJSplitPane split;
 
 	private final CriteriasetTreeTableModel criteriaTreeTableModel;
-	
+
 	private CyLogger logger;
 
 	/**
@@ -126,6 +126,16 @@ public class CriteriasetPanel extends JPanel
 
 		treeTable = new JTreeTable(criteriaTreeTableModel);
 		treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		treeTable.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					String csetname = getSelectedCriteriaset();
+					if (null != csetname)
+						WorkspacesCommandHandler.openCriteriaMapper(csetname);
+				}
+			}
+		});
 
 		initialize();
 
@@ -268,9 +278,9 @@ public class CriteriasetPanel extends JPanel
 	 * 
 	 * 
 	 * @param csetname
-	 * 				criteria set name
+	 *            criteria set name
 	 * @param parent_id
-	 * 				parent node
+	 *            parent node
 	 * 
 	 */
 	public void addItem(String csetname, String parent_id) {
@@ -327,6 +337,18 @@ public class CriteriasetPanel extends JPanel
 			treeTable.getTree().scrollPathToVisible(
 					new TreePath(node.getPath()));
 		}
+	}
+
+	/**
+	 * @return criteria set name
+	 */
+	public static String getSelectedCriteriaset() {
+		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
+				.getLastSelectedPathComponent();
+		if (null == node)
+			return null;
+		else
+			return node.getID();
 	}
 
 	/**
@@ -689,7 +711,8 @@ public class CriteriasetPanel extends JPanel
 									colorlistNodes.get(cl).toString(), cl, net);
 						}
 					}
-					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(
+							true, true);
 				}
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
 				List<CyNetwork> netlist = new ArrayList<CyNetwork>();
@@ -713,7 +736,8 @@ public class CriteriasetPanel extends JPanel
 				}
 				for (CyNetwork net : netlist) {
 					WorkspacesCommandHandler.clearCombinedCriteria(net);
-					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(
+							true, true);
 				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
@@ -737,9 +761,9 @@ public class CriteriasetPanel extends JPanel
 					.getIdentifier();
 
 			String colorlist = generateColorlist(nodeid);
-			 if (null == colorlist)
-			 continue;
-			
+			if (null == colorlist)
+				continue;
+
 			nodelist = colorlistNodes.get(colorlist);
 			if (null == nodelist) {
 				nodelist = new ArrayList<String>();
