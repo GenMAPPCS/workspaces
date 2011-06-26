@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -58,6 +59,7 @@ import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.tree.DatasetPanel.TreeCellRenderer;
 
 import cytoscape.CyEdge;
 import cytoscape.CyNetwork;
@@ -170,7 +172,13 @@ public class CriteriasetPanel extends JPanel
 		treeTable.getTree().addTreeSelectionListener(this);
 		treeTable.getTree().setRootVisible(false);
 		ToolTipManager.sharedInstance().registerComponent(treeTable);
-		treeTable.getTree().setCellRenderer(new TreeCellRenderer());
+		TreeCellRenderer treeCellRenderer = new TreeCellRenderer();
+		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource(
+				"images/criteriaset.png"));
+		if (leafIcon != null) {
+			treeCellRenderer.setLeafIcon(leafIcon);
+		}
+		treeTable.getTree().setCellRenderer(treeCellRenderer);
 
 		resetTable();
 

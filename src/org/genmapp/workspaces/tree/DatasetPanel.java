@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -52,6 +53,7 @@ import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.tree.NetworkPanel.TreeCellRenderer;
 import org.genmapp.workspaces.utils.DatasetMapping;
 import org.genmapp.workspaces.utils.NetworkMapping;
 
@@ -144,7 +146,13 @@ public class DatasetPanel extends JPanel implements
 		treeTable.getTree().addTreeSelectionListener(this);
 		treeTable.getTree().setRootVisible(false);
 		ToolTipManager.sharedInstance().registerComponent(treeTable);
-		treeTable.getTree().setCellRenderer(new TreeCellRenderer());
+		TreeCellRenderer treeCellRenderer = new TreeCellRenderer();
+		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource(
+				"images/dataset.png"));
+		if (leafIcon != null) {
+			treeCellRenderer.setLeafIcon(leafIcon);
+		}
+		treeTable.getTree().setCellRenderer(treeCellRenderer);
 
 		resetTable();
 

@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -124,9 +125,6 @@ public class NetworkPanel extends JPanel
 	private boolean doNotEnterValueChanged = false;
 
 	private final NetworkTreeTableModel networkTreeTableModel;
-	// public final JPanel oriNetworkPanel = (JPanel)
-	// Cytoscape.getDesktop().getCytoPanel(
-	// SwingConstants.WEST).getComponentAt(1);
 
 	private CyLogger logger;
 
@@ -183,7 +181,14 @@ public class NetworkPanel extends JPanel
 		treeTable.getTree().addTreeSelectionListener(this);
 		treeTable.getTree().setRootVisible(false);
 		ToolTipManager.sharedInstance().registerComponent(treeTable);
-		treeTable.getTree().setCellRenderer(new TreeCellRenderer());
+		TreeCellRenderer treeCellRenderer = new TreeCellRenderer();
+		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource(
+				"images/network.png"));
+		if (leafIcon != null) {
+			treeCellRenderer.setLeafIcon(leafIcon);
+		}
+		treeTable.getTree().setCellRenderer(treeCellRenderer);
+
 
 		resetTable();
 
@@ -301,11 +306,11 @@ public class NetworkPanel extends JPanel
 		if (treeTable.getTree().getSelectionPath() != null) {
 			// user has selected a network
 			networkTreeTableModel.setValueAt(network.getTitle(), treeTable
-					.getTree().getSelectionPath().getLastPathComponent(), 0);
+					.getTree().getSelectionPath().getLastPathComponent(), 1);
 		} else {
 			// no selection, means the title has been changed programmatically
 			GenericTreeNode node = getNetworkTreeNode(network.getIdentifier());
-			networkTreeTableModel.setValueAt(network.getTitle(), node, 0);
+			networkTreeTableModel.setValueAt(network.getTitle(), node, 1);
 		}
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();

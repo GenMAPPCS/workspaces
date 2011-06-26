@@ -110,8 +110,8 @@ public final class NetworkTreeTableModel extends AbstractTreeTableModel {
 		} else if (columnNames.get(column).equals(
 				GenericColumnTypes.NETWORK_ICONS)
 				&& aValue instanceof Icon) {
-			networkIcons.put(((GenericTreeNode) node).getID(), new ImageIcon(getClass().getResource(
-			"../images/network.png")));
+			networkIcons.put(((GenericTreeNode) node).getID(),
+					(Icon) aValue);
 		}
 	}
 
