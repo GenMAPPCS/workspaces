@@ -11,10 +11,10 @@
 	<property name="src.dir" value="src" />
 
 	<!--  The directory containing library jar files -->
+
 	<property name="cytoroot.dir" value=".." />
-	<property name="release.dir" value="c:/Program Files/Cytoscape_v2.8.1/" />
-	<property name="plugins.dir" value="c:/Program Files/Cytoscape_v2.8.1/plugins" />
-	<property name="lib.dir" value="c:/Users/Isaac/workspace/genmappcs2/goeliteplugin/lib" />
+	<property name="release.dir" value="/Applications/Cytoscape_v2.8.2/" />
+	<property name="pluginlib.dir" value="lib"/>
 
 	<!-- Temporary build directories -->
 	<property name="build.dir" value="build" />
@@ -26,15 +26,15 @@
 	<!-- Classpath with all lib JAR Files and all Cytoscape Core classes -->
 	<path id="classpath">
 
-		<fileset dir="${lib.dir}">
-			<include name="*.jar" />
-		</fileset>
 
 		<!-- include cytoscape.jar, which is it release directory top level -->
 		<fileset dir="${release.dir}">
 			<include name="*.jar" />
 		</fileset>
-
+		
+		<fileset dir="${pluginlib.dir}">
+			<include name="*.jar"/>
+		</fileset>
 
 	</path>
 
@@ -56,11 +56,6 @@
 		<delete dir="${dist.dir}" />
 	</target>
 
-	<!-- Target to create Cytoscape Jar File  -->
-	<target name="build_cytoscape">
-		<ant antfile="${cytoroot.dir}/cytoscape/build.xml" inheritAll="false" target="jar" />
-	</target>
-
 	<!--  Target to compile all Plug In Code -->
 	<target name="compile" depends="prepare" description="Compiles all PlugIn source code.">
 		<javac debug="Yes" srcdir="${src.dir}" destdir="${build.classes}">
@@ -70,13 +65,18 @@
 
 	<!--  Create PlugIn Jar File (Unobfuscated) -->
 	<target name="jar" depends="compile" description="Creates PlugIn Jar File.">
-
+		
+        <copy file="plugin.props" todir="${build.classes}/org/genmapp/workspaces/"/>
+		
 		<jar destfile="${build.dir}/${plugin.name}.jar">
 			<fileset dir="${build.classes}" />
 		</jar>
+
+		
 		<echo message="${plugin.name}.jar is now complete.  It is located in build/ directory" />
 
-		<copy file="${build.dir}/${plugin.name}.jar" todir="${plugins.dir}" />
+		<copy file="${build.dir}/${plugin.name}.jar" todir="${release.dir}/plugins" />
+
 
 	</target>
 
