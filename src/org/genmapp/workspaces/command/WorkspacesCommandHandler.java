@@ -10,8 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JTabbedPane;
+
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.objects.CyResult;
 
 import cytoscape.CyNetwork;
 import cytoscape.CyNode;
@@ -43,6 +46,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ARG_DATASET_ATTRS = "attrs";
 
 	private final static String GET_ALL_DATASET_NODES = "get all dataset nodes";
+
+	private final static String UPDATE_RESULTS = "update results";
+	private final static String CHANGE_RESULT_STATUS = "change result status";
+	private static final String ARG_RESULT_NAME = "name";
+	private static final String ARG_RESULT_GREEN = "green";
+	private static final String ARG_RESULT_COMPONENT = "component";
+	private static final String ARG_RESULT_SUBTABBED_PANE = "subtabbedpane";
+	private static final String ARG_RESULT_SUBCOMPONENT = "subcomponent";
 
 	// VERSIONING
 	public static final String PROPERTY_SETS = "org.genmapp.criteriasets_1.0";
@@ -93,7 +104,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	public static final String ARG_CHARTATTR = "chartattribute";
 	public static final String ARG_NODECHART = "nodechart";
 	public static final String ARG_NETWORKVIEW = "networkview";
-	
+
 	private static final String CYTHESAURUS = "idmapping";
 	private static final String GET_TARGET_TYPES = "get target id types";
 	private static final String CHECK_MAPPING = "check mapping supported";
@@ -106,7 +117,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String ADD_GOELITE_JOB = "add job";
 	private final static String ARG_GOELITE_JOB = "jobid";
 	private final static String ARG_GOELITE_TABLABEL = "tablabel";
-	
+
 	private CyLogger logger;
 
 	public WorkspacesCommandHandler(CyLogger cyLogger) {
@@ -132,6 +143,19 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		addDescription(GET_ALL_DATASET_NODES,
 				"Ask Workspaces for array of dataset node indicies");
 		addArgument(GET_ALL_DATASET_NODES);
+
+		addDescription(UPDATE_RESULTS,
+				"Tell Workspaces to update the result panel");
+		addArgument(UPDATE_RESULTS, ARG_RESULT_NAME);
+		addArgument(UPDATE_RESULTS, ARG_RESULT_COMPONENT);
+		addArgument(UPDATE_RESULTS, ARG_RESULT_GREEN, Boolean.toString(true));
+		addArgument(UPDATE_RESULTS, ARG_RESULT_SUBTABBED_PANE, null);
+		addArgument(UPDATE_RESULTS, ARG_RESULT_SUBCOMPONENT, null);
+
+		addDescription(CHANGE_RESULT_STATUS,
+				"Tell Workspaces to change the status of a result");
+		addArgument(UPDATE_RESULTS, ARG_RESULT_NAME);
+		addArgument(UPDATE_RESULTS, ARG_RESULT_GREEN);
 
 	}
 
@@ -244,12 +268,94 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				result.addMessage("Dataset " + name
 						+ " already listed in Workspaces.");
 			} else {
-				CyDataset dataset = new CyDataset(name, type, nodes, attrs, logger);
+				CyDataset dataset = new CyDataset(name, type, nodes, attrs,
+						logger);
 				result.addMessage("Dataset " + name + " added to Workspaces.");
 			}
 
 		} else if (GET_ALL_DATASET_NODES.equals(command)) {
 			result.addResult(CyDataset.getAllDatasetNodeIndexes());
+
+		} else if (UPDATE_RESULTS.equals(command)) {
+			String name;
+			Object s = getArg(command, ARG_RESULT_NAME, args);
+			if (s instanceof String)
+				name = (String) s;
+			else
+				throw new CyCommandException(ARG_RESULT_NAME
+						+ ": unknown type (try String!)");
+
+			boolean green;
+			Object g = getArg(command, ARG_RESULT_GREEN, args);
+			if (null == g)
+				green = true; // default
+			else if (g instanceof Boolean)
+				green = (Boolean) g;
+			else if (g instanceof String)
+				green = Boolean.getBoolean((String) g);
+			else
+				throw new CyCommandException(ARG_RESULT_GREEN
+						+ ": unknown type (try Boolean or String)");
+
+			String componentLabel;
+			Object c = getArg(command, ARG_RESULT_COMPONENT, args);
+			if (c instanceof String)
+				componentLabel = (String) c;
+			else
+				throw new CyCommandException(ARG_RESULT_COMPONENT
+						+ ": unknown type (try String!)");
+
+			String subComponentLabel;
+			Object sc = getArg(command, ARG_RESULT_SUBCOMPONENT, args);
+			if (null == sc)
+				subComponentLabel = null;
+			else if (sc instanceof String)
+				subComponentLabel = (String) sc;
+			else
+				throw new CyCommandException(ARG_RESULT_SUBCOMPONENT
+						+ ": unknown type (try String!)");
+
+			JTabbedPane subTabbedPane;
+			Object stp = getArg(command, ARG_RESULT_SUBTABBED_PANE, args);
+			if (null == stp)
+				subTabbedPane = null;
+			else if (stp instanceof JTabbedPane)
+				subTabbedPane = (JTabbedPane) stp;
+			else
+				throw new CyCommandException(ARG_RESULT_SUBTABBED_PANE
+						+ ": unknown type (try JTabbedPane!)");
+
+			CyResult cr = new CyResult(name, componentLabel);
+			cr.setGreen(green);
+			if (subTabbedPane != null && subComponentLabel != null) {
+				cr.setSubTabbedPane(subTabbedPane);
+				cr.setSubComponentLabel(subComponentLabel);
+			}
+
+			result.addMessage("added " + name + " to results panel");
+
+		} else if (CHANGE_RESULT_STATUS.equals(command)) {
+			String name;
+			Object s = getArg(command, ARG_RESULT_NAME, args);
+			if (s instanceof String)
+				name = (String) s;
+			else
+				throw new CyCommandException(ARG_RESULT_NAME
+						+ ": unknown type (try String!)");
+
+			boolean green;
+			Object g = getArg(command, ARG_RESULT_GREEN, args);
+			if (g instanceof Boolean)
+				green = (Boolean) g;
+			else if (g instanceof String)
+				green = Boolean.getBoolean((String) g);
+			else
+				throw new CyCommandException(ARG_RESULT_GREEN
+						+ ": unknown type (try Boolean or String)");
+
+			CyResult.resultNameMap.get(name).setGreen(green);
+
+			result.addMessage("changed " + name + " green status to " + green);
 
 		} else {
 
@@ -484,7 +590,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		CyCommandResult result;
 		try {
 			result = CyCommandManager.execute(CRITERIA_MAPPER, APPLY_SET, args);
-//			System.out.println(result.getMessages());
+			// System.out.println(result.getMessages());
 		} catch (CyCommandException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -765,8 +871,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		args.put("nodelist", "all");
 		args.put("network", network.getIdentifier());
 		try {
-			CyCommandResult re = CyCommandManager.execute("nodecharts", "clear",
-					args);
+			CyCommandResult re = CyCommandManager.execute("nodecharts",
+					"clear", args);
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -872,7 +978,6 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		} catch (CyCommandException e) {
 		}
 	}
-	
 
 	/**
 	 * @return
@@ -881,8 +986,8 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		Map<String, Object> args = new HashMap<String, Object>();
 
 		try {
-			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, GET_TARGET_TYPES,
-					args);
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS,
+					GET_TARGET_TYPES, args);
 			return (Set<String>) re.getResult();
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
@@ -893,20 +998,20 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 		return new HashSet<String>();
 	}
-	
 
 	/**
 	 * @param sourcetype
 	 * @param targettype
 	 * @return
 	 */
-	public static boolean checkMappingSupported(String sourcetype, String targettype) {
+	public static boolean checkMappingSupported(String sourcetype,
+			String targettype) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_SOURCE_TYPE, sourcetype);
 		args.put(ARG_TARGET_TYPE, targettype);
 		try {
-			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, CHECK_MAPPING,
-					args);
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS,
+					CHECK_MAPPING, args);
 			if (null != re) {
 				Boolean b = (Boolean) re.getResult();
 				return b;
@@ -922,7 +1027,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @param firstonly
 	 * @param sourceid
@@ -930,15 +1035,16 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	 * @param targettype
 	 * @return
 	 */
-	public static CyCommandResult performGeneralMapping(String firstonly, String sourceid, String sourcetype, String targettype) {
+	public static CyCommandResult performGeneralMapping(String firstonly,
+			String sourceid, String sourcetype, String targettype) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put(ARG_SOURCE_ID, sourceid);
 		args.put(ARG_FIRST_ONLY, firstonly);
 		args.put(ARG_SOURCE_TYPE, sourcetype);
 		args.put(ARG_TARGET_TYPE, targettype);
 		try {
-			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS, PERFORM_MAPPING,
-					args);
+			CyCommandResult re = CyCommandManager.execute(CYTHESAURUS,
+					PERFORM_MAPPING, args);
 			return re;
 		} catch (CyCommandException e1) {
 			// TODO Auto-generated catch block
@@ -949,6 +1055,5 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 		return null;
 	}
-
 
 }

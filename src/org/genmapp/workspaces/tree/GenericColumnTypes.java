@@ -14,7 +14,9 @@ public enum GenericColumnTypes {
 	ROWS("Rows", String.class),
 	CRITERIA_SET_ICONS("Overview", Icon.class), 
 	CRITERIA_SET("Criteria Set", TreeTableModel.class), 
-	CRITERIA("Criteria", String.class);
+	CRITERIA("Criteria", String.class),
+	RESULTS_ICONS("Overview", Icon.class), 
+	RESULTS("Results", TreeTableModel.class); 
 
 	private final String displayName;
 	private final Class<?> type;

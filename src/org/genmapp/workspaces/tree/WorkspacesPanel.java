@@ -55,9 +55,8 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	private static NetworkPanel networkPanel;
 	private static DatasetPanel datasetPanel;
 	private static CriteriasetPanel criteriaPanel;
+	private static ResultsPanel resultsPanel;
 	private static BackpagePanel backpagePanel;
-	// private AnalysisPanel analysisTreePanel;
-	// private ReportPanel reportTreePanel;
 
 	private JPanel navigatorPanel;
 	// BirdsEyeView bev;
@@ -83,14 +82,14 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		networkPanel = new NetworkPanel(logger);
 		datasetPanel = new DatasetPanel(logger);
 		criteriaPanel = new CriteriasetPanel(logger);
+		resultsPanel = new ResultsPanel(logger);
 		progress = new JProgressBar(0,100);
-		// analysisTreePanel = new AnalysisPanel();
-		// reportTreePanel = new ReportPanel();
 
 		// set default viz
 		networkPanel.setVisible(true);
 		datasetPanel.setVisible(false);
 		criteriaPanel.setVisible(false);
+		resultsPanel.setVisible(false);
 		progress.setVisible(false);
 
 		navigatorPanel = new JPanel();
@@ -101,10 +100,11 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		// setNavigator(getBev());
 
 		JPanel main = new JPanel();
-		main.setLayout(new GridLayout(3, 1, 0, 0));
+		main.setLayout(new GridLayout(4, 1, 0, 0));
 		main.add(networkPanel);
 		main.add(datasetPanel);
 		main.add(criteriaPanel);
+		main.add(resultsPanel);
 
 		JPanel wsPanel = new JPanel();
 		wsPanel.setLayout(new BoxLayout(wsPanel, BoxLayout.Y_AXIS));
@@ -153,6 +153,16 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 		return criteriaPanel;
 	}
 
+	/**
+	 * @return the resultsTreePanel
+	 */
+	public static ResultsPanel getResultsTreePanel() {
+		return resultsPanel;
+	}
+
+	/**
+	 * @return the backpagePanel
+	 */
 	public static BackpagePanel getBackpagePanel() {
 		if (backpagePanel == null) {
 			CytoPanel cytoPanel3 = Cytoscape.getDesktop().getCytoPanel(

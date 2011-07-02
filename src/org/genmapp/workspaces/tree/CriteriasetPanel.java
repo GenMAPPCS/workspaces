@@ -115,7 +115,7 @@ public class CriteriasetPanel extends JPanel
 	private CyLogger logger;
 
 	/**
-	 * Constructor for the Network Panel.
+	 * Constructor for the Criteriaset Panel.
 	 * 
 	 * @param desktop
 	 */

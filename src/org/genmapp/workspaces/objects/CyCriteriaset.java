@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.SwingUtilities;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import org.apache.commons.lang.StringUtils;
 import org.genmapp.workspaces.GenMAPPWorkspaces;
@@ -19,6 +20,7 @@ import cytoscape.Cytoscape;
 import cytoscape.CytoscapeInit;
 import cytoscape.data.CyAttributes;
 import cytoscape.view.CyNetworkView;
+import cytoscape.view.cytopanels.CytoPanel;
 import cytoscape.visual.CalculatorCatalog;
 import cytoscape.visual.VisualMappingManager;
 

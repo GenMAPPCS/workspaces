@@ -98,7 +98,7 @@ public class DatasetPanel extends JPanel implements
 	private CyLogger logger;
 
 	/**
-	 * Constructor for the Network Panel.
+	 * Constructor for the Dataset Panel.
 	 * 
 	 * @param desktop
 	 */
