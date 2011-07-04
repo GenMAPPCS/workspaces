@@ -31,6 +31,7 @@ import javax.swing.SwingConstants;
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
+import org.genmapp.workspaces.tree.GenericTreeNode;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
 import org.genmapp.workspaces.utils.DatasetAttributesReader;
 import org.genmapp.workspaces.utils.DatasetAttributesWriter;
@@ -161,10 +162,15 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						String title = gpmlFile.getName();
 						title = title.replaceFirst("GenMAPPWorkspaces_", "");
 						title = title.replaceAll(".gpml", "");
+						
 						// destroy CyNetwork restored from xGMML; replace with
 						// this GPML import
 						Cytoscape.destroyNetwork(title);
 						net.setTitle(title);
+						List<String> netlist = new ArrayList<String>();
+						netlist.add(net.getIdentifier());
+						Cytoscape.setSelectedNetworks(netlist);
+						WorkspacesPanel.getNetworkTreePanel().updateTitle(net);
 						Cytoscape.getNetworkAttributes().setAttribute(
 								net.getIdentifier(), ATTR_PATHWAY_URL,
 								gpmlFile.getPath());

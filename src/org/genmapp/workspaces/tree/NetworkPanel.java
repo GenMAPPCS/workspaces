@@ -104,7 +104,7 @@ public class NetworkPanel extends JPanel
 	// Make this panel as a source of events.
 	private final SwingPropertyChangeSupport pcs;
 
-	private final JTreeTable treeTable;
+	public final JTreeTable treeTable;
 	private final GenericTreeNode root;
 
 	private JPopupMenu popup;
@@ -124,7 +124,7 @@ public class NetworkPanel extends JPanel
 
 	private boolean doNotEnterValueChanged = false;
 
-	private final NetworkTreeTableModel networkTreeTableModel;
+	public final NetworkTreeTableModel networkTreeTableModel;
 
 	private CyLogger logger;
 
@@ -306,11 +306,11 @@ public class NetworkPanel extends JPanel
 		if (treeTable.getTree().getSelectionPath() != null) {
 			// user has selected a network
 			networkTreeTableModel.setValueAt(network.getTitle(), treeTable
-					.getTree().getSelectionPath().getLastPathComponent(), 1);
+					.getTree().getSelectionPath().getLastPathComponent(), 0);
 		} else {
 			// no selection, means the title has been changed programmatically
 			GenericTreeNode node = getNetworkTreeNode(network.getIdentifier());
-			networkTreeTableModel.setValueAt(network.getTitle(), node, 1);
+			networkTreeTableModel.setValueAt(network.getTitle(), node, 0);
 		}
 		treeTable.getTree().updateUI();
 		treeTable.doLayout();
