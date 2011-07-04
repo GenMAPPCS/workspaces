@@ -223,10 +223,10 @@ public class ActionPanel extends JPanel
 				exportGraphics, saveSessionFile, saveSessionAsFile};
 
 		// prepare default list of actions and behavior
-		CyAction actions[] = {openNetworkFile, layoutForceDirected,
-				newDatasetFile, newCriteriaSet, openSessionFile, runGoelite,
-				loadNetworkWeb, saveSessionFile, saveSessionAsFile};
-		workflowState = true;
+		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
+				newDatasetFile, newCriteriaSet, runGoelite,
+				saveSessionFile, saveSessionAsFile};
+		workflowState = false;
 		loadActions(actions);
 	}
 
