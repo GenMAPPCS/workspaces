@@ -305,12 +305,12 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				throw new CyCommandException(ARG_RESULT_COMPONENT
 						+ ": unknown type (try String!)");
 
-			String subComponentLabel;
+			int subComponentIndex;
 			Object sc = getArg(command, ARG_RESULT_SUBCOMPONENT, args);
 			if (null == sc)
-				subComponentLabel = null;
-			else if (sc instanceof String)
-				subComponentLabel = (String) sc;
+				subComponentIndex = 0;
+			else if (sc instanceof Integer)
+				subComponentIndex = (Integer) sc;
 			else
 				throw new CyCommandException(ARG_RESULT_SUBCOMPONENT
 						+ ": unknown type (try String!)");
@@ -327,9 +327,9 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 			CyResult cr = new CyResult(name, componentLabel);
 			cr.setGreen(green);
-			if (subTabbedPane != null && subComponentLabel != null) {
+			if (subTabbedPane != null) {
 				cr.setSubTabbedPane(subTabbedPane);
-				cr.setSubComponentLabel(subComponentLabel);
+				cr.setSubComponentIndex(subComponentIndex);
 			}
 
 			result.addMessage("added " + name + " to results panel");

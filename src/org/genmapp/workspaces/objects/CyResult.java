@@ -12,7 +12,7 @@ public class CyResult {
 	private String name;
 	private String componentLabel;
 	private JTabbedPane subTabbedPane;
-	private String subComponentLabel;
+	private int subComponentIndex;
 	private boolean green;
 
 	// Map of rname, CyResult objects
@@ -38,6 +38,8 @@ public class CyResult {
 	public CyResult(String r, String label) {
 		this.name = r;
 		this.componentLabel = label;
+		this.subTabbedPane = null; //default
+		this.subComponentIndex = 0; //default
 
 		resultNameMap.put(r, this);
 
@@ -79,18 +81,18 @@ public class CyResult {
 	}
 
 	/**
-	 * @return the subComponentLabel
+	 * @return the subComponentIndex
 	 */
-	public String getSubComponentLabel() {
-		return subComponentLabel;
+	public int getSubComponentIndex() {
+		return subComponentIndex;
 	}
 
 	/**
-	 * @param subComponentLabel
-	 *            the subComponentLabel to set
+	 * @param subComponentIndex
+	 *            the subComponentIndex to set
 	 */
-	public void setSubComponentLabel(String subComponentLabel) {
-		this.subComponentLabel = subComponentLabel;
+	public void setSubComponentIndex(int subComponentIndex) {
+		this.subComponentIndex = subComponentIndex;
 	}
 
 	/**

@@ -33,12 +33,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -50,13 +49,8 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.genmapp.workspaces.command.WorkspacesCommandHandler;
-import org.genmapp.workspaces.objects.CyCriteriaset;
-import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.objects.CyResult;
-import org.genmapp.workspaces.tree.CriteriasetPanel.PopupActionListener;
 
-import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
 import cytoscape.data.SelectEvent;
 import cytoscape.logger.CyLogger;
@@ -346,6 +340,10 @@ public class ResultsPanel extends JPanel
 		cytoPanel.setSelectedIndex(index);
 
 		// TODO: if sub, then go deeper
+		if (cr.getSubTabbedPane() != null){
+			JTabbedPane subTabbedPane = cr.getSubTabbedPane();
+			subTabbedPane.setSelectedIndex(cr.getSubComponentIndex());
+		}
 
 	}
 
