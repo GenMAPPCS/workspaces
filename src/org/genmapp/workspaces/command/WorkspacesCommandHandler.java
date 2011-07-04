@@ -1,5 +1,6 @@
 package org.genmapp.workspaces.command;
 
+import java.awt.Component;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
@@ -27,6 +29,7 @@ import cytoscape.command.CyCommandManager;
 import cytoscape.command.CyCommandResult;
 import cytoscape.layout.Tunable;
 import cytoscape.logger.CyLogger;
+import cytoscape.view.cytopanels.CytoPanel;
 
 public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	private final static String NAMESPACE = "workspaces";
@@ -49,6 +52,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 	private final static String UPDATE_RESULTS = "update results";
 	private final static String CHANGE_RESULT_STATUS = "change result status";
+	private final static String CHANGE_RESULT_TABINDEX = "change result tab";
 	private static final String ARG_RESULT_NAME = "name";
 	private static final String ARG_RESULT_GREEN = "green";
 	private static final String ARG_RESULT_COMPONENT = "component";
@@ -154,8 +158,13 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		addDescription(CHANGE_RESULT_STATUS,
 				"Tell Workspaces to change the status of a result");
-		addArgument(UPDATE_RESULTS, ARG_RESULT_NAME);
-		addArgument(UPDATE_RESULTS, ARG_RESULT_GREEN);
+		addArgument(CHANGE_RESULT_STATUS, ARG_RESULT_NAME);
+		addArgument(CHANGE_RESULT_STATUS, ARG_RESULT_GREEN);
+
+		addDescription(CHANGE_RESULT_TABINDEX,
+				"Tell Workspaces to change the tab associate with a result");
+		addArgument(CHANGE_RESULT_TABINDEX, ARG_RESULT_NAME);
+		addArgument(CHANGE_RESULT_TABINDEX, ARG_RESULT_SUBCOMPONENT);
 
 	}
 
@@ -287,12 +296,11 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 			boolean green;
 			Object g = getArg(command, ARG_RESULT_GREEN, args);
-			if (null == g)
-				green = true; // default
-			else if (g instanceof Boolean)
+			green = true; // default
+			if (g instanceof Boolean)
 				green = (Boolean) g;
 			else if (g instanceof String)
-				green = Boolean.getBoolean((String) g);
+				green = Boolean.parseBoolean((String) g);
 			else
 				throw new CyCommandException(ARG_RESULT_GREEN
 						+ ": unknown type (try Boolean or String)");
@@ -305,25 +313,39 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				throw new CyCommandException(ARG_RESULT_COMPONENT
 						+ ": unknown type (try String!)");
 
-			int subComponentIndex;
-			Object sc = getArg(command, ARG_RESULT_SUBCOMPONENT, args);
-			if (null == sc)
-				subComponentIndex = 0;
-			else if (sc instanceof Integer)
-				subComponentIndex = (Integer) sc;
-			else
-				throw new CyCommandException(ARG_RESULT_SUBCOMPONENT
-						+ ": unknown type (try String!)");
-
 			JTabbedPane subTabbedPane;
 			Object stp = getArg(command, ARG_RESULT_SUBTABBED_PANE, args);
-			if (null == stp)
-				subTabbedPane = null;
-			else if (stp instanceof JTabbedPane)
-				subTabbedPane = (JTabbedPane) stp;
+			subTabbedPane = null;
+			if (stp instanceof String) {
+				try {
+					CytoPanel cytoPanel = Cytoscape.getDesktop().getCytoPanel(
+							SwingConstants.EAST);
+					int index = cytoPanel.indexOfComponent(componentLabel);
+					JTabbedPane tabbedPane = (JTabbedPane) cytoPanel
+							.getComponentAt(index);
+					int index2 = tabbedPane.indexOfTab((String) stp);
+					subTabbedPane = (JTabbedPane) tabbedPane.getComponentAt(index2);
+				} catch (Exception e) {
+					logger.error("failed to detect subTabbedPane", e);
+					throw new CyCommandException(ARG_RESULT_SUBTABBED_PANE
+							+ ": failed to detect subTabbedPane");
+				}
+			}
+
 			else
 				throw new CyCommandException(ARG_RESULT_SUBTABBED_PANE
-						+ ": unknown type (try JTabbedPane!)");
+						+ ": unknown type (try String!)");
+
+			int subComponentIndex;
+			Object sc = getArg(command, ARG_RESULT_SUBCOMPONENT, args);
+			subComponentIndex = 0;
+			if (sc instanceof Integer)
+				subComponentIndex = (Integer) sc;
+			else if (sc instanceof String)
+				subComponentIndex = subTabbedPane.indexOfTab((String) sc);
+			else
+				throw new CyCommandException(ARG_RESULT_SUBCOMPONENT
+						+ ": unknown type (try int!)");
 
 			CyResult cr = new CyResult(name, componentLabel);
 			cr.setGreen(green);
@@ -348,7 +370,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			if (g instanceof Boolean)
 				green = (Boolean) g;
 			else if (g instanceof String)
-				green = Boolean.getBoolean((String) g);
+				green = Boolean.parseBoolean((String) g);
 			else
 				throw new CyCommandException(ARG_RESULT_GREEN
 						+ ": unknown type (try Boolean or String)");
@@ -357,13 +379,40 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 			result.addMessage("changed " + name + " green status to " + green);
 
+		} else if (CHANGE_RESULT_TABINDEX.equals(command)) {
+			String name;
+			Object s = getArg(command, ARG_RESULT_NAME, args);
+			if (s instanceof String)
+				name = (String) s;
+			else
+				throw new CyCommandException(ARG_RESULT_NAME
+						+ ": unknown type (try String!)");
+
+			int subComponentIndex;
+			Object sc = getArg(command, ARG_RESULT_SUBCOMPONENT, args);
+			subComponentIndex = 0;
+			if (sc instanceof Integer)
+				subComponentIndex = (Integer) sc;
+			else if (sc instanceof String) {
+				JTabbedPane subTabbedPane = CyResult.resultNameMap.get(name)
+						.getSubTabbedPane();
+				subComponentIndex = subTabbedPane.indexOfTab((String) sc);
+			} else
+				throw new CyCommandException(ARG_RESULT_SUBCOMPONENT
+						+ ": unknown type (try int!)");
+
+			CyResult.resultNameMap.get(name).setSubComponentIndex(
+					subComponentIndex);
+
+			result.addMessage("changed " + name + " tab index "
+					+ subComponentIndex);
+
 		} else {
 
 			result.addError("Command not supported: " + command);
 		}
 		return (result);
 	}
-
 	/**
 	 * From CyCommandTool to handle command strings
 	 * 

@@ -341,7 +341,10 @@ public class ResultsPanel extends JPanel
 
 		// TODO: if sub, then go deeper
 		if (cr.getSubTabbedPane() != null){
+			JTabbedPane tabbedPane = (JTabbedPane) cytoPanel
+			.getComponentAt(index);
 			JTabbedPane subTabbedPane = cr.getSubTabbedPane();
+			tabbedPane.setSelectedComponent(subTabbedPane);
 			subTabbedPane.setSelectedIndex(cr.getSubComponentIndex());
 		}
 

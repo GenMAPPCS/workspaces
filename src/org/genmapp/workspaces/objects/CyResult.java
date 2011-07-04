@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.swing.JTabbedPane;
 
 import org.genmapp.workspaces.GenMAPPWorkspaces;
+import org.genmapp.workspaces.tree.WorkspacesPanel;
 
 public class CyResult {
 
@@ -17,16 +18,6 @@ public class CyResult {
 
 	// Map of rname, CyResult objects
 	public static Map<String, CyResult> resultNameMap = new HashMap<String, CyResult>();
-	// Map of rname, componentLabel (label of component in CytoPanel EAST)
-	// public static Map<String, String> resultComponentMap = new
-	// HashMap<String, String>();
-	// //Map of rname, subTabbedPane (subTabbedPane within component)
-	// public static Map<String, JTabbedPane> resultTabbedPaneMap = new
-	// HashMap<String, JTabbedPane>();
-	// //Map of rname, subComponentLabel (label of subComponent within
-	// subTabbedPane)
-	// public static Map<String, String> resultSubComponentMap = new
-	// HashMap<String, String>();
 
 	/**
 	 * Analogous to CyNetwork, this is the base class of all result objects in
@@ -43,7 +34,7 @@ public class CyResult {
 
 		resultNameMap.put(r, this);
 
-		GenMAPPWorkspaces.wsPanel.getResultsTreePanel().addItem(r, "rroot");
+		WorkspacesPanel.getResultsTreePanel().addItem(r, "rroot");
 	}
 
 	public String getName() {
@@ -108,6 +99,7 @@ public class CyResult {
 	 */
 	public void setGreen(boolean green) {
 		this.green = green;
+		WorkspacesPanel.getResultsTreePanel().updateUI();
 	}
 
 	/**
