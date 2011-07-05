@@ -22,16 +22,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 
 import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyCriteriaset;
 import org.genmapp.workspaces.objects.CyDataset;
-import org.genmapp.workspaces.tree.GenericTreeNode;
 import org.genmapp.workspaces.tree.WorkspacesPanel;
 import org.genmapp.workspaces.utils.DatasetAttributesReader;
 import org.genmapp.workspaces.utils.DatasetAttributesWriter;
@@ -80,8 +79,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		// set properties
 		// set view thresholds to handle "overview" xGMMLs
 		CytoscapeInit.getProperties().setProperty("viewThreshold", "30000");
-		CytoscapeInit.getProperties().setProperty("render.coarseDetailThreshold", "100000");
-		CytoscapeInit.getProperties().setProperty("render.nodeLabelThreshold", "30000");
+		CytoscapeInit.getProperties().setProperty(
+				"render.coarseDetailThreshold", "100000");
+		CytoscapeInit.getProperties().setProperty("render.nodeLabelThreshold",
+				"30000");
 
 		// set default node width/height lock to avoid dependency issues
 		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency()
@@ -151,48 +152,58 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 			// Load GPML files
 			for (File gpmlFile : gpmlFileList) {
-				GpmlPlugin gp = GpmlPlugin.getInstance();
+				String title = gpmlFile.getName();
+				title = title.replaceFirst("GenMAPPWorkspaces_", "");
+				title = title.replaceAll(".gpml", "");
+				JOptionPane
+						.showMessageDialog(
+								Cytoscape.getDesktop(),
+								"GPML pathway graphics will not be saved/restored.\nThis feature will be support in future versions of GenMAPP-CS.",
+								"Detected GPML: " + title,
+								JOptionPane.WARNING_MESSAGE);
 
-				// if GPML plugin is loaded, then attempt load pathway
-				if (null != gp) {
-					try {
-						Pathway pathway = new Pathway();
-						pathway.readFromXml(gpmlFile, true);
-						CyNetwork net = gp.load(pathway, true);
-						String title = gpmlFile.getName();
-						title = title.replaceFirst("GenMAPPWorkspaces_", "");
-						title = title.replaceAll(".gpml", "");
-						
-						// destroy CyNetwork restored from xGMML; replace with
-						// this GPML import
-						Cytoscape.destroyNetwork(title);
-						net.setTitle(title);
-						List<String> netlist = new ArrayList<String>();
-						netlist.add(net.getIdentifier());
-						Cytoscape.setSelectedNetworks(netlist);
-						WorkspacesPanel.getNetworkTreePanel().updateTitle(net);
-						Cytoscape.getNetworkAttributes().setAttribute(
-								net.getIdentifier(), ATTR_PATHWAY_URL,
-								gpmlFile.getPath());
-
-						// and let the world know...
-						// the Object[2] is Cytoscape convention
-						// Object[] new_value = new Object[2];
-						// new_value[0] = net;
-						// new_value[1] = net.getIdentifier();
-						//Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
-						// null, new_value);
-
-						logger.info("GPML file " + title
-								+ " restored from session file.");
-
-					} catch (ConverterException e) {
-						logger.error("Error reading GPML file: ", e);
-					}
-				} else {
-					logger.warn("GPML plugin not detected. "
-							+ gpmlFile.getName() + " not restored.");
-				}
+				// GpmlPlugin gp = GpmlPlugin.getInstance();
+				//
+				// // if GPML plugin is loaded, then attempt load pathway
+				// if (null != gp) {
+				// try {
+				// Pathway pathway = new Pathway();
+				// pathway.readFromXml(gpmlFile, true);
+				// CyNetwork net = gp.load(pathway, true);
+				// String title = gpmlFile.getName();
+				// title = title.replaceFirst("GenMAPPWorkspaces_", "");
+				// title = title.replaceAll(".gpml", "");
+				//
+				// // destroy CyNetwork restored from xGMML; replace with
+				// // this GPML import
+				// Cytoscape.destroyNetwork(title);
+				// net.setTitle(title);
+				// List<String> netlist = new ArrayList<String>();
+				// netlist.add(net.getIdentifier());
+				// Cytoscape.setSelectedNetworks(netlist);
+				// WorkspacesPanel.getNetworkTreePanel().updateTitle(net);
+				// Cytoscape.getNetworkAttributes().setAttribute(
+				// net.getIdentifier(), ATTR_PATHWAY_URL,
+				// gpmlFile.getPath());
+				//
+				// // and let the world know...
+				// // the Object[2] is Cytoscape convention
+				// // Object[] new_value = new Object[2];
+				// // new_value[0] = net;
+				// // new_value[1] = net.getIdentifier();
+				// //Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
+				// // null, new_value);
+				//
+				// logger.info("GPML file " + title
+				// + " restored from session file.");
+				//
+				// } catch (ConverterException e) {
+				// logger.error("Error reading GPML file: ", e);
+				// }
+				// } else {
+				// logger.warn("GPML plugin not detected. "
+				// + gpmlFile.getName() + " not restored.");
+				// }
 
 			}
 
@@ -204,8 +215,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * attributes structure, (hopefully) overwriting any duplicates
 			 */
 			logger.info("Loading node attributes for CyDataset nodes");
-			DatasetAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(),
-					new FileReader(nodeAttributeFile), logger);
+			DatasetAttributesReader.loadAttributes(Cytoscape
+					.getNodeAttributes(), new FileReader(nodeAttributeFile),
+					logger);
 
 			/*
 			 * Display a mini table of node attributes, if in debug mode
@@ -266,8 +278,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				 * since that has already been done and loaded directly as node
 				 * attributes.
 				 */
-				new CyDataset(name, keyType, nodeRootIdList,
-						attrList, false, logger);
+				new CyDataset(name, keyType, nodeRootIdList, attrList, false,
+						logger);
 				logger.info("CyDataset " + name
 						+ " restored from session file.");
 			}
@@ -287,7 +299,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 				for (String cs : temp) {
 					full.add(cs);
-					logger.debug(cs+" to be restored...");
+					logger.debug(cs + " to be restored...");
 				}
 			}
 			// create csets
@@ -297,7 +309,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 								WorkspacesCommandHandler.PROPERTY_SET_PREFIX
 										+ csetname);
 				new CyCriteriaset(csetname, setParameters);
-				logger.info("CyCriteriaset "+csetname+" restored from session file.");
+				logger.info("CyCriteriaset " + csetname
+						+ " restored from session file.");
 			}
 			// restore network-criteria map from prop file
 			for (CyNetwork net : Cytoscape.getNetworkSet()) {
@@ -306,7 +319,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						.get(csetname);
 				// track last applied cset per network
 				CyCriteriaset.setNetworkCriteriaset(net, cset);
-				logger.debug("setting "+csetname+" for "+net.getTitle());
+				logger.debug("setting " + csetname + " for " + net.getTitle());
 				// apply them after SESSION_LOADED
 			}
 			// end try read files
@@ -315,7 +328,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		}
 		logger.debug("done with all session restoring tasks");
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -341,7 +354,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 					+ "");
 			int i = 0;
 			for (String name : CyDataset.datasetNameMap.keySet()) {
-				logger.debug(name+" to be saved...");
+				logger.debug(name + " to be saved...");
 				CyDataset ds = (CyDataset) CyDataset.datasetNameMap.get(name);
 				props.setProperty("ds." + i + ".name", name);
 				props.setProperty("ds." + i + ".keyType", ds.getKeyType());
@@ -362,12 +375,13 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				CyCriteriaset cset = CyCriteriaset.getNetworkCriteriaset(net);
 				if (null != cset) {
 					props.setProperty("cs." + net.getTitle(), cset.getName());
-					logger.debug("saving " +cset.getName()+" for "+ net.getTitle());
+					logger.debug("saving " + cset.getName() + " for "
+							+ net.getTitle());
 				}
 			}
 
 			// writes property file to disk
-			logger.debug("writing props to file: "+propFile.getName());
+			logger.debug("writing props to file: " + propFile.getName());
 			props.store(new FileOutputStream(propFile), null);
 			fileList.add(propFile);
 
@@ -383,8 +397,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 */
 			// TODO: this can be improved
 			logger.debug("writing node attribtues");
-			DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(),
-					nodeAttributeFile, logger);
+			DatasetAttributesWriter.writeAttributes(Cytoscape
+					.getNodeAttributes(), nodeAttributeFile, logger);
 			fileList.add(nodeAttributeFile);
 
 		} catch (IOException ex) {
@@ -398,21 +412,30 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 					net.getIdentifier(), ATTR_PATHWAY_URL);
 			if (null != wpurl) {
 				final File gpmlFile = new File(tmpDir, net.getTitle() + ".gpml");
-				GpmlPlugin gp = GpmlPlugin.getInstance();
+				// GpmlPlugin gp = GpmlPlugin.getInstance();
 				logger.debug("detected gpml network to be saved");
-				
+				JOptionPane
+						.showMessageDialog(
+								Cytoscape.getDesktop(),
+								"GPML pathway graphics will not be saved/restored.\nThis feature will be support in future versions of GenMAPP-CS.",
+								"Detected GPML: " + net.getTitle(),
+								JOptionPane.WARNING_MESSAGE);
+
 				// if GPML plugin is loaded, then attempt save pathway
-				if (null != gp) {
-					try {
-						gp.writeToFile(Cytoscape.getNetworkView(net
-								.getIdentifier()), gpmlFile);
-						logger.debug("Saved "+gpmlFile.getName());
-					} catch (ConverterException e) {
-						logger.error("gpml writeToFile ConverterException: "+e);
-					}
-					fileList.add(gpmlFile);
-				}
-				logger.warn("Ignored saving "+gpmlFile.getName()+ " as GPML in session file.");
+				// if (null != gp) {
+				// try {
+				// gp.writeToFile(Cytoscape.getNetworkView(net
+				// .getIdentifier()), gpmlFile);
+				// logger.debug("Saved " + gpmlFile.getName());
+				// } catch (ConverterException e) {
+				// logger.error("gpml writeToFile ConverterException: "
+				// + e);
+				// }
+				fileList.add(gpmlFile);
+				// } else {
+				// logger.warn("Ignored saving " + gpmlFile.getName()
+				// + " as GPML in session file.");
+				// }
 			}
 
 		}
