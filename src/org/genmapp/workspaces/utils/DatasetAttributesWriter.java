@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,12 +28,31 @@ public class DatasetAttributesWriter {
 
 	public static void writeAttributes(CyAttributes attrib, File attribFile,
 			CyLogger logger) throws IOException {
-		int cols = attrib.getAttributeNames().length;
+
+		// only deal with dataset node attrs
+		List<String> cytoattrs = Arrays.asList(attrib.getAttributeNames());
+		List<String> dnattrs = new ArrayList<String>();
+		for (CyDataset cd : CyDataset.datasetNameMap.values()) {
+			for (String att : cd.getAttrs()) {
+				if (cytoattrs.contains(att)) //make sure it's real
+					dnattrs.add(att);
+			}
+		}
+		dnattrs.add("canonicalName");
+		
+		// make unique
+		Set<String> set = new HashSet<String>(dnattrs);
+		ArrayList<String> dnattrsUnique = new ArrayList<String>(set);
+		
+		// make it an array
+		String[] datasetNodeAttrib = (String[]) dnattrsUnique
+				.toArray(new String[dnattrsUnique.size()]);
+
+		int cols = datasetNodeAttrib.length;
 		logger.debug("write Attributes to " + attribFile + " cols = " + cols);
 
-		Set<String> allNetworkNodeIds = new HashSet<String>();
-
 		// generate list of network nodes to skip
+		Set<String> allNetworkNodeIds = new HashSet<String>();
 		for (CyNetwork network : Cytoscape.getNetworkSet()) {
 			int[] networkNodeIndexes = network.getNodeIndicesArray();
 			for (int i = 0; i < networkNodeIndexes.length; i++) {
@@ -64,8 +85,8 @@ public class DatasetAttributesWriter {
 			// cannot
 			// iterate this way
 			// in the future
-			for (String n : attrib.getAttributeNames()) {
-				if (n.equals("canonicalName") && col != 0) {
+			for (String n : datasetNodeAttrib) {
+				 if (n.equals("canonicalName") && col != 0) {
 					// make sure "canonicalName" is first col: if it isn't, then
 					// swap with what is there
 					n = masterValues.get(headerRowDummyNodeName)[0];
@@ -133,10 +154,8 @@ public class DatasetAttributesWriter {
 			cytoscape.data.writers.CyAttributesWriter w = new cytoscape.data.writers.CyAttributesWriter(
 					attrib, a, fw);
 			w.writeAttributes();
-
 			BufferedReader tempReader = new BufferedReader(new FileReader(
 					tempFile));
-
 			String l = "";
 			boolean bHeaderProcessed = false;
 			while ((l = tempReader.readLine()) != null) {
@@ -219,7 +238,7 @@ public class DatasetAttributesWriter {
 				if (nodeId.equals(headerRowDummyNodeName)) {
 					continue;
 				}
-				for (String a : attrib.getAttributeNames()) {
+				for (String a : datasetNodeAttrib) {
 					s += attrib.getAttribute(nodeId, a) + ",";
 				}
 				s += "\n";
@@ -254,14 +273,14 @@ public class DatasetAttributesWriter {
 			String csvLine = "";
 
 			// iterate over all the columns of the given row
-			for (int col2 = 0; col2 < attrib.getAttributeNames().length; col2++) {
+			for (int col2 = 0; col2 < datasetNodeAttrib.length; col2++) {
 				// logger.debug( "getting " + nodeID + " col= " + col2 );
 				String x = masterValues.get(nodeID)[col2];
 				// logger.debug( "getting " + nodeID + " col= " + col2 + " = " +
 				// x );
 
 				csvLine += x;
-				if (col2 < attrib.getAttributeNames().length - 1) {
+				if (col2 < datasetNodeAttrib.length - 1) {
 					csvLine += ",";
 				}
 			}
