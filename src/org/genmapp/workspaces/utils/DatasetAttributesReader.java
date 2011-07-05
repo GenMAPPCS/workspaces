@@ -95,8 +95,7 @@ public class DatasetAttributesReader {
 				.get(DatasetAttributesWriter.headerRowDummyNodeName).length;
 		// done reading file into mastervalues: now, write out a column at a
 		// time into a temp file
-		// so that core CyAttrReader can read it ( yes, this qualifies as a hack
-		// )
+		// so that core CyAttrReader can read it (yes, this qualifies as a hack)
 		// we are going through these convolutions because the attribute reading
 		// code is complex
 		// and we want to reuse it as cleanly as we can. Surprisingly this is
@@ -125,15 +124,17 @@ public class DatasetAttributesReader {
 					false));
 			// write it in format that cytoscape.data.readers.CyAttributeReader
 			// can read
-			tempWriter
-					.println(masterValues
-							.get(DatasetAttributesWriter.headerRowDummyNodeName)[col]);
+			tempWriter.println(masterValues
+					.get(DatasetAttributesWriter.headerRowDummyNodeName)[col]);
 
 			for (String nodeId : masterValues.keySet()) {
 				if (nodeId
 						.equals(DatasetAttributesWriter.headerRowDummyNodeName)) {
 					continue;
 				}
+				if (masterValues.get(nodeId)[col].equals("null"))
+					continue;
+
 				tempWriter.println(nodeId + " = "
 						+ masterValues.get(nodeId)[col]);
 			}
@@ -151,8 +152,7 @@ public class DatasetAttributesReader {
 		String s = cyAttrs.getAttributeNames() + "\n";
 
 		for (String nodeId : masterValues.keySet()) {
-			if (nodeId
-					.equals(DatasetAttributesWriter.headerRowDummyNodeName)) {
+			if (nodeId.equals(DatasetAttributesWriter.headerRowDummyNodeName)) {
 				continue;
 			}
 			for (String a : cyAttrs.getAttributeNames()) {
