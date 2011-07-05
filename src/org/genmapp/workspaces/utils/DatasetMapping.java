@@ -412,7 +412,8 @@ public abstract class DatasetMapping {
 	 *            CyNetwork
 	 * @return
 	 */
-	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network, CyDataset d) {
+	private static boolean relateNodes(CyNode dn, CyNode cn, CyNetwork network,
+			CyDataset d) {
 		CyGroup gn;
 		/*
 		 * We have to create dn views on relevant network centered on or around
@@ -464,7 +465,7 @@ public abstract class DatasetMapping {
 		 * next attempt to add a child crashes with NPE.
 		 */
 		gn.setState(2);
-		
+
 		// and tag the node
 		if (d != null)
 			annotateNode(d, dn, cn);
@@ -572,7 +573,7 @@ public abstract class DatasetMapping {
 
 		return true;
 	}
-	
+
 	/**
 	 * @param d
 	 * @param dn
@@ -747,8 +748,8 @@ public abstract class DatasetMapping {
 
 	/**
 	 * Screens out networks that have already been mapped for this dataset
-	 * (unless forced), as well as metanode-generated nested networks and
-	 * networks without views.
+	 * (unless forced), as well as metanode-generated nested networks, networks
+	 * without views, and networks directly generated from dataset.
 	 * 
 	 * @param networkList
 	 * @param title
@@ -756,7 +757,7 @@ public abstract class DatasetMapping {
 	 * @return
 	 */
 	private static List<CyNetwork> screenNetworkList(
-			List<CyNetwork> networkList, String title, boolean force) {
+			List<CyNetwork> networkList, String datasetname, boolean force) {
 		// collect list of virgin networks
 		List<CyNetwork> netList = new ArrayList<CyNetwork>();
 		for (CyNetwork network : networkList) {
@@ -768,8 +769,9 @@ public abstract class DatasetMapping {
 					List<String> sourcelist = (List<String>) Cytoscape
 							.getNetworkAttributes().getListAttribute(netid,
 									NET_ATTR_DATASETS);
-					if (!sourcelist.contains(title) || force) {
-						netList.add(network);
+					if (!sourcelist.contains(datasetname) || force) {
+						if (!network.getTitle().equals(datasetname))
+							netList.add(network);
 					}
 				} else if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
 						"parent_nodes")) {
