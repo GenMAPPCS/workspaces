@@ -182,7 +182,7 @@ public class WorkspacesPanel extends JPanel implements PropertyChangeListener {
 	protected void clearAllDatasets() {
 		logger.debug("clearing all datasets...");
 		for (CyDataset dset : CyDataset.datasetNameMap.values()) {
-			dset.deleteCyDatasetInfo(false);
+			dset.removeFromPanel();
 		}
 		logger.debug("clearing dataset name map");
 		CyDataset.datasetNameMap.clear();

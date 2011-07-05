@@ -3,9 +3,11 @@ package org.genmapp.workspaces.objects;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +64,7 @@ public class CyDataset {
 		logger = cyLogger;
 
 		datasetNameMap.put(n, this);
-		
+
 		this.rows = nl.size();
 
 		// add to dataset panel
@@ -84,7 +86,6 @@ public class CyDataset {
 		// set color of entry in panel
 		DatasetPanel.getTreeTable().getTree().updateUI();
 	}
-
 
 	/**
 	 * 
@@ -200,7 +201,68 @@ public class CyDataset {
 	public String getSource() {
 		return this.source;
 	}
-	
+
+	/**
+	 * The main purpose for this method is to remove dataset nodes for efficient
+	 * save/restore. Thus, all information that was successfully mapped to
+	 * network nodes, metanodes or used by criteriasets, etc remains intact. We
+	 * are just removing unmapped nodes that would otherwise bloat the .cys
+	 * file.
+	 * 
+	 * @param self
+	 *            also delete reference in name map?
+	 */
+	public void deleteUnmappedCyDatasetInfo(boolean self) {
+		String dname = this.getName();
+
+		// generate list of network and metanode nodes to skip
+		Set<Integer> mappedNodeIndexes = new HashSet<Integer>();
+
+		// first, process all networks
+		for (CyNetwork network : Cytoscape.getNetworkSet()) {
+			int[] networkNodeIndexes = network.getNodeIndicesArray();
+			for (int i = 0; i < networkNodeIndexes.length; i++) {
+				mappedNodeIndexes.add(networkNodeIndexes[i]);
+			}
+		}
+
+		// next, process all metanodes
+		List<CyGroup> mnList = CyGroupManager.getGroupList(CyGroupManager
+				.getGroupViewer("metaNode"));
+		if (mnList != null) {
+			Iterator<CyGroup> it = mnList.iterator();
+			while (it.hasNext()) {
+				CyGroup mn = it.next();
+				List<CyNode> cnList = mn.getNodes();
+				for (CyNode cn : cnList) {
+					mappedNodeIndexes.add(cn.getRootGraphIndex());
+
+				}
+			}
+		}
+
+		// destroy unmapped dataset nodes
+		for (int ni : nodes) {
+			if (!mappedNodeIndexes.contains(ni))
+				Cytoscape.getRootGraph().removeNode(ni);
+		}
+
+		removeFromPanel();
+
+		if (self) {
+			// remove internal representation
+			datasetNameMap.remove(dname);
+		}
+
+	}
+
+	/**
+	 * Removed CyDataset from DatasetPanel
+	 */
+	public void removeFromPanel() {
+		GenMAPPWorkspaces.wsPanel.getDatasetTreePanel().removeItem(
+				this.getName());
+	}
 
 	/**
 	 * Clears all dataset info, including dataset-specific nodes and attributes,
@@ -209,7 +271,7 @@ public class CyDataset {
 	 * @param self
 	 *            also delete reference in name map?
 	 */
-	public void deleteCyDatasetInfo(boolean self) {
+	 public void deleteCyDatasetInfo(boolean self) {
 		String dname = this.getName();
 
 		/*
@@ -283,7 +345,7 @@ public class CyDataset {
 			// TODO: assess dependent criteriasets
 			// TODO: go through all nodes and clear ds node attrs
 			// TODO: etc
-			// OR, never active dataset deletion!
+			// OR, never active complete deletion of datasets info!
 
 		}
 
@@ -298,6 +360,10 @@ public class CyDataset {
 
 	}
 
+	/**
+	 * @param gn
+	 * @param cnv
+	 */
 	public static void arrangeChildren(CyGroup gn, CyNetworkView cnv) {
 
 		// collect some measurements

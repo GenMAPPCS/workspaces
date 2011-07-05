@@ -176,7 +176,7 @@ public class DatasetPanel extends JPanel implements
 		selectAttributes.addActionListener(popupActionListener);
 		createNetwork.addActionListener(popupActionListener);
 		popup.add(remapDataset);
-		// popup.add(destroyDatasetItem);
+		popup.add(destroyDatasetItem);
 		popup.addSeparator();
 		popup.add(selectAttributes);
 		popup.add(createNetwork);
@@ -493,8 +493,7 @@ public class DatasetPanel extends JPanel implements
 			CyDataset ds = CyDataset.datasetNameMap.get(dsname);
 
 			if (DESTROY_DATASET.equals(label)) {
-				// TODO
-				CyDataset.datasetNameMap.get(dsname).deleteCyDatasetInfo(true);
+				CyDataset.datasetNameMap.get(dsname).deleteUnmappedCyDatasetInfo(true);
 			} else if (CREATE_NETWORK.equals(label)) {
 				int[] edges = new int[0];
 				List<Integer> nodesL = ds.getNodes();
