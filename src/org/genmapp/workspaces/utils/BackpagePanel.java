@@ -138,7 +138,7 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 			}
 		}
 
-		if (null == sourceid) {
+		if (null == sourceid || null == sourcetype) {
 			html = div2 + "No information..." + divx;
 
 		} else {
@@ -183,6 +183,12 @@ public class BackpagePanel extends JPanel implements HyperlinkListener {
 		for (String targettype : targettypes) {
 			if (nonMappingTypes.contains(targettype))
 				continue;
+			
+			boolean supported = WorkspacesCommandHandler.checkMappingSupported(sourcetype,
+					targettype);
+			if (!supported)
+				continue;
+			
 			CyCommandResult result = WorkspacesCommandHandler
 					.performGeneralMapping("true", sourceid, sourcetype,
 							targettype);
