@@ -1,6 +1,7 @@
 package org.genmapp.workspaces.utils;
 
 import java.io.BufferedReader;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -18,6 +19,7 @@ import cytoscape.CyNetwork;
 import cytoscape.CyNode;
 import cytoscape.Cytoscape;
 import cytoscape.data.CyAttributes;
+import cytoscape.giny.CytoscapeRootGraph;
 import cytoscape.logger.CyLogger;
 import cytoscape.plugin.PluginManager;
 
@@ -25,8 +27,119 @@ import cytoscape.plugin.PluginManager;
 public class DatasetAttributesWriter {
 
 	public static String headerRowDummyNodeName = "CyAttributesWriter.ColumnHeader.DummyNode";
+	
+	private static String encode( String raw )  { return( raw ); } // XXX need to add in proper encoding from CyAttributesWriter
 
-	public static void writeAttributes(CyAttributes attrib, File attribFile,
+	private static String getEncodedAttribute(String attr, String nodeName,
+			CyAttributes attributes) {
+		byte type = attributes.getType(attr);
+		if (!attributes.hasAttribute(nodeName, attr) || type ==
+			CyAttributes.TYPE_SIMPLE_MAP || type == CyAttributes.TYPE_COMPLEX)
+		{
+		  return "";
+		}
+		switch (type) {
+		  case CyAttributes.TYPE_STRING:
+			 // Encode the string
+		     return encode( ( String ) attributes.getAttribute(nodeName, attr));
+		  case CyAttributes.TYPE_SIMPLE_LIST:
+			 List attrList = attributes.getListAttribute(nodeName, attr);
+			 return listEncode(attrList);
+		  default:
+			 return attributes.getAttribute(nodeName, attr).toString();
+			 
+		}
+	}
+	
+	private static String listEncode(List list) 
+	{
+	    String s = null;
+	    for (Object o: list) {
+		   if (s == null)
+		      s = "[" + encode(o.toString());
+		   else
+		      s += "::"+ encode(o.toString());
+		 }
+	     return s+"]";
+	}
+
+	public static void writeRow( FileWriter writer, int nodeIndex, CyAttributes attributes  ) throws IOException
+	{
+	    String nodeName = ((CyNode) Cytoscape.getRootGraph().getNode(nodeIndex)).getIdentifier();
+	    String [] attrNames = attributes.getAttributeNames();
+	    boolean isFirst = true;
+	    for (String attr: attrNames) 
+	    {
+	    	String attrValue = getEncodedAttribute(attr, nodeName, attributes);
+	    	if ( !isFirst ) { writer.write(","); }
+	    	writer.write( attrValue);
+	    	isFirst = false;
+	    }
+	    writer.write("\n");	
+	}
+
+	public static void writeHeader( FileWriter writer, CyAttributes attributes ) throws IOException
+	{
+		// format = csv
+		// first line: attribute names
+		String namesRow = "";
+		// second line: attribute types
+		String typesRow = "";
+		
+		String [] attrNames = attributes.getAttributeNames();
+		boolean bIsFirstName = true;
+		// first line: names
+	    for (String attr: attrNames) 
+	    {
+	    	if ( !bIsFirstName ) 
+	    	{ 
+	    		namesRow += ","; 
+	    		typesRow += ",";
+	    	}
+	    	else 
+	    	{ 
+	    		bIsFirstName = false; 
+	    	}
+	    	byte type = attributes.getType(attr);
+	    	String typeStr = "";
+	    	switch( type )
+	    	{
+		    	case CyAttributes.TYPE_BOOLEAN: typeStr += "Boolean"; break;
+		    	case CyAttributes.TYPE_FLOATING: typeStr += "Float"; break;
+		    	case CyAttributes.TYPE_INTEGER: typeStr += "Integer"; break;
+		    	case CyAttributes.TYPE_STRING: typeStr += "String"; break;
+		    	case CyAttributes.TYPE_COMPLEX: typeStr += "Complex"; break;
+		    	case CyAttributes.TYPE_SIMPLE_MAP: typeStr += "String"; break;
+		    	case CyAttributes.TYPE_UNDEFINED: typeStr += "Undefined"; break;
+		    	default: typeStr += "unsupported"; break;
+	    	}
+	    	
+	    	namesRow += attr;
+	    	typesRow += typeStr;	   
+	    }
+	    writer.write( namesRow + "\n" );
+	    writer.write( typesRow + "\n" );
+	}
+	
+	// CyAttribute types: simple_map and complex are NOT supported
+	public static void writeAttributes( CyAttributes nodeAttributes, File attribFile, CyLogger logger ) throws IOException 
+	{
+	    FileWriter writer = new FileWriter( attribFile );
+	    CytoscapeRootGraph rootGraph = Cytoscape.getRootGraph();
+	    writeHeader(writer, nodeAttributes);    // Two-line header.  First
+	    										// line is name, second line is type
+	    int[] nodes = rootGraph.getNodeIndicesArray();
+	    for (int i = 0; i <nodes.length; i++) 
+	    {
+	      writeRow(writer, nodes[i], nodeAttributes);
+	    }	
+	    writer.close();
+	}
+	
+	
+	
+	
+	public static void writeAttributesHack(CyAttributes attrib, File attribFile,
 			CyLogger logger) throws IOException {
 
 		// only deal with dataset node attrs

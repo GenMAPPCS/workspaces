@@ -22,6 +22,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
 
+import org.genmapp.workspaces.command.WorkspacesCommandHandler;
 import org.genmapp.workspaces.objects.CyAction;
 import org.genmapp.workspaces.objects.CyDataset;
 import org.genmapp.workspaces.ui.CyActionConfigDialog;
@@ -279,7 +280,7 @@ public class ActionPanel extends JPanel
 			System.out.println(action);
 
 			if (action.equals(OPEN_SESSION_FILE)) {
-				showMessage("Isaac: 1");
+				WorkspacesCommandHandler.showMessage( "Open session file ");
 				if (Cytoscape.getNetworkSet().size() == 0
 						&& CyDataset.datasetNameMap.size() > 0) {
 					// Show warning, in cases unique to GenMAPP-CS
@@ -292,7 +293,7 @@ public class ActionPanel extends JPanel
 						return;
 					}
 				}
-
+				CyLogger.getLogger().info( "open session file: ActionPanel");
 				// now, open the new session file
 				OpenSessionAction osa = new OpenSessionAction();
 				
@@ -303,6 +304,8 @@ public class ActionPanel extends JPanel
 				 */
 				osa.actionPerformed(new ActionEvent(osa,
 						ActionEvent.ACTION_PERFORMED, action));
+
+				WorkspacesCommandHandler.showMessage( "end open session file ");
 
 				// GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible(
 				// true );

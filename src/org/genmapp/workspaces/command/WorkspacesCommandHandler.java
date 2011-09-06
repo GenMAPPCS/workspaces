@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
@@ -174,14 +175,13 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 	}
 	public static void showMessage(String message) {
 
-		// JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
-		// JOptionPane.ERROR_MESSAGE );
+		 //JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
+			//	 JOptionPane.ERROR_MESSAGE );
 
 	}
 
 	public CyCommandResult execute(String command, Map<String, Object> args)
 			throws CyCommandException {
-		showMessage("WorkspacesCommandHandler:execute");
 		CyCommandResult result = new CyCommandResult();
 
 		for (String t : args.keySet()) {
@@ -190,7 +190,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 
 		if (UPDATE_CRITERIASETS.equals(command)) {
 			String setName;
-			Object s = getArg(command, ARG_SETNAME, args);
+			Object s = getArg(command, ARG_SETNAME, args); 
 			showMessage("args passed in: " + args);
 			showMessage("args passed in count: " + args.size());
 
@@ -321,10 +321,21 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 					CytoPanel cytoPanel = Cytoscape.getDesktop().getCytoPanel(
 							SwingConstants.EAST);
 					int index = cytoPanel.indexOfComponent(componentLabel);
+					CyLogger.getLogger("GenMAPPWorkspaces").debug( "got index of component: " + index );
 					JTabbedPane tabbedPane = (JTabbedPane) cytoPanel
 							.getComponentAt(index);
+					CyLogger.getLogger("GenMAPPWorkspaces").debug( "converted to tabbed pane: " + componentLabel );
+					CyLogger.getLogger("GenMAPPWorkspaces").debug( "looking for:" + stp );
+					for ( int i =0; i < tabbedPane.getTabCount(); i++ )
+					{
+						CyLogger.getLogger("GenMAPPWorkspaces").debug( tabbedPane.getTitleAt( i ) + "\n" );
+					}
 					int index2 = tabbedPane.indexOfTab((String) stp);
+					CyLogger.getLogger("GenMAPPWorkspaces").debug( "found subtab index:" + index2 );
+
 					subTabbedPane = (JTabbedPane) tabbedPane.getComponentAt(index2);
+					CyLogger.getLogger("GenMAPPWorkspaces").debug( "converted to tabbed pane" + subTabbedPane.getName() );
+					
 				} catch (Exception e) {
 					logger.error("failed to detect subTabbedPane", e);
 					throw new CyCommandException(ARG_RESULT_SUBTABBED_PANE

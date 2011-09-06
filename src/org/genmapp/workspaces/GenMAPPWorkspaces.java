@@ -214,10 +214,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			 * this will read the properties directly into the Cytoscape node
 			 * attributes structure, (hopefully) overwriting any duplicates
 			 */
-			logger.info("Loading node attributes for CyDataset nodes");
+			logger.info("Loading node attributes for CyDataset nodes...getting ready");
 			DatasetAttributesReader.loadAttributes(Cytoscape
 					.getNodeAttributes(), new FileReader(nodeAttributeFile),
 					logger);
+			logger.info("Loading node attributes for CyDataset nodes done");
 
 			/*
 			 * Display a mini table of node attributes, if in debug mode
