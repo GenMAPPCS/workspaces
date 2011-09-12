@@ -68,8 +68,24 @@ public class DatasetAttributesWriter {
 	    String nodeName = ((CyNode) Cytoscape.getRootGraph().getNode(nodeIndex)).getIdentifier();
 	    String [] attrNames = attributes.getAttributeNames();
 	    boolean isFirst = true;
+	    int keyCol = -1;
+	    for( int i =0; i < attrNames.length; i++ )
+	    {
+	    	if ( attrNames[ i ].equals( "canonicalName" ) )
+	    	{
+	    		keyCol = i;
+	    	}
+	    }
+	    if ( keyCol == -1 ) { CyLogger.getLogger().error( "'canonicalName' column not found in attributes table" ); }
+	    // swap columns so that canonicalName is first
+	    String temp = attrNames[ 0 ]; attrNames[ 0 ] = attrNames[ keyCol ]; attrNames[ keyCol ] = temp;
+	    
 	    for (String attr: attrNames) 
 	    {
+	    	// make sure canonicalName (ID) is first column written
+	    	if ( isFirst ) { attr = "canonicalName"; }  
+	    	else if ( !isFirst && attr.equals( "canonicalName" ) ) { continue; }
+	    	
 	    	String attrValue = getEncodedAttribute(attr, nodeName, attributes);
 	    	if ( !isFirst ) { writer.write(","); }
 	    	writer.write( attrValue);
@@ -88,6 +104,19 @@ public class DatasetAttributesWriter {
 		
 		String [] attrNames = attributes.getAttributeNames();
 		boolean bIsFirstName = true;
+	    int keyCol = -1;
+	    for( int i =0; i < attrNames.length; i++ )
+	    {
+	    	if ( attrNames[ i ].equals( "canonicalName" ) )
+	    	{
+	    		keyCol = i;
+	    	}
+	    }
+	    if ( keyCol == -1 ) { CyLogger.getLogger().error( "'canonicalName' column not found in attributes table" ); }
+	    // swap columns so that canonicalName is first
+	    String temp = attrNames[ 0 ]; attrNames[ 0 ] = attrNames[ keyCol ]; attrNames[ keyCol ] = temp;
+
+		
 		// first line: names
 	    for (String attr: attrNames) 
 	    {

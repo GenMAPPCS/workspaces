@@ -136,7 +136,6 @@ public class DatasetAttributesReader
 		byte type = -1;
 		boolean bIsListType = false;   
 		{
-			// got rid of some heavy code here, was it meant to be for lists/maps?  
 			final String className = col.get( lineNum++ );
 		
 			if (className.equalsIgnoreCase("java.lang.String")
