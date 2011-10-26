@@ -200,7 +200,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				throw new CyCommandException(ARG_SETNAME
 						+ ": unknown type (try String!)");
 			}
-			String msg = updateCriteriaset(setName);
+			String msg = updateCriteriaset(setName, logger);
 			result.addMessage(msg);
 
 		} else if (UPDATE_DATASETS.equals(command)) {
@@ -421,7 +421,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		} else {
 
 			result.addError("Command not supported: " + command);
-		}
+		}	
 		return (result);
 	}
 	/**
@@ -545,13 +545,13 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 		}
 	}
 
-	public static String updateCriteriaset(String setName) {
+	public static String updateCriteriaset(String setName, CyLogger logger) {
 
 		/*
 		 * Three possibilities: (1) saving new set (2) saving or loading
 		 * existing set (3) deleting existing set
 		 */
-		showMessage("Update CriteriaSets: " + setName);
+		logger.debug("Update CriteriaSets: " + setName);
 
 		String setParameters = CytoscapeInit.getProperties().getProperty(
 				PROPERTY_SET_PREFIX + setName);
@@ -559,7 +559,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 				.containsKey(setName);
 		if (!isExistingSet && setParameters != null) {
 			// (1) saving new set or restoring session with saved sets
-			showMessage("Update CriteriaSets: save new set " + setName);
+			logger.debug("Update CriteriaSets: save new set " + setName);
 
 			CyCriteriaset cset = new CyCriteriaset(setName, setParameters);
 			CyCriteriaset.setNetworkCriteriaset(Cytoscape.getCurrentNetwork(),
@@ -567,7 +567,7 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			return "Criteria " + setName + " added.";
 
 		} else if (isExistingSet && setParameters != null) {
-			showMessage("Update CriteriaSets: save/load existing set "
+			logger.debug("Update CriteriaSets: save/load existing set "
 					+ setName);
 
 			// (2) saving or loading an existing set
@@ -579,13 +579,14 @@ public class WorkspacesCommandHandler extends AbstractCommandHandler {
 			return "Criteria " + setName + " updated.";
 
 		} else if (isExistingSet && null == setParameters) {
-			showMessage("Update CriteriaSets: delete existing set " + setName);
+			logger.debug("Update CriteriaSets: delete existing set " + setName);
 
 			// (3) deleting an existing set
 			CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(setName);
 			cset.deleteCriteriaset();
 			return "Criteria " + setName + " removed.";
 		} else {
+			logger.warn("CyCommand: Update Criterisets was not properly handled");
 			return null;
 		}
 	}
