@@ -13,7 +13,11 @@
 	<!--  The directory containing library jar files -->
 
 	<property name="cytoroot.dir" value=".." />
-	<property name="release.dir" value="/Applications/Cytoscape_v2.8.2/" />
+	
+	
+	<!--<property name="release.dir" value="/Applications/Cytoscape_v2.8.2/" />-->
+	
+	<property name="release.dir" value="/Applications/genmapp/" />
 	<property name="pluginlib.dir" value="lib"/>
 
 	<!-- Temporary build directories -->
@@ -72,7 +76,8 @@
 			<fileset dir="${build.classes}" />
 		</jar>
 
-		
+		<echo message="Note that Alex Williams CHANGED the auto-build directory to point to GenMAPP and not to Cytoscape!!! Change this back if it (somehow) erroneously gets added to the repository." />
+
 		<echo message="${plugin.name}.jar is now complete.  It is located in build/ directory" />
 
 		<copy file="${build.dir}/${plugin.name}.jar" todir="${release.dir}/plugins" />
