@@ -109,12 +109,20 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * @see cytoscape.plugin.CytoscapePlugin#restoreSessionState(java.util.List)
 	 */
 	public void restoreSessionState(List<File> fileList) {
+		
+		logger.error("ALEX WILLIAMS: RETURNING EARLY FROM RESTORE SESSION STATE. NOT ACTUALLY RESTORING SESSION IN WORKSPACE PLUGIN");
+		
+		int TESTAGW = 1;
+		if (TESTAGW == 1) {
+			return;
+		}
+		
+		
 		logger.debug("loadSessionState");
 		try {
 			File nodeAttributeFile = null; // <-- There's only exactly ONE of these files
 			File propFile = null; // <-- There's only exactly ONE of these files
 			List<File> gpmlFileList = new ArrayList<File>(); // <-- Can be MANY of these files!
-
 			for (final File f : fileList) {
 				// Go through the files to restore, and figure out which files are which.
 				if (f.getName().contains(propFileName)) {
@@ -137,8 +145,13 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			if (propFile == null) {
 				logger.error("ERROR 'PROP FILE 28': We were not able to find a properties file! We were hoping to find one with the name <" + propFileName + ">.");
 			}
-			final GpmlPlugin gp = GpmlPlugin.getInstance();
 
+			// Ok, now we've figured out which files are:
+			// * node attribute files (in noteAttributeFile -- only one of these at most!)
+			// * properties files (in propFile -- only one of these at most!)
+			// * GPML files (in gpmlFileList)
+
+			final GpmlPlugin gp = GpmlPlugin.getInstance();
 			// Load GPML files
 			if (null == gp) {
 				logger.warn("WARNING OF TYPE 'GPML PLUGIN MISSING': The GPML plugin was not detected. As a result, the GPML networks were SKIPPED, and not successfully restored from the save file.");
@@ -178,6 +191,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				}
 			}
 
+			// Ok, guess we're done with the GPLM plugins!
+			
+			
+			
 			/*
 			 * // first process the node attribute file so as to populate missing
 			 * // RootGraph nodes properties file for GenMAPPWorkspaces
@@ -376,12 +393,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		final File nodeAttributeFile = new File(tmpDir, nodeAttributeFileName);
 
 		// Now actually write all the files! These functions are located directly above.
-		
-		
+
 		logger.error("Danger: removed file saving here. Uncomment these lines soon!");
-		//writePropFile(props, propFile, fileList);
-		//writeNodeAttrFile(nodeAttributeFile, fileList);
-		//writeGPMLFiles(tmpDir, fileList);
+		// writePropFile(props, propFile, fileList);
+		// writeNodeAttrFile(nodeAttributeFile, fileList);
+		// writeGPMLFiles(tmpDir, fileList);
 		// Done writing all the files.
 
 		logger.debug("saveSessionStateFiles: [DONE]");
