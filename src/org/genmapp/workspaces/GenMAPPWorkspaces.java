@@ -15,6 +15,7 @@
  ******************************************************************************/
 package org.genmapp.workspaces;
 
+import java.util.HashSet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -67,8 +68,14 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	private static final String ATTR_LIST = ".attrList";
 
 	public GenMAPPWorkspaces() {
+
+		CyLogger.getLogger(GenMAPPWorkspaces.class).error("ALEX WILLIAMS: TESTING GENMAPP LOAD/SAVE");
+
 		logger = CyLogger.getLogger(GenMAPPWorkspaces.class);
 		logger.setDebug(true);
+
+		logger.error("ALEX WILLIAMS: test part 2");
+
 		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(SwingConstants.WEST); // Create workspaces panel
 		wsPanel = new WorkspacesPanel(logger);
 		cytoPanel1.add("GenMAPP-CS", new ImageIcon(getClass().getResource("images/genmappcs.png")), wsPanel, "Workspaces Panel", 0);
@@ -109,15 +116,14 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * @see cytoscape.plugin.CytoscapePlugin#restoreSessionState(java.util.List)
 	 */
 	public void restoreSessionState(List<File> fileList) {
-		
+
 		logger.error("ALEX WILLIAMS: RETURNING EARLY FROM RESTORE SESSION STATE. NOT ACTUALLY RESTORING SESSION IN WORKSPACE PLUGIN");
-		
+
 		int TESTAGW = 1;
 		if (TESTAGW == 1) {
 			return;
 		}
-		
-		
+
 		logger.debug("loadSessionState");
 		try {
 			File nodeAttributeFile = null; // <-- There's only exactly ONE of these files
@@ -191,16 +197,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				}
 			}
 
-			// Ok, guess we're done with the GPLM plugins!
-			
-			
-			
-			/*
-			 * // first process the node attribute file so as to populate missing
-			 * // RootGraph nodes properties file for GenMAPPWorkspaces
-			 * //
-			 * // this will read the properties directly into the Cytoscape nodeAttributes structure, (hopefully) overwriting any duplicates
-			 */
+			// Ok, guess we're done with the GPML plugins!
+			// first process the node attribute file so as to populate missing
+			// RootGraph nodes properties file for GenMAPPWorkspaces
+			// this will read the properties directly into the Cytoscape nodeAttributes structure, (hopefully) overwriting any duplicates
+
 			logger.error("restoreSessionState: [Starting] loading node attributes for CyDataset nodes...");
 			logger.error("Alex Williams: problem tracked down to this location!");
 			// There is a problem here!
@@ -402,4 +403,36 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		logger.debug("saveSessionStateFiles: [DONE]");
 	}
+
+	private HashSet<CyNode> setOfAllNodes() {
+		// Added in Oct 2012 by Alex Williams
+		// Returns a new HashSet of all nodes that Cytoscape knows about, even if they aren't in a network!
+		@SuppressWarnings("unchecked")
+		// Note about "@SuppressWarnings": getCyNodesList returns a "List" and not a "List<CyNode>", so we suppress the unchecked conversion. This would break if (hypothetically) Cytoscape code changed so that non-CyNode items were returned in the list.
+		final List<CyNode> nodeList = (List<CyNode>) Cytoscape.getCyNodesList();
+		return (new HashSet<CyNode>(nodeList));
+	}
+
+	private HashSet<CyNode> setOfNodesThatAreInAtLeastOneNetwork() {
+		// Added in Oct 2012 by Alex Williams
+		// Returns a new HashSet of all nodes that are in AT LEAST ONE NETWORK.
+		final HashSet<CyNetwork> allNetworks = (HashSet<CyNetwork>) Cytoscape.getNetworkSet();
+		HashSet<CyNode> nodesInAnyNetwork = new HashSet<CyNode>();
+		for (final CyNetwork net : allNetworks) { // Go through each network
+			final List<CyNode> nodes = (List<CyNode>) net.nodesList();
+			nodesInAnyNetwork.addAll(nodes); // <-- Keep track of the nodes that we find in a network
+		}
+		return (nodesInAnyNetwork); // All the nodes that were in at least ONE network.
+	}
+
+	private HashSet<CyNode> setOfOrphanNodesNotInAnyNetwork() {
+		// Added in Oct 2012 by Alex Williams
+		// Returns a set of all the nodes that are NOT in any network.
+		// Why this is useful: We want this set because, as it turns out, Cytoscape itself only saves nodes that are IN A NETWORK.
+		// So the "orphan" nodes that GenMAPP loads, but aren't in a network, get ignored, UNLESS we save them specifically.
+		HashSet<CyNode> orphanNodes = setOfAllNodes(); // Start with ALL nodes
+		orphanNodes.removeAll(setOfNodesThatAreInAtLeastOneNetwork()); // Remove all those nodes that ARE in a network, leaving only the "orphan" nodes without a network behind.
+		return (orphanNodes); // "orphan" nodes don't have a network
+	}
+
 }

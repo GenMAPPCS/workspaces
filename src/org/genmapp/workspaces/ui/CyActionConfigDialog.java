@@ -188,50 +188,40 @@ public class CyActionConfigDialog extends JDialog {
 		gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
 		getContentPane().add(OKPanel, gridBagConstraints);
 
-		selectActionsPanel.setBorder(BorderFactory
-				.createTitledBorder("Select actions"));
+		selectActionsPanel.setBorder(BorderFactory.createTitledBorder("Select actions"));
 		selectActionsPanel.setMinimumSize(new java.awt.Dimension(700, 350));
 		selectActionsPanel.setPreferredSize(new java.awt.Dimension(700, 350));
 		selectActionsPanel.setLayout(new java.awt.GridBagLayout());
 
-		availableActionsScrollPane.setPreferredSize(new java.awt.Dimension(300,
-				150));
+		availableActionsScrollPane.setPreferredSize(new java.awt.Dimension(300, 150));
 
-		availableActionsList.setBorder(BorderFactory
-				.createTitledBorder("Availabe actions"));
+		availableActionsList.setBorder(BorderFactory.createTitledBorder("Availabe actions"));
 
 		availableActionsList.setCellRenderer(new ListCellRenderer() {
 			private DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-			public Component getListCellRendererComponent(JList list,
-					Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
-				JLabel renderer = (JLabel) defaultRenderer
-						.getListCellRendererComponent(list, value, index,
-								isSelected, cellHasFocus);
+
+			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+				JLabel renderer = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				renderer.setText(((CyAction) value).toString());
 				return renderer;
 			}
 		});
 
-		availableActionsList
-				.addListSelectionListener(new ListSelectionListener() {
-					public void valueChanged(ListSelectionEvent evt) {
-						int index = availableActionsList.getMinSelectionIndex();
-						if (index > -1) {
-							selectedActionsList.getSelectionModel()
-									.clearSelection();
-							rightButton.setEnabled(true);
-							CyAction action = availableActionsData
-									.getElementAt(index);
-							description.setText(DESC + action.getDescription());
-							requirements.setText(REQS
-									+ action.getRequirements());
-						} else {
-							rightButton.setEnabled(false);
-						}
+		availableActionsList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent evt) {
+				int index = availableActionsList.getMinSelectionIndex();
+				if (index > -1) {
+					selectedActionsList.getSelectionModel().clearSelection();
+					rightButton.setEnabled(true);
+					CyAction action = availableActionsData.getElementAt(index);
+					description.setText(DESC + action.getDescription());
+					requirements.setText(REQS + action.getRequirements());
+				} else {
+					rightButton.setEnabled(false);
+				}
 
-					}
-				});
+			}
+		});
 		availableActionsScrollPane.setViewportView(availableActionsList);
 
 		gridBagConstraints = new java.awt.GridBagConstraints();
@@ -260,8 +250,7 @@ public class CyActionConfigDialog extends JDialog {
 
 		leftRightPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
 
-		rightButton.setIcon(new ImageIcon(getClass().getResource(
-				"../images/right.png")));
+		rightButton.setIcon(new ImageIcon(getClass().getResource("../images/right.png")));
 		rightButton.setEnabled(false);
 		rightButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -272,8 +261,7 @@ public class CyActionConfigDialog extends JDialog {
 					return;
 
 				for (int i = indices.length - 1; i >= 0; i--) {
-					CyAction selected = availableActionsData
-							.getElementAt(indices[i]);
+					CyAction selected = availableActionsData.getElementAt(indices[i]);
 					selectedActionsData.add(selected);
 				}
 
@@ -296,8 +284,7 @@ public class CyActionConfigDialog extends JDialog {
 		});
 		leftRightPanel.add(rightButton);
 
-		leftButton.setIcon(new ImageIcon(getClass().getResource(
-				"../images/left.png")));
+		leftButton.setIcon(new ImageIcon(getClass().getResource("../images/left.png")));
 		leftButton.setEnabled(false);
 		leftButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -308,8 +295,7 @@ public class CyActionConfigDialog extends JDialog {
 					return;
 
 				for (int i = indices.length - 1; i >= 0; i--) {
-					CyAction removed = selectedActionsData
-							.removeElement(indices[i]);
+					CyAction removed = selectedActionsData.removeElement(indices[i]);
 					availableActionsData.add(removed);
 				}
 
@@ -341,8 +327,7 @@ public class CyActionConfigDialog extends JDialog {
 		// Up-Down Panel
 		upDownPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
 
-		upButton.setIcon(new ImageIcon(getClass().getResource(
-				"../images/up.png")));
+		upButton.setIcon(new ImageIcon(getClass().getResource("../images/up.png")));
 		upButton.setEnabled(false);
 		upButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -357,8 +342,7 @@ public class CyActionConfigDialog extends JDialog {
 		});
 		upDownPanel.add(upButton);
 
-		downButton.setIcon(new ImageIcon(getClass().getResource(
-				"../images/down.png")));
+		downButton.setIcon(new ImageIcon(getClass().getResource("../images/down.png")));
 		downButton.setEnabled(false);
 		downButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -379,63 +363,52 @@ public class CyActionConfigDialog extends JDialog {
 		gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
 		selectActionsPanel.add(upDownPanel, gridBagConstraints);
 
-		selectedActionsScrollPane.setPreferredSize(new java.awt.Dimension(300,
-				150));
+		selectedActionsScrollPane.setPreferredSize(new java.awt.Dimension(300, 150));
 
-		selectedActionsList
-				.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-		selectedActionsList.setBorder(BorderFactory
-				.createTitledBorder("Selected actions"));
+		selectedActionsList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+		selectedActionsList.setBorder(BorderFactory.createTitledBorder("Selected actions"));
 
 		selectedActionsList.setCellRenderer(new ListCellRenderer() {
 			private DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-			public Component getListCellRendererComponent(JList list,
-					Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
-				JLabel renderer = (JLabel) defaultRenderer
-						.getListCellRendererComponent(list, value, index,
-								isSelected, cellHasFocus);
+
+			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+				JLabel renderer = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				renderer.setText(((CyAction) value).toString());
 				return renderer;
 			}
 		});
-		selectedActionsList
-				.addListSelectionListener(new ListSelectionListener() {
-					public void valueChanged(ListSelectionEvent evt) {
-						int index = selectedActionsList.getMinSelectionIndex();
-						if (index > -1) {
-							availableActionsList.getSelectionModel()
-									.clearSelection();
-							leftButton.setEnabled(true);
-							CyAction action = selectedActionsData
-									.getElementAt(index);
-							description.setText(DESC + action.getDescription());
-							requirements.setText(REQS
-									+ action.getRequirements());
+		selectedActionsList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent evt) {
+				int index = selectedActionsList.getMinSelectionIndex();
+				if (index > -1) {
+					availableActionsList.getSelectionModel().clearSelection();
+					leftButton.setEnabled(true);
+					CyAction action = selectedActionsData.getElementAt(index);
+					description.setText(DESC + action.getDescription());
+					requirements.setText(REQS + action.getRequirements());
+				} else {
+					leftButton.setEnabled(false);
+				}
+				int[] indices = selectedActionsList.getSelectedIndices();
+				if (indices != null) {
+					if (indices.length == 1) {
+						if (indices[0] != 0) {
+							upButton.setEnabled(true);
 						} else {
-							leftButton.setEnabled(false);
+							upButton.setEnabled(false);
 						}
-						int[] indices = selectedActionsList
-								.getSelectedIndices();
-						if (indices != null) {
-							if (indices.length == 1) {
-								if (indices[0] != 0) {
-									upButton.setEnabled(true);
-								} else {
-									upButton.setEnabled(false);
-								}
-								if (indices[0] != selectedActionsData.getSize() - 1) {
-									downButton.setEnabled(true);
-								} else {
-									downButton.setEnabled(false);
-								}
-							} else {
-								upButton.setEnabled(false);
-								downButton.setEnabled(false);
-							}
+						if (indices[0] != selectedActionsData.getSize() - 1) {
+							downButton.setEnabled(true);
+						} else {
+							downButton.setEnabled(false);
 						}
+					} else {
+						upButton.setEnabled(false);
+						downButton.setEnabled(false);
 					}
-				});
+				}
+			}
+		});
 		selectedActionsScrollPane.setViewportView(selectedActionsList);
 
 		gridBagConstraints = new java.awt.GridBagConstraints();

@@ -69,9 +69,7 @@ import cytoscape.view.cytopanels.BiModalJSplitPane;
  */
 public class DatasetPanel extends JPanel implements
 // PropertyChangeListener,
-			TreeSelectionListener,
-			SelectEventListener,
-			ChangeListener {
+		TreeSelectionListener, SelectEventListener, ChangeListener {
 
 	private static final long serialVersionUID = -5545819433715802144L;
 
@@ -146,8 +144,7 @@ public class DatasetPanel extends JPanel implements
 		treeTable.getTree().setRootVisible(false);
 		ToolTipManager.sharedInstance().registerComponent(treeTable);
 		TreeCellRenderer treeCellRenderer = new TreeCellRenderer();
-		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource(
-				"images/dataset.png"));
+		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource("images/dataset.png"));
 		if (leafIcon != null) {
 			treeCellRenderer.setLeafIcon(leafIcon);
 		}
@@ -183,10 +180,8 @@ public class DatasetPanel extends JPanel implements
 	}
 
 	public void resetTable() {
-		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName())
-				.setPreferredWidth(220);
-		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName())
-				.setPreferredWidth(40);
+		treeTable.getColumn(GenericColumnTypes.DATASET.getDisplayName()).setPreferredWidth(220);
+		treeTable.getColumn(GenericColumnTypes.ROWS.getDisplayName()).setPreferredWidth(40);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);
 
 	}
@@ -250,13 +245,10 @@ public class DatasetPanel extends JPanel implements
 		// activate panel
 		this.setVisible(true);
 		// activate dataset-dependent actions
-		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET)
-				.setDoable(true);
+		CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET).setDoable(true);
 		// prompt next action
-		if (CyCriteriaset.criteriaNameMap.isEmpty()
-				&& !ActionPanel.workflowState)
-			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap
-					.get(ActionPanel.NEW_CRITERIA_SET));
+		if (CyCriteriaset.criteriaNameMap.isEmpty() && !ActionPanel.workflowState)
+			ActionPanel.actionCombobox.setSelectedItem(CyAction.actionNameMap.get(ActionPanel.NEW_CRITERIA_SET));
 
 		// first see if it exists
 		if (getDatasetTreeNode(dname) == null) {
@@ -269,8 +261,7 @@ public class DatasetPanel extends JPanel implements
 			}
 
 			// apparently this doesn't fire valueChanged
-			treeTable.getTree()
-					.collapsePath(new TreePath(new TreeNode[]{root}));
+			treeTable.getTree().collapsePath(new TreePath(new TreeNode[] { root }));
 
 			treeTable.getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
@@ -294,10 +285,8 @@ public class DatasetPanel extends JPanel implements
 
 		if (node != null) {
 			// fires valueChanged if the network isn't already selected
-			treeTable.getTree().getSelectionModel().setSelectionPath(
-					new TreePath(node.getPath()));
-			treeTable.getTree().scrollPathToVisible(
-					new TreePath(node.getPath()));
+			treeTable.getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+			treeTable.getTree().scrollPathToVisible(new TreePath(node.getPath()));
 		}
 	}
 
@@ -305,8 +294,7 @@ public class DatasetPanel extends JPanel implements
 	 * @return dataset name
 	 */
 	public static String getSelectedDataset() {
-		GenericTreeNode dnode = (GenericTreeNode) treeTable
-				.getTree().getLastSelectedPathComponent();
+		GenericTreeNode dnode = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 		if (null == dnode)
 			return null;
 		else
@@ -324,8 +312,7 @@ public class DatasetPanel extends JPanel implements
 		Enumeration tree_node_enum = root.breadthFirstEnumeration();
 
 		while (tree_node_enum.hasMoreElements()) {
-			GenericTreeNode node = (GenericTreeNode) tree_node_enum
-					.nextElement();
+			GenericTreeNode node = (GenericTreeNode) tree_node_enum.nextElement();
 
 			if (((String) node.getID()).equals(dname)) {
 				return node;
@@ -346,8 +333,7 @@ public class DatasetPanel extends JPanel implements
 		// called 3 times!
 
 		// sets the "current" dataset based on last node in the tree selected
-		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
-				.getLastSelectedPathComponent();
+		GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 		if (node == null || node.getUserObject() == null)
 			return;
 
@@ -414,8 +400,7 @@ public class DatasetPanel extends JPanel implements
 				// if (dselected.length > nselected.length) {
 
 				if (selected >= 0) {
-					GenericTreeNode node = (GenericTreeNode) treeTable
-							.getTree().getLastSelectedPathComponent();
+					GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 					if (node == null || node.getUserObject() == null)
 						return;
 					CyDataset ds = CyDataset.datasetNameMap.get(node.getID());
@@ -483,8 +468,7 @@ public class DatasetPanel extends JPanel implements
 		public void actionPerformed(ActionEvent ae) {
 			final String label = ((JMenuItem) ae.getSource()).getText();
 
-			GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
-					.getLastSelectedPathComponent();
+			GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 
 			if (node == null || node.getUserObject() == null)
 				return;
@@ -502,66 +486,47 @@ public class DatasetPanel extends JPanel implements
 					nodes[i] = (int) nodesL.get(i);
 				}
 				boolean goForIt = false;
-				if (nodes.length > Integer.parseInt(CytoscapeInit
-						.getProperties().getProperty("secondaryViewThreshold"))) {
-					int n = JOptionPane.showConfirmDialog(Cytoscape
-							.getDesktop(),
-							"You are about to create a network of "
-									+ nodes.length + " nodes.", "Warning",
-							JOptionPane.OK_CANCEL_OPTION);
+				if (nodes.length > Integer.parseInt(CytoscapeInit.getProperties().getProperty("secondaryViewThreshold"))) {
+					int n = JOptionPane.showConfirmDialog(Cytoscape.getDesktop(), "You are about to create a network of " + nodes.length + " nodes.", "Warning", JOptionPane.OK_CANCEL_OPTION);
 					if (n == JOptionPane.OK_OPTION)
 						goForIt = true;
 				} else {
 					goForIt = true;
 				}
 				if (goForIt) {
-					JProgressBar progress = GenMAPPWorkspaces.wsPanel
-							.getProgressBar();
+					JProgressBar progress = GenMAPPWorkspaces.wsPanel.getProgressBar();
 					progress.setVisible(true);
 					progress.setValue(0);
 					progress.setStringPainted(true);
 
 					progress.setString("Creating network from dataset");
 					progress.setValue(10);
-					CyNetwork newNetwork = Cytoscape.createNetwork(nodes,
-							edges, ds.getName());
+					CyNetwork newNetwork = Cytoscape.createNetwork(nodes, edges, ds.getName());
 					progress.setValue(90);
 					// set Network attributes to notify NetworkMapping that job
 					// is already done
-					Cytoscape.getNetworkAttributes().setAttribute(
-							newNetwork.getIdentifier(), NetworkMapping.CODE,
-							ds.getKeyType());
+					Cytoscape.getNetworkAttributes().setAttribute(newNetwork.getIdentifier(), NetworkMapping.CODE, ds.getKeyType());
 
 					// and tag new network
 					String netid = newNetwork.getIdentifier();
 					List<String> sourcelist = new ArrayList<String>();
-					if (Cytoscape.getNetworkAttributes().hasAttribute(netid,
-							DatasetMapping.NET_ATTR_DATASETS)) {
-						sourcelist = (List<String>) Cytoscape
-								.getNetworkAttributes().getListAttribute(netid,
-										DatasetMapping.NET_ATTR_DATASETS);
+					if (Cytoscape.getNetworkAttributes().hasAttribute(netid, DatasetMapping.NET_ATTR_DATASETS)) {
+						sourcelist = (List<String>) Cytoscape.getNetworkAttributes().getListAttribute(netid, DatasetMapping.NET_ATTR_DATASETS);
 						if (!sourcelist.contains(dsname)) {
 							sourcelist.add(dsname);
-							Cytoscape.getNetworkAttributes().setListAttribute(
-									netid, DatasetMapping.NET_ATTR_DATASETS,
-									sourcelist);
+							Cytoscape.getNetworkAttributes().setListAttribute(netid, DatasetMapping.NET_ATTR_DATASETS, sourcelist);
 						}
 					} else {
 						sourcelist.add(dsname);
-						Cytoscape.getNetworkAttributes().setListAttribute(
-								netid, DatasetMapping.NET_ATTR_DATASETS,
-								sourcelist);
+						Cytoscape.getNetworkAttributes().setListAttribute(netid, DatasetMapping.NET_ATTR_DATASETS, sourcelist);
 					}
-					Cytoscape.getNetworkAttributes().setListAttribute(netid,
-							DatasetMapping.NET_ATTR_DATASET_PREFIX + dsname,
-							ds.getAttrs());
+					Cytoscape.getNetworkAttributes().setListAttribute(netid, DatasetMapping.NET_ATTR_DATASET_PREFIX + dsname, ds.getAttrs());
 
 					// fire NETWORK_LOADED
 					Object[] new_value = new Object[2];
 					new_value[0] = newNetwork;
 					new_value[1] = newNetwork.getIdentifier();
-					Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED,
-							null, new_value);
+					Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null, new_value);
 
 					// force update of highlight
 					DatasetPanel.getTreeTable().getTree().updateUI();
@@ -570,22 +535,18 @@ public class DatasetPanel extends JPanel implements
 				}
 
 			} else if (REMAP_DATA.equals(label)) {
-				JProgressBar progress = GenMAPPWorkspaces.wsPanel
-						.getProgressBar();
+				JProgressBar progress = GenMAPPWorkspaces.wsPanel.getProgressBar();
 				progress.setVisible(true);
 				progress.setValue(0);
 				progress.setStringPainted(true);
 
 				// set "force" = true to support re-annotation of ds nodes
-				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape
-						.getNetworkSet());
+				List<CyNetwork> netlist = new ArrayList<CyNetwork>(Cytoscape.getNetworkSet());
 				for (CyNetwork network : netlist) {
 
-					NetworkMapping.performNetworkAnnotation(network, true,
-							logger, progress);
+					NetworkMapping.performNetworkAnnotation(network, true, logger, progress);
 				}
-				DatasetMapping.performDatasetMapping(ds, netlist, true, logger,
-						progress);
+				DatasetMapping.performDatasetMapping(ds, netlist, true, logger, progress);
 
 				progress.setVisible(false);
 				// force update of highlight
@@ -605,11 +566,8 @@ public class DatasetPanel extends JPanel implements
 
 		private static final long serialVersionUID = -678559990857492912L;
 
-		public Component getTreeCellRendererComponent(JTree tree, Object value,
-				boolean sel, boolean expanded, boolean leaf, int row,
-				boolean hasFocus) {
-			super.getTreeCellRendererComponent(tree, value, sel, expanded,
-					leaf, row, hasFocus);
+		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+			super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
 			GenericTreeNode node = (GenericTreeNode) value;
 
@@ -619,10 +577,7 @@ public class DatasetPanel extends JPanel implements
 				CyDataset cd = CyDataset.datasetNameMap.get(nodeid);
 				setToolTipText(cd.getKeyType() + " = " + cd.getAttrString());
 
-				List<String> datasetList = Cytoscape.getNetworkAttributes()
-						.getListAttribute(
-								Cytoscape.getCurrentNetwork().getIdentifier(),
-								DatasetMapping.NET_ATTR_DATASETS);
+				List<String> datasetList = Cytoscape.getNetworkAttributes().getListAttribute(Cytoscape.getCurrentNetwork().getIdentifier(), DatasetMapping.NET_ATTR_DATASETS);
 
 				boolean green = false;
 				if (datasetList != null) {
@@ -636,12 +591,10 @@ public class DatasetPanel extends JPanel implements
 					green = true;
 
 				if (green) {
-					setBackgroundNonSelectionColor(java.awt.Color.green
-							.brighter());
+					setBackgroundNonSelectionColor(java.awt.Color.green.brighter());
 					setBackgroundSelectionColor(java.awt.Color.green.darker());
 				} else {
-					setBackgroundNonSelectionColor(java.awt.Color.red
-							.brighter());
+					setBackgroundNonSelectionColor(java.awt.Color.red.brighter());
 					setBackgroundSelectionColor(java.awt.Color.red.darker());
 				}
 			}

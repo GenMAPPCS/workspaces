@@ -42,10 +42,7 @@ import cytoscape.logger.CyLogger;
 import cytoscape.task.util.TaskManager;
 import cytoscape.view.CyNetworkView;
 
-public class ActionPanel extends JPanel
-		implements
-			ActionListener,
-			MouseListener {
+public class ActionPanel extends JPanel implements ActionListener, MouseListener {
 
 	private static final long serialVersionUID = 7783752875541061715L;
 
@@ -71,7 +68,7 @@ public class ActionPanel extends JPanel
 
 	public static CyAction[] currentActionsList;
 	public static CyAction[] availableActionsList;
-	
+
 	private CyLogger logger;
 
 	/**
@@ -90,10 +87,8 @@ public class ActionPanel extends JPanel
 		actionCombobox.setToolTipText("Select an action to perform");
 		actionCombobox.addActionListener(this);
 
-		goButton = new JButton(new ImageIcon(getClass().getResource(
-				"../images/go-green.png")));
-		configButton = new JButton(new ImageIcon(getClass().getResource(
-				"../images/configure.png")));
+		goButton = new JButton(new ImageIcon(getClass().getResource("../images/go-green.png")));
+		configButton = new JButton(new ImageIcon(getClass().getResource("../images/configure.png")));
 		configButton.setToolTipText("Manually configure action list");
 
 		goButton.addMouseListener(this);
@@ -109,18 +104,12 @@ public class ActionPanel extends JPanel
 
 		// Layout
 		SpringLayout layout = new SpringLayout();
-		layout.putConstraint(SpringLayout.WEST, actionCombobox, 5,
-				SpringLayout.WEST, this);
-		layout.putConstraint(SpringLayout.NORTH, actionCombobox, 2,
-				SpringLayout.NORTH, this);
-		layout.putConstraint(SpringLayout.WEST, goButton, 1, SpringLayout.EAST,
-				actionCombobox);
-		layout.putConstraint(SpringLayout.NORTH, goButton, 0,
-				SpringLayout.NORTH, this);
-		layout.putConstraint(SpringLayout.WEST, configButton, 1,
-				SpringLayout.EAST, goButton);
-		layout.putConstraint(SpringLayout.NORTH, configButton, 0,
-				SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.WEST, actionCombobox, 5, SpringLayout.WEST, this);
+		layout.putConstraint(SpringLayout.NORTH, actionCombobox, 2, SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.WEST, goButton, 1, SpringLayout.EAST, actionCombobox);
+		layout.putConstraint(SpringLayout.NORTH, goButton, 0, SpringLayout.NORTH, this);
+		layout.putConstraint(SpringLayout.WEST, configButton, 1, SpringLayout.EAST, goButton);
+		layout.putConstraint(SpringLayout.NORTH, configButton, 0, SpringLayout.NORTH, this);
 
 		this.setLayout(layout);
 
@@ -129,8 +118,7 @@ public class ActionPanel extends JPanel
 		this.setMaximumSize(new Dimension(400, 200));
 
 		Border etchedBdr = BorderFactory.createEtchedBorder();
-		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr,
-				"Actions");
+		Border titledBdr = BorderFactory.createTitledBorder(etchedBdr, "Actions");
 		this.setBorder(titledBdr);
 
 		// set max width = to max width of SpeciesPanel
@@ -146,66 +134,52 @@ public class ActionPanel extends JPanel
 		CyAction openSessionFile = new CyAction(OPEN_SESSION_FILE);
 		openSessionFile.setDoable(true);
 		openSessionFile.setDescription("Select a CYS session file");
-		openSessionFile
-				.setRequirements("Your must have a CYS cytoscape session file");
+		openSessionFile.setRequirements("Your must have a CYS cytoscape session file");
 
 		CyAction openNetworkFile = new CyAction(OPEN_NETWORK_FILE);
 		openNetworkFile.setDoable(true);
-		openNetworkFile
-				.setDescription("Select an xGMML, GPML, BioPAX, SIF or other supported network file format");
-		openNetworkFile
-				.setRequirements("Your must have an xGMML, GPML, BioPAX, SIF or other supported network file format");
+		openNetworkFile.setDescription("Select an xGMML, GPML, BioPAX, SIF or other supported network file format");
+		openNetworkFile.setRequirements("Your must have an xGMML, GPML, BioPAX, SIF or other supported network file format");
 
 		CyAction loadNetworkWeb = new CyAction(LOAD_NETWORK_WEB);
 		loadNetworkWeb.setDoable(true);
-		loadNetworkWeb
-				.setDescription("Search and browse content from WikiPathways, Pathway Commons and other web services");
+		loadNetworkWeb.setDescription("Search and browse content from WikiPathways, Pathway Commons and other web services");
 		loadNetworkWeb.setRequirements("You must be connected to the internet");
 
 		CyAction layoutForceDirected = new CyAction(LAYOUT_FORCE_DIRECTED2);
 		layoutForceDirected.setDoable(false);
-		layoutForceDirected
-				.setDescription("Layout selected network using force-directed");
+		layoutForceDirected.setDescription("Layout selected network using force-directed");
 		layoutForceDirected.setRequirements("You must have a network loaded");
 
 		CyAction newNetworkTable = new CyAction(NEW_NETWORK_TABLE);
 		newNetworkTable.setDoable(true);
-		newNetworkTable
-				.setDescription("Select a text file or spreadsheet from which to import a network");
-		newNetworkTable
-				.setRequirements("You must have a file with tabular data");
+		newNetworkTable.setDescription("Select a text file or spreadsheet from which to import a network");
+		newNetworkTable.setRequirements("You must have a file with tabular data");
 
 		CyAction newDatasetFile = new CyAction(NEW_DATASET_TABLE);
 		newDatasetFile.setDoable(true);
-		newDatasetFile
-				.setDescription("Select a text file or spreadsheet from which to import a dataset");
-		newDatasetFile
-				.setRequirements("You must have a file with tabular data");
+		newDatasetFile.setDescription("Select a text file or spreadsheet from which to import a dataset");
+		newDatasetFile.setRequirements("You must have a file with tabular data");
 
 		CyAction newCriteriaSet = new CyAction(NEW_CRITERIA_SET);
 		newCriteriaSet.setDoable(false);
-		newCriteriaSet
-				.setDescription("Define criteria based on imported data to set node color");
+		newCriteriaSet.setDescription("Define criteria based on imported data to set node color");
 		newCriteriaSet.setRequirements("You must first import a dataset or a network with data");
 
 		CyAction runClustermaker = new CyAction(RUN_CLUSTERMAKER);
 		runClustermaker.setDoable(false);
-		runClustermaker
-				.setDescription("Perform heirarchical clustering on a network with associated data");
+		runClustermaker.setDescription("Perform heirarchical clustering on a network with associated data");
 		runClustermaker.setRequirements("You must have a network with data");
 
 		CyAction runGoelite = new CyAction(RUN_GOELITE);
 		runGoelite.setDoable(true);
-		runGoelite
-				.setDescription("Perform GO/Pathway overrepresentation analysis per criteria");
+		runGoelite.setDescription("Perform GO/Pathway overrepresentation analysis per criteria");
 		runGoelite.setRequirements("You must first define criteria");
 
 		CyAction exportGraphics = new CyAction(EXPORT_GRAPHICS);
 		exportGraphics.setDoable(false);
-		exportGraphics
-				.setDescription("Export current network view as an image file, e.g., PDF, SVG, JPG");
-		exportGraphics
-				.setRequirements("You must have an active network view selected");
+		exportGraphics.setDescription("Export current network view as an image file, e.g., PDF, SVG, JPG");
+		exportGraphics.setRequirements("You must have an active network view selected");
 
 		CyAction saveSessionFile = new CyAction(SAVE_SESSION_FILE);
 		saveSessionFile.setDoable(true);
@@ -218,15 +192,10 @@ public class ActionPanel extends JPanel
 		saveSessionAsFile.setRequirements("");
 
 		// prepare full list of available actions
-		availableActionsList = new CyAction[]{openSessionFile, openNetworkFile,
-				loadNetworkWeb, layoutForceDirected, newNetworkTable,
-				newDatasetFile, newCriteriaSet, runClustermaker, runGoelite,
-				exportGraphics, saveSessionFile, saveSessionAsFile};
+		availableActionsList = new CyAction[] { openSessionFile, openNetworkFile, loadNetworkWeb, layoutForceDirected, newNetworkTable, newDatasetFile, newCriteriaSet, runClustermaker, runGoelite, exportGraphics, saveSessionFile, saveSessionAsFile };
 
 		// prepare default list of actions and behavior
-		CyAction actions[] = {openSessionFile, openNetworkFile, loadNetworkWeb,
-				newDatasetFile, newCriteriaSet, runGoelite,
-				saveSessionFile, saveSessionAsFile};
+		CyAction actions[] = { openSessionFile, openNetworkFile, loadNetworkWeb, newDatasetFile, newCriteriaSet, runGoelite, saveSessionFile, saveSessionAsFile };
 		workflowState = false;
 		loadActions(actions);
 	}
@@ -265,6 +234,7 @@ public class ActionPanel extends JPanel
 		}
 
 	}
+
 	public static void showMessage(String message) {
 		/*
 		 * JOptionPane.showMessageDialog( Cytoscape.getDesktop(), message, "",
@@ -275,66 +245,54 @@ public class ActionPanel extends JPanel
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource().equals(goButton) && goButton.isEnabled()) {
 			// do stuff
-			String action = ((CyAction) actionCombobox.getSelectedItem())
-					.toString();
+			String action = ((CyAction) actionCombobox.getSelectedItem()).toString();
 			System.out.println(action);
 
 			if (action.equals(OPEN_SESSION_FILE)) {
-				WorkspacesCommandHandler.showMessage( "Open session file ");
-				if (Cytoscape.getNetworkSet().size() == 0
-						&& CyDataset.datasetNameMap.size() > 0) {
+				WorkspacesCommandHandler.showMessage("Open session file ");
+				if (Cytoscape.getNetworkSet().size() == 0 && CyDataset.datasetNameMap.size() > 0) {
 					// Show warning, in cases unique to GenMAPP-CS
 					final String warning = "Current session will be lost.\nDo you want to continue?";
-					final int result = JOptionPane.showConfirmDialog(Cytoscape
-							.getDesktop(), warning, "Caution!",
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.WARNING_MESSAGE, null);
+					final int result = JOptionPane.showConfirmDialog(Cytoscape.getDesktop(), warning, "Caution!", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null);
 					if (result == JOptionPane.NO_OPTION) {
 						return;
 					}
 				}
-				CyLogger.getLogger().info( "open session file: ActionPanel");
+				CyLogger.getLogger().info("open session file: ActionPanel");
 				// now, open the new session file
 				OpenSessionAction osa = new OpenSessionAction();
-				
+
 				/*
 				 * TODO: Apparently this event is triggered 3x and causes NPEs.
 				 * May need to add greenlight/sleep() strategy here to avoid
 				 * consecutive events. Ugh...
 				 */
-				osa.actionPerformed(new ActionEvent(osa,
-						ActionEvent.ACTION_PERFORMED, action));
+				osa.actionPerformed(new ActionEvent(osa, ActionEvent.ACTION_PERFORMED, action));
 
-				WorkspacesCommandHandler.showMessage( "end open session file ");
+				WorkspacesCommandHandler.showMessage("end open session file ");
 
 				// GenMAPPWorkspaces.wsPanel.getCriteriaTreePanel().setVisible(
 				// true );
 
 			} else if (action.equals(OPEN_NETWORK_FILE)) {
-				ImportGraphFileAction igfa = new ImportGraphFileAction(
-						Cytoscape.getDesktop().getCyMenus());
-				igfa.actionPerformed(new ActionEvent(igfa,
-						ActionEvent.ACTION_PERFORMED, action));
+				ImportGraphFileAction igfa = new ImportGraphFileAction(Cytoscape.getDesktop().getCyMenus());
+				igfa.actionPerformed(new ActionEvent(igfa, ActionEvent.ACTION_PERFORMED, action));
 			} else if (action.equals(LOAD_NETWORK_WEB)) {
 				WebServiceNetworkImportAction wsnia = new WebServiceNetworkImportAction();
-				wsnia.actionPerformed(new ActionEvent(wsnia,
-						ActionEvent.ACTION_PERFORMED, action));
+				wsnia.actionPerformed(new ActionEvent(wsnia, ActionEvent.ACTION_PERFORMED, action));
 			} else if (action.equals(LAYOUT_FORCE_DIRECTED2)) {
 				CyNetworkView cnv = Cytoscape.getCurrentNetworkView();
 				if (null == cnv)
 					return;
 				System.out.println("CNV: " + cnv.getIdentifier());
-				TaskManager.executeTask(new LayoutTask(CyLayouts
-						.getLayout("force-directed"), cnv), LayoutTask
-						.getDefaultTaskConfig());
+				TaskManager.executeTask(new LayoutTask(CyLayouts.getLayout("force-directed"), cnv), LayoutTask.getDefaultTaskConfig());
 			} else if (action.equals(NEW_NETWORK_TABLE)) {
 				// TODO
 				System.out.println("coming soon...");
 			} else if (action.equals(NEW_DATASET_TABLE)) {
 				Map<String, Object> noargs = new HashMap<String, Object>();
 				try {
-					CyCommandManager.execute("genmappimporter", "open dialog",
-							noargs);
+					CyCommandManager.execute("genmappimporter", "open dialog", noargs);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -345,8 +303,7 @@ public class ActionPanel extends JPanel
 			} else if (action.equals(NEW_CRITERIA_SET)) {
 				Map<String, Object> noargs = new HashMap<String, Object>();
 				try {
-					CyCommandManager.execute("criteriamapper", "open dialog",
-							noargs);
+					CyCommandManager.execute("criteriamapper", "open dialog", noargs);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -358,8 +315,7 @@ public class ActionPanel extends JPanel
 				Map<String, Object> args = new HashMap<String, Object>();
 				args.put("type", "hierarchical");
 				try {
-					CyCommandManager
-							.execute("clustermaker", "showDialog", args);
+					CyCommandManager.execute("clustermaker", "showDialog", args);
 				} catch (CyCommandException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -382,32 +338,26 @@ public class ActionPanel extends JPanel
 
 			} else if (action.equals(EXPORT_GRAPHICS)) {
 				ExportAsGraphicsAction eaga = new ExportAsGraphicsAction();
-				eaga.actionPerformed(new ActionEvent(eaga,
-						ActionEvent.ACTION_PERFORMED, action));
+				eaga.actionPerformed(new ActionEvent(eaga, ActionEvent.ACTION_PERFORMED, action));
 
 			} else if (action.equals(SAVE_SESSION_FILE)) {
 				SaveSessionAction ssa = new SaveSessionAction();
-				ssa.actionPerformed(new ActionEvent(ssa,
-						ActionEvent.ACTION_PERFORMED, action));
+				ssa.actionPerformed(new ActionEvent(ssa, ActionEvent.ACTION_PERFORMED, action));
 
 			} else if (action.equals(SAVE_SESSION_AS_FILE)) {
 				SaveSessionAsAction ssaa = new SaveSessionAsAction();
-				ssaa.actionPerformed(new ActionEvent(ssaa,
-						ActionEvent.ACTION_PERFORMED, action));
+				ssaa.actionPerformed(new ActionEvent(ssaa, ActionEvent.ACTION_PERFORMED, action));
 			}
 
-		} else if (e.getSource().equals(configButton)
-				&& configButton.isEnabled()) {
+		} else if (e.getSource().equals(configButton) && configButton.isEnabled()) {
 
-			CyActionConfigDialog actionDialog = new CyActionConfigDialog(
-					Cytoscape.getDesktop(), true);
+			CyActionConfigDialog actionDialog = new CyActionConfigDialog(Cytoscape.getDesktop(), true);
 			actionDialog.setLocationRelativeTo(Cytoscape.getDesktop());
 			actionDialog.setVisible(true);
 		}
 
 		// Set selection based on workflow
-		if (e.getSource().equals(goButton) && goButton.isEnabled()
-				&& workflowState) {
+		if (e.getSource().equals(goButton) && goButton.isEnabled() && workflowState) {
 			Integer nextAction = workflowIndex + 1;
 			boolean clear = false;
 			while (!clear) {
@@ -415,8 +365,7 @@ public class ActionPanel extends JPanel
 					nextAction = 0;
 				}
 				actionCombobox.setSelectedIndex(nextAction);
-				clear = ((CyAction) actionCombobox.getSelectedItem())
-						.isDoable();
+				clear = ((CyAction) actionCombobox.getSelectedItem()).isDoable();
 				workflowIndex = nextAction;
 				nextAction++;
 			}
@@ -452,8 +401,7 @@ public class ActionPanel extends JPanel
  */
 class MyCellRenderer extends JLabel implements ListCellRenderer {
 
-	public Component getListCellRendererComponent(JList list, Object value,
-			int index, boolean isSelected, boolean cellHasFocus) {
+	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 
 		CyAction action = (CyAction) value;
 
@@ -478,7 +426,8 @@ class MyCellRenderer extends JLabel implements ListCellRenderer {
 		} else {
 			background = Color.WHITE;
 			foreground = Color.BLACK;
-		};
+		}
+		;
 
 		setBackground(background);
 		setForeground(foreground);

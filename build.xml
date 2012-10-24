@@ -17,7 +17,7 @@
 	
 	<!--<property name="release.dir" value="/Applications/Cytoscape_v2.8.2/" />-->
 	
-	<property name="release.dir" value="/Applications/genmapp/" />
+	<property name="release.dir" value="/Applications/genmapp/" /> <!-- note that Alex changed this from the ABOVE line to this CURRENT line. This MAY get accidentally committed to SVN so beware. -->
 	<property name="pluginlib.dir" value="lib"/>
 
 	<!-- Temporary build directories -->
@@ -62,7 +62,7 @@
 
 	<!--  Target to compile all Plug In Code -->
 	<target name="compile" depends="prepare" description="Compiles all PlugIn source code.">
-		<javac debug="Yes" srcdir="${src.dir}" destdir="${build.classes}">
+		<javac debug="Yes" includeantruntime="false" srcdir="${src.dir}" destdir="${build.classes}">
 			<classpath refid="classpath" />
 		</javac>
 	</target>
