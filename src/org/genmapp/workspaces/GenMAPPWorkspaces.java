@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 //import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -68,13 +70,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	private static final String ATTR_LIST = ".attrList";
 
 	public GenMAPPWorkspaces() {
-
-		CyLogger.getLogger(GenMAPPWorkspaces.class).error("ALEX WILLIAMS: TESTING GENMAPP LOAD/SAVE");
-
+		
 		logger = CyLogger.getLogger(GenMAPPWorkspaces.class);
 		logger.setDebug(true);
 
-		logger.error("ALEX WILLIAMS: test part 2");
+		logger.error("ALEX WILLIAMS: testing genmapp load/save");
 
 		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(SwingConstants.WEST); // Create workspaces panel
 		wsPanel = new WorkspacesPanel(logger);
@@ -146,10 +146,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			}
 
 			if (nodeAttributeFile == null) {
-				logger.error("ERROR 'ATTRIBUTE FILE 29': We were not able to find a node attributes file! We were looking for a file with the name <" + nodeAttributeFileName + ">.");
+				logger.error("ERROR 'ATTRIBUTE FILE NOT FOUND': We were not able to find a node attributes file! We were looking for a file with the name <" + nodeAttributeFileName + ">.");
 			}
 			if (propFile == null) {
-				logger.error("ERROR 'PROP FILE 28': We were not able to find a properties file! We were hoping to find one with the name <" + propFileName + ">.");
+				logger.error("ERROR 'PROP FILE NOT FOUND': We were not able to find a properties file! We were hoping to find one with the name <" + propFileName + ">.");
 			}
 
 			// Ok, now we've figured out which files are:
@@ -389,15 +389,19 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			}
 		}
 
-		final String tmpDir = System.getProperty("java.io.tmpdir"); // Looks like files are WRITTEN to an intermediate temporary directory and are then COPIED to the actual save file.
-		final File propFile = new File(tmpDir, propFileName);
-		final File nodeAttributeFile = new File(tmpDir, nodeAttributeFileName);
 
 		// Now actually write all the files! These functions are located directly above.
 
-		logger.error("Danger: removed file saving here. Uncomment these lines soon!");
-		// writePropFile(props, propFile, fileList);
-		// writeNodeAttrFile(nodeAttributeFile, fileList);
+		logger.error("Danger: removed GPML file saving here! Uncomment these lines soon!");
+		
+		final String tmpDir = System.getProperty("java.io.tmpdir"); // Looks like files are WRITTEN to an intermediate temporary directory and are then COPIED to the actual save file.
+		
+		logger.error("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
+		logger.error("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
+		
+		
+		writePropFile(props, new File(tmpDir, propFileName), fileList);
+		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
 		// writeGPMLFiles(tmpDir, fileList);
 		// Done writing all the files.
 
@@ -407,8 +411,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	private HashSet<CyNode> setOfAllNodes() {
 		// Added in Oct 2012 by Alex Williams
 		// Returns a new HashSet of all nodes that Cytoscape knows about, even if they aren't in a network!
+		
+		// Note about "@SuppressWarnings" below: getCyNodesList returns a "List" and not a "List<CyNode>", so we suppress the unchecked conversion. This would break if (hypothetically) Cytoscape code changed so that non-CyNode items were returned in the list.
 		@SuppressWarnings("unchecked")
-		// Note about "@SuppressWarnings": getCyNodesList returns a "List" and not a "List<CyNode>", so we suppress the unchecked conversion. This would break if (hypothetically) Cytoscape code changed so that non-CyNode items were returned in the list.
 		final List<CyNode> nodeList = (List<CyNode>) Cytoscape.getCyNodesList();
 		return (new HashSet<CyNode>(nodeList));
 	}
@@ -424,7 +429,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		}
 		return (nodesInAnyNetwork); // All the nodes that were in at least ONE network.
 	}
-
+	
 	private HashSet<CyNode> setOfOrphanNodesNotInAnyNetwork() {
 		// Added in Oct 2012 by Alex Williams
 		// Returns a set of all the nodes that are NOT in any network.
@@ -435,4 +440,16 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		return (orphanNodes); // "orphan" nodes don't have a network
 	}
 
+	private String namesOfAllCyNodesInCollection(final Collection c) {
+		// Added in Oct 2012 by Alex Williams.
+		// This function just takes a collection (of CyNodes, usually), and goes through it, calling "toString" on each node.
+		// This can occasionally be useful for debugging.
+		String s = "";
+		for (Iterator iter = c.iterator(); iter.hasNext(); ) {
+		    CyNode nnn = (CyNode) iter.next();
+		    s += nnn.toString() + ", ";
+		}
+		return ("[" + s + "]");
+	}
+	
 }
