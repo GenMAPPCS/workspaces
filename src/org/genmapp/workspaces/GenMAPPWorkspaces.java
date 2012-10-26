@@ -320,6 +320,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		}
 	}
 
+
+	
+	
+	
 	private void writeGPMLFiles(final String theTempDir, List<File> theParentFileList) {
 		// Save GPMLs: The GPML files contain the data that is used to make the WikiPathways images with annotation / lines / boxes / etc
 		// on top of the graph. It goes beyond the Cytoscape 2.x "nodes & edges only" saving.
@@ -408,7 +412,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		logger.debug("saveSessionStateFiles: [DONE]");
 	}
 
-	private HashSet<CyNode> setOfAllNodes() {
+	private static HashSet<CyNode> setOfAllNodes() {
 		// Added in Oct 2012 by Alex Williams
 		// Returns a new HashSet of all nodes that Cytoscape knows about, even if they aren't in a network!
 		
@@ -418,7 +422,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		return (new HashSet<CyNode>(nodeList));
 	}
 
-	private HashSet<CyNode> setOfNodesThatAreInAtLeastOneNetwork() {
+	private static HashSet<CyNode> setOfNodesThatAreInAtLeastOneNetwork() {
 		// Added in Oct 2012 by Alex Williams
 		// Returns a new HashSet of all nodes that are in AT LEAST ONE NETWORK.
 		final HashSet<CyNetwork> allNetworks = (HashSet<CyNetwork>) Cytoscape.getNetworkSet();
@@ -430,7 +434,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		return (nodesInAnyNetwork); // All the nodes that were in at least ONE network.
 	}
 	
-	private HashSet<CyNode> setOfOrphanNodesNotInAnyNetwork() {
+	public static HashSet<CyNode> setOfOrphanNodesNotInAnyNetwork() {
 		// Added in Oct 2012 by Alex Williams
 		// Returns a set of all the nodes that are NOT in any network.
 		// Why this is useful: We want this set because, as it turns out, Cytoscape itself only saves nodes that are IN A NETWORK.
@@ -440,7 +444,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		return (orphanNodes); // "orphan" nodes don't have a network
 	}
 
-	private String namesOfAllCyNodesInCollection(final Collection c) {
+	private static String namesOfAllCyNodesInCollection(final Collection c) {
 		// Added in Oct 2012 by Alex Williams.
 		// This function just takes a collection (of CyNodes, usually), and goes through it, calling "toString" on each node.
 		// This can occasionally be useful for debugging.

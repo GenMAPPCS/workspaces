@@ -2,6 +2,7 @@ package org.genmapp.workspaces.utils;
 
 //import java.io.BufferedReader;
 
+import java.util.HashSet;
 import java.io.File;
 
 import java.io.FileWriter;
@@ -141,6 +142,41 @@ public class DatasetAttributesWriter {
 		}
 	}
 
+	
+
+	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/cytoscape/CyNode.html
+	private static void saveTheOrphanage() throws IOException {
+		// Added by Alex: the idea is that this will ONLY save orphan nodes
+		// CyAttribute types: simple_map and complex are NOT supported
+		CyLogger.getLogger().warn("OK, Alex Williams is trying to save all the attributes for ONLY THE ORPHAN NODES now!");
+
+		final HashSet<CyNode> orphanSet = GenMAPPWorkspaces.setOfOrphanNodesNotInAnyNetwork();
+		
+		// Apparently we don't need to save REGULAR nodes, only the ORPHAN nodes that aren't in any network.
+		
+		// If we save the regular nodes AND ALSO let Cytoscape save the node attributes, that maybe causes problems? Unclear.
+		
+		// Wow, attributes are complicated: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/data/CyAttributes.html
+		CyAttributes att = Cytoscape.getNodeAttributes();
+		//String[] att = Cytoscape.getNodeAttributesList( orphanSet.toArray() ); // Returns String[] 
+		
+		if (1== 0) {
+			// Skip writing attributes; there are none to write!
+		} else {
+			//final FileWriter writer = new FileWriter(attribFile);
+			//writeHeader(writer, nodeAttributes); // Writes two header lines. First line is the attribute NAME, second line is attribute TYPE
+			for (int i = 0; i < 10; i++) {
+				//writeRow(writer, nodes[i], nodeAttributes);
+			}
+			//writer.close();
+		}
+		
+
+		CyLogger.getLogger().warn("OK, DONE attributes now apparently!");
+
+	}
+	
+	
 	public static void writeAttributes(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
 		// CyAttribute types: simple_map and complex are NOT supported
 		CyLogger.getLogger().warn("OK, writing attributes now!");
