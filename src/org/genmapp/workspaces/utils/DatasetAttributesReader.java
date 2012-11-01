@@ -179,6 +179,7 @@ public class DatasetAttributesReader {
 			}
 		}
 		cyAttrs.setListAttribute(key, attributeName, elmsBuff); // <-- From the Oracle Javadocs: Requirements for setListAttribute: "All items within the list are of the same type, and are chosen from one of the following: Boolean, Integer, Double or String."
+		// Maybe this creates the node???
 	}
 
 	private static void setCyAttrBasedOnType(final byte type, CyAttributes cyAttrsToSet, final String theKey, final String attributeName, final String setToThing) {

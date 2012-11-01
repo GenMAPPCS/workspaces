@@ -54,7 +54,7 @@ import cytoscape.visual.VisualPropertyDependency;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 
-	public static final String DELIMITER_STRING = " ||--GENMAPP--|| "; // Note: this gets used in DatasetAttributesReader as well!
+	public static final String DELIMITER_STRING = "QQQQGENMAPPQQQQ"; // Note: this gets used in DatasetAttributesReader as well!
 
 	public static WorkspacesPanel wsPanel;
 	private CyLogger logger;
@@ -119,10 +119,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		logger.error("ALEX WILLIAMS: RETURNING EARLY FROM RESTORE SESSION STATE. NOT ACTUALLY RESTORING SESSION IN WORKSPACE PLUGIN");
 
-		int TESTAGW = 1;
-		if (TESTAGW == 1) {
-			return;
-		}
+		//int TESTAGW = 1;
+		//if (TESTAGW == 1) {
+		//	return;
+		//}
 
 		logger.debug("loadSessionState");
 		try {
@@ -208,27 +208,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			DatasetAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(), new FileReader(nodeAttributeFile), logger);
 			logger.error("restoreSessionState: [Done] Loading node attributes for CyDataset nodes");
 
-			/*
-			 * if (logger.isDebugging()) { // END OF DEBUGGING
-			 * final CyAttributes nodeAttr = Cytoscape.getNodeAttributes();
-			 * HashMap<String, String> display = new HashMap<String, String>();
-			 * for (String n : nodeAttr.getAttributeNames()) {
-			 * CountedIterator i = nodeAttr.getMultiHashMap().getObjectKeys(n);
-			 * while (i.hasNext()) {
-			 * final String id = (String) i.next();
-			 * boolean displayIdIsNull = (display.get(id) != null);
-			 * String theStr = ((displayIdIsNull) ? "" : display.get(id)) + nodeAttr.getAttribute(id, n) + "---";
-			 * display.put(id, theStr);
-			 * }
-			 * }
-			 * String displayStr = "";
-			 * for (String k : display.keySet()) {
-			 * displayStr += display.get(k) + "\n";
-			 * }
-			 * logger.debug("DISPLAY: " + displayStr);
-			 * } // END OF DEBUGGING
-			 */
-
 			// now, you can create your CyDatasets
 			Properties props = new Properties();
 			props.load(new FileReader(propFile)); // <-- apparently this is some method that reads properties from the file
@@ -243,7 +222,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				final String[] nodeIdsAsStr = nodeIdListString.split(DELIMITER_STRING);
 				final List<Integer> nodeRootIdList = new ArrayList<Integer>();
 				for (final String cyNodeID : nodeIdsAsStr) {
-					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true).getRootGraphIndex());
+					// This is the part where ORPHAN NODES are added
+					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true).getRootGraphIndex()); // getNode -- adds nodes here
 				}
 				logger.debug(nodeRootIdList + "");
 				// Create a new CyDataset object, but with no automatic mapping
@@ -255,8 +235,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			// Load Criteria sets
 			logger.debug("loading CyCriteriasets");
 			final String setsString = CytoscapeInit.getProperties().getProperty(WorkspacesCommandHandler.PROPERTY_SETS);
-			// extract cset names
-			// String[] csetList = { "" };
 			ArrayList<String> full = new ArrayList<String>();
 			if (null != setsString && setsString.length() > 2) {
 				// no clue what should happen if the length is 1... maybe that doesn't happen?
@@ -375,9 +353,16 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			props.setProperty(PROP_DS + idx + PROP_NAME, name);
 			props.setProperty(PROP_DS + idx + KEY_TYPE, ds.getKeyType());
 			String nodeIdListString = "";
-			for (final Integer rootID : ds.getNodes()) {
+			for (int i = 0; i < ds.getNodes().size(); i++) {
+				final Integer rootID = ds.getNodes().get(i);
+			//for (final Integer rootID : ds.getNodes()) {
+				// Write to the properties file!
 				String cyNodeID = ((CyNode) Cytoscape.getRootGraph().getNode(rootID)).getIdentifier();
-				nodeIdListString += cyNodeID + ","; // note that this adds an EXTRA comma to the end of the string, too.
+				if (i == (ds.getNodes().size() - 1)) {
+					nodeIdListString += cyNodeID; // It's the LAST ONE -- don't add a delimiter at the end!
+				} else {
+					nodeIdListString += cyNodeID + DELIMITER_STRING; // Add a delimiter--it's not the last one
+				}
 				// TODO: should this last comma NOT be included? Maybe it doesn't matter.
 			}
 			props.setProperty(PROP_DS + idx + ATTR_LIST, ds.getAttrString());
@@ -403,7 +388,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		logger.error("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
 		logger.error("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
 		
-		
 		writePropFile(props, new File(tmpDir, propFileName), fileList);
 		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
 		// writeGPMLFiles(tmpDir, fileList);
@@ -428,6 +412,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		final HashSet<CyNetwork> allNetworks = (HashSet<CyNetwork>) Cytoscape.getNetworkSet();
 		HashSet<CyNode> nodesInAnyNetwork = new HashSet<CyNode>();
 		for (final CyNetwork net : allNetworks) { // Go through each network
+			@SuppressWarnings("unchecked")
 			final List<CyNode> nodes = (List<CyNode>) net.nodesList();
 			nodesInAnyNetwork.addAll(nodes); // <-- Keep track of the nodes that we find in a network
 		}
