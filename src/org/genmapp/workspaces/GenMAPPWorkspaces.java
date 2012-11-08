@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * 	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/cytoscape/CyNode.html
  ******************************************************************************/
 package org.genmapp.workspaces;
 
@@ -54,7 +56,7 @@ import cytoscape.visual.VisualPropertyDependency;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 
-	public static final String DELIMITER_STRING = "QQQQGENMAPPQQQQ"; // Note: this gets used in DatasetAttributesReader as well!
+	public static final String DELIMITER_REGEXP = "QQQQGENMAPPQQQQ"; // Note: this gets used in DatasetAttributesReader as well!
 
 	public static WorkspacesPanel wsPanel;
 	private CyLogger logger;
@@ -219,10 +221,12 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				final String keyType = props.getProperty(PROP_DS + i + KEY_TYPE);
 				final String nodeIdListString = props.getProperty(PROP_DS + i + NODE_ID_LIST);
 				final List<String> attrList = CyDataset.attrStringToAttrList(props.getProperty(PROP_DS + i + ATTR_LIST));
-				final String[] nodeIdsAsStr = nodeIdListString.split(DELIMITER_STRING);
+				final String[] nodeIdsAsStr = nodeIdListString.split(DELIMITER_REGEXP);
 				final List<Integer> nodeRootIdList = new ArrayList<Integer>();
 				for (final String cyNodeID : nodeIdsAsStr) {
-					// This is the part where ORPHAN NODES are added
+					// THIS IS THE PART WHERE NODES ARE ADDED TO THE NETWORK!
+					// The "getCyNode" function (or getNode) actually CREATES NEW NODES if they do not exist already!
+					// (Specifically, this is the part where ORPHAN NODES are restored and added to the network.)
 					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true).getRootGraphIndex()); // getNode -- adds nodes here
 				}
 				logger.debug(nodeRootIdList + "");
@@ -238,8 +242,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			ArrayList<String> full = new ArrayList<String>();
 			if (null != setsString && setsString.length() > 2) {
 				// no clue what should happen if the length is 1... maybe that doesn't happen?
-				// Ha, this is a hackish way to get the elements out of the "[" and "]" delimiting!
-				// setsString really IS just a string!
+				// This appears to be a hackish way to get the elements out of the "[" and "]" delimiting!
 				final String setsStringWithoutFirstAndLastElements = setsString.substring(1, setsString.length() - 1); // umm... no clue what's up here. Looks like we are getting rid of the first and last element for some reason.
 				final String[] splitUpStringArray = setsStringWithoutFirstAndLastElements.split("\\]\\[");
 				for (String cs : splitUpStringArray) {
@@ -361,7 +364,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				if (i == (ds.getNodes().size() - 1)) {
 					nodeIdListString += cyNodeID; // It's the LAST ONE -- don't add a delimiter at the end!
 				} else {
-					nodeIdListString += cyNodeID + DELIMITER_STRING; // Add a delimiter--it's not the last one
+					nodeIdListString += cyNodeID + DELIMITER_REGEXP; // Add a delimiter--it's not the last one
 				}
 				// TODO: should this last comma NOT be included? Maybe it doesn't matter.
 			}
@@ -429,6 +432,17 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		return (orphanNodes); // "orphan" nodes don't have a network
 	}
 
+	public static HashSet<Integer> setOfOrphanNodeIndexes() {
+		HashSet<CyNode> orphanCyNodes = setOfOrphanNodesNotInAnyNetwork(); // Start with ALL nodes
+		HashSet<Integer> nodeIDs = new HashSet<Integer>( orphanCyNodes.size() );
+		for (final CyNode nnn : orphanCyNodes) {
+			int nodeIndex = nnn.getRootGraphIndex();
+			nodeIDs.add( new Integer(nodeIndex) );
+		}
+		return (nodeIDs); // "orphan" nodes don't have a network
+	}
+	
+	
 	private static String namesOfAllCyNodesInCollection(final Collection c) {
 		// Added in Oct 2012 by Alex Williams.
 		// This function just takes a collection (of CyNodes, usually), and goes through it, calling "toString" on each node.

@@ -96,7 +96,7 @@ public class DatasetAttributesWriter {
 		return (-1); // Failure to find canonical name!
 	}
 
-	private static void writeRow(FileWriter writer, int nodeIndex, CyAttributes attributes) throws IOException {
+	private static void writeRow(FileWriter writer, int nodeIndex, final CyAttributes attributes) throws IOException {
 		final String nodeName = ((CyNode) Cytoscape.getRootGraph().getNode(nodeIndex)).getIdentifier();
 		final String[] attrNames = attributes.getAttributeNames();
 		final int canonicalCol = canonicalNameIndex(attrNames); // -1 if it was not found
@@ -111,7 +111,7 @@ public class DatasetAttributesWriter {
 				attrNames[canonicalCol] = swapTemp;
 			}
 			for (int i = 0; i < attrNames.length; i++) {
-				writer.write(((i == 0) ? "" : GenMAPPWorkspaces.DELIMITER_STRING) + getEncodedAttribute(attrNames[i], nodeName, attributes)); // No comma before the very first item, then commas BEFORE all the rest of them.
+				writer.write(((i == 0) ? "" : GenMAPPWorkspaces.DELIMITER_REGEXP) + getEncodedAttribute(attrNames[i], nodeName, attributes)); // No comma before the very first item, then commas BEFORE all the rest of them.
 			}
 			writer.write("\n");
 		}
@@ -134,8 +134,8 @@ public class DatasetAttributesWriter {
 			String namesRow = ""; // first line: attribute names
 			String typesRow = ""; // second line: attribute types
 			for (String attr : attrNames) {
-				namesRow += ((namesRow.length() == 0) ? "" : GenMAPPWorkspaces.DELIMITER_STRING) + attr; // <-- Comma-separate every item AFTER the very first one.
-				typesRow += ((typesRow.length() == 0) ? "" : GenMAPPWorkspaces.DELIMITER_STRING) + attributeTypeAsString(attributes.getType(attr)); // <-- Comma-separate every item AFTER the very first one.
+				namesRow += ((namesRow.length() == 0) ? "" : GenMAPPWorkspaces.DELIMITER_REGEXP) + attr; // <-- Comma-separate every item AFTER the very first one.
+				typesRow += ((typesRow.length() == 0) ? "" : GenMAPPWorkspaces.DELIMITER_REGEXP) + attributeTypeAsString(attributes.getType(attr)); // <-- Comma-separate every item AFTER the very first one.
 			}
 			writer.write(namesRow + "\n"); // Write the NAMES of the attributes on one line
 			writer.write(typesRow + "\n"); // Then, below that, write the TYPES of the attributes (Boolean, String, etc)
@@ -145,34 +145,32 @@ public class DatasetAttributesWriter {
 	
 
 	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/cytoscape/CyNode.html
-	private static void saveTheOrphanage() throws IOException {
+	public static void writeOrphanAttributes(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
 		// Added by Alex: the idea is that this will ONLY save orphan nodes
 		// CyAttribute types: simple_map and complex are NOT supported
-		CyLogger.getLogger().warn("OK, Alex Williams is trying to save all the attributes for ONLY THE ORPHAN NODES now!");
-
-		final HashSet<CyNode> orphanSet = GenMAPPWorkspaces.setOfOrphanNodesNotInAnyNetwork();
 		
 		// Apparently we don't need to save REGULAR nodes, only the ORPHAN nodes that aren't in any network.
-		
-		// If we save the regular nodes AND ALSO let Cytoscape save the node attributes, that maybe causes problems? Unclear.
-		
+		// If we save the regular nodes AND ALSO let Cytoscape save the node attributes, that maybe causes problems? Unclear.		
 		// Wow, attributes are complicated: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/data/CyAttributes.html
-		CyAttributes att = Cytoscape.getNodeAttributes();
-		//String[] att = Cytoscape.getNodeAttributesList( orphanSet.toArray() ); // Returns String[] 
+		// CyAttribute types: simple_map and complex are NOT supported
+		logger.warn("OK, Alex Williams is trying to save all the attributes for ONLY THE ORPHAN NODES now!");
 		
-		if (1== 0) {
+		// Previous comment: CyAttribute types: simple_map and complex are NOT supported.
+		// Alex Williams: I'm not sure why there's no handling for simple_map or complex here, besides the "they are not supported" comment.
+		//final HashSet<CyNode> orphanSet = GenMAPPWorkspaces.setOfOrphanNodesNotInAnyNetwork();
+		if (nodeAttributes.getAttributeNames().length == 0) {
 			// Skip writing attributes; there are none to write!
 		} else {
-			//final FileWriter writer = new FileWriter(attribFile);
-			//writeHeader(writer, nodeAttributes); // Writes two header lines. First line is the attribute NAME, second line is attribute TYPE
-			for (int i = 0; i < 10; i++) {
-				//writeRow(writer, nodes[i], nodeAttributes);
+			final FileWriter writer = new FileWriter(attribFile);
+			final HashSet<Integer> nodeIndexSet = GenMAPPWorkspaces.setOfOrphanNodeIndexes();		
+			writeHeader(writer, nodeAttributes); // Writes two header lines. First line is the attribute NAME, second line is attribute TYPE
+			for (final Integer thisNodeIndex : nodeIndexSet) {
+				writeRow(writer, thisNodeIndex.intValue(), nodeAttributes); // Write all the rows!
 			}
-			//writer.close();
+			writer.close();
 		}
-		
 
-		CyLogger.getLogger().warn("OK, DONE attributes now apparently!");
+		logger.warn("OK, DONE attributes now apparently!");
 
 	}
 	
@@ -183,8 +181,7 @@ public class DatasetAttributesWriter {
 
 		// Previous comment: CyAttribute types: simple_map and complex are NOT supported.
 		// Alex Williams: I'm not sure why there's no handling for simple_map or complex here, besides the "they are not supported" comment.
-		final CytoscapeRootGraph rootGraph = Cytoscape.getRootGraph();
-		final int[] nodes = rootGraph.getNodeIndicesArray();
+		final int[] nodes = Cytoscape.getRootGraph().getNodeIndicesArray();
 		final String[] attrNames = nodeAttributes.getAttributeNames();
 		if (attrNames.length == 0) {
 			// Skip writing attributes; there are none to write!

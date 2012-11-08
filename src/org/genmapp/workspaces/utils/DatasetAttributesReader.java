@@ -79,7 +79,7 @@ public class DatasetAttributesReader {
 			BufferedReader inStream = new BufferedReader(fileIn);
 			for (String line = inStream.readLine(); line != null; line = inStream.readLine()) {
 				lineNum++;
-				final String row[] = line.split(GenMAPPWorkspaces.DELIMITER_STRING); // Split the comma-separated values
+				final String row[] = line.split(GenMAPPWorkspaces.DELIMITER_REGEXP); // Split the comma-separated values
 				if (bufferCols == null) { // <-- Initialize this the FIRST TIME only!
 					totalNumHeaderColumns = row.length;
 					bufferCols = new Vector<Vector<String>>(totalNumHeaderColumns);
