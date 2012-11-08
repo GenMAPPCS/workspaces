@@ -1,3 +1,5 @@
+// Javadocs for Cytoscape 2.8.3 can be found at: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/CyMain.html
+
 package org.genmapp.workspaces.utils;
 
 //import java.io.BufferedReader;
@@ -144,8 +146,8 @@ public class DatasetAttributesWriter {
 
 	
 
-	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/cytoscape/CyNode.html
-	public static void writeOrphanAttributes(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
+	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/CyMain.html
+	public static void writeAttributesForOrphanNodesOnly(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
 		// Added by Alex: the idea is that this will ONLY save orphan nodes
 		// CyAttribute types: simple_map and complex are NOT supported
 		
@@ -158,44 +160,35 @@ public class DatasetAttributesWriter {
 		// Previous comment: CyAttribute types: simple_map and complex are NOT supported.
 		// Alex Williams: I'm not sure why there's no handling for simple_map or complex here, besides the "they are not supported" comment.
 		//final HashSet<CyNode> orphanSet = GenMAPPWorkspaces.setOfOrphanNodesNotInAnyNetwork();
-		if (nodeAttributes.getAttributeNames().length == 0) {
+		if (0 == nodeAttributes.getAttributeNames().length) {
 			// Skip writing attributes; there are none to write!
 		} else {
 			final FileWriter writer = new FileWriter(attribFile);
-			final HashSet<Integer> nodeIndexSet = GenMAPPWorkspaces.setOfOrphanNodeIndexes();		
+			final HashSet<Integer> orphanNodeIndexSet = GenMAPPWorkspaces.setOfOrphanNodeIndexes();		
 			writeHeader(writer, nodeAttributes); // Writes two header lines. First line is the attribute NAME, second line is attribute TYPE
-			for (final Integer thisNodeIndex : nodeIndexSet) {
+			for (final Integer thisNodeIndex : orphanNodeIndexSet) {
 				writeRow(writer, thisNodeIndex.intValue(), nodeAttributes); // Write all the rows!
 			}
 			writer.close();
 		}
-
 		logger.warn("OK, DONE attributes now apparently!");
-
 	}
 	
 	
 	public static void writeAttributes(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
-		// CyAttribute types: simple_map and complex are NOT supported
-		CyLogger.getLogger().warn("OK, writing attributes now!");
-
-		// Previous comment: CyAttribute types: simple_map and complex are NOT supported.
-		// Alex Williams: I'm not sure why there's no handling for simple_map or complex here, besides the "they are not supported" comment.
-		final int[] nodes = Cytoscape.getRootGraph().getNodeIndicesArray();
-		final String[] attrNames = nodeAttributes.getAttributeNames();
-		if (attrNames.length == 0) {
+		CyLogger.getLogger().warn("OK, writing attributes now!");		// CyAttribute types: simple_map and complex are NOT supported
+		if (nodeAttributes.getAttributeNames().length == 0) {
 			// Skip writing attributes; there are none to write!
 		} else {
 			final FileWriter writer = new FileWriter(attribFile);
 			writeHeader(writer, nodeAttributes); // Writes two header lines. First line is the attribute NAME, second line is attribute TYPE
-			for (int i = 0; i < nodes.length; i++) {
-				writeRow(writer, nodes[i], nodeAttributes);
+			final int[] nodeIndexArr = Cytoscape.getRootGraph().getNodeIndicesArray();
+			for (int i = 0; i < nodeIndexArr.length; i++) {
+				writeRow(writer, nodeIndexArr[i], nodeAttributes);
 			}
 			writer.close();
 		}
-
 		CyLogger.getLogger().warn("OK, DONE attributes now apparently!");
-
 	}
 
 }

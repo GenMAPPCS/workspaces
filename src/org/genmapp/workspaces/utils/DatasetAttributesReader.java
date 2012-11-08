@@ -1,5 +1,5 @@
 /*
-  File: CyAttributesReader.java
+  File: DatasetAttributesReader.java
 
   Copyright (c) 2006, 2010, The Cytoscape Consortium (www.cytoscape.org)
 
@@ -28,6 +28,9 @@
   Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 package org.genmapp.workspaces.utils;
+
+// Javadocs for Cytoscape 2.8.3 can be found at: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/CyMain.html
+
 
 import java.io.BufferedReader;
 
