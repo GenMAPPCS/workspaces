@@ -55,7 +55,13 @@ import cytoscape.visual.VisualPropertyDependency;
 
 public class GenMAPPWorkspaces extends CytoscapePlugin {
 
-	public static final String DELIMITER_REGEXP = "QQQQGENMAPPQQQQ"; // Note: this gets used in DatasetAttributesReader as well!
+	// Delimiter regexp can be multiple characters, but DON'T USE ANY SPECIAL CHARACTERS that have a regular expression meaning!
+	// That will cause untold pain and suffering, and you will be super confused as to why the "split" operation fails.
+
+	public static final String DELIMITER_REGEXP = "\t"; // <-- this is a TAB and not a space!
+	// You'd better not use anything that might possibly show up in a name, like a comma! That will break everything.
+
+	// Note: this gets used in DatasetAttributesReader as well!
 	// Alex Williams: I'm using the DELIMITER_REGEXP as both the delimiter to add, AND the regular expression to match the delimiter.
 	// This could be a problem if (for example) the delimiter had a character like "|" in it (which means 'or' in regular expression talk)
 	// because that WOULD be a valid delimiter, but WOULD NOT be a valid thing to search for as a regular expression.
@@ -120,14 +126,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * @see cytoscape.plugin.CytoscapePlugin#restoreSessionState(java.util.List)
 	 */
 	public void restoreSessionState(List<File> fileList) {
-
-		logger.error("ALEX WILLIAMS: RETURNING EARLY FROM RESTORE SESSION STATE. NOT ACTUALLY RESTORING SESSION IN WORKSPACE PLUGIN");
-
-		// int TESTAGW = 1;
-		// if (TESTAGW == 1) {
-		// return;
-		// }
-
 		logger.debug("loadSessionState");
 		try {
 			File nodeAttributeFile = null; // <-- There's only exactly ONE of these files
@@ -150,16 +148,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 					logger.warn("Ignored the file <" + f.getName() + ">. We couldn't determine if it was a GPML file, a property file, or an attribute file! So we skipped it.");
 				}
 			}
-			if (nodeAttributeFile == null) {
-				logger.error("ERROR in restoring files: 'ATTRIBUTE FILE NOT FOUND': We were not able to find a node attributes file! We were looking for a file with the name <" + nodeAttributeFileName + ">.");
-				return; // Give up here if we can't find a nodeAtrributeFile!
-			}
-			if (propFile == null) {
-				logger.error("ERROR in restoring files: 'PROP FILE NOT FOUND': We were not able to find a properties file! We were hoping to find one with the name <" + propFileName + ">.");
-				return; // Give up here if we can't find a propFile!
-			}
 			// =============== DONE FIGURING OUT THE SPECIFIC FILENAMES WE SHOULD READ ==============
-
 			// Ok, now we've figured out which files are:
 			// * node attribute files (in noteAttributeFile -- only one of these at most!)
 			// * properties files (in propFile -- only one of these at most!)
@@ -181,8 +170,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						pathway.readFromXml(gpmlFile, true);
 						CyNetwork gpmlNet = gp.load(pathway, true);
 						gpmlNet.setTitle(gpmlNetworkTitle); // Set the NEW network to have the name of the GPLM pathway
-						// Ok, now we've made a new gpml network
-
 						List<String> netlist = new ArrayList<String>();
 						netlist.add(gpmlNet.getIdentifier());
 
@@ -190,7 +177,6 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 						WorkspacesPanel.getNetworkTreePanel().updateTitle(gpmlNet);
 
 						Cytoscape.getNetworkAttributes().setAttribute(gpmlNet.getIdentifier(), ATTR_PATHWAY_URL, gpmlFile.getPath());
-
 						// And let the world know. The Object[2] is Cytoscape convention
 						// Object[] new_value = new Object[2];
 						// new_value[0] = net;
@@ -204,78 +190,74 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				}
 			}
 
-			// Ok, guess we're done with the GPML plugins!
-			// first process the node attribute file so as to populate missing
-			// RootGraph nodes properties file for GenMAPPWorkspaces
-			// this will read the properties directly into the Cytoscape nodeAttributes structure, (hopefully) overwriting any duplicates
+			if (nodeAttributeFile == null) {
+				logger.warning("WARNING in restoring files: 'ATTRIBUTE FILE NOT FOUND': We were not able to find a node attributes file! We were looking for a file with the name <" + nodeAttributeFileName + ">.");
+			} else {
+				DatasetAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(), new FileReader(nodeAttributeFile), logger);
+			}
 
-			logger.error("restoreSessionState: [Starting] loading node attributes for CyDataset nodes...");
-			logger.error("Alex Williams: problem tracked down to this location!");
-			// There is a problem here!
-			DatasetAttributesReader.loadAttributes(Cytoscape.getNodeAttributes(), new FileReader(nodeAttributeFile), logger);
-			logger.error("restoreSessionState: [Done] Loading node attributes for CyDataset nodes");
-
-			// ============================================================
-			// Alex Williams: The "Properties" object is a java.util class that is basically just an automatic way of reading in key/value pairs.
-			// We load our file here, but then actually PARSE it (using Java's built-in "getProperty" methods) below.
-			java.util.Properties props = new java.util.Properties();
-			props.load(new FileReader(propFile));
-
-			// ============================================================
-			final int numCyDatasets = new Integer(props.getProperty("numCyDatasets")).intValue(); // This is an integer that should have been found in the saved "<something>.props" file
-			logger.debug("Loading " + numCyDatasets + " CyDatasets (that's how many the input .props file said there would be, at least)");
-			for (int i = 0; i < numCyDatasets; i++) {
-				final String name = props.getProperty(PROP_DS + i + PROP_NAME);
-				final String keyType = props.getProperty(PROP_DS + i + KEY_TYPE);
-				final String nodeIdListString = props.getProperty(PROP_DS + i + NODE_ID_LIST);
-				final List<String> attrList = CyDataset.attrStringToAttrList(props.getProperty(PROP_DS + i + ATTR_LIST));
-				final String[] nodeIdsAsStr = nodeIdListString.split(DELIMITER_REGEXP);
-				List<Integer> nodeRootIdList = new ArrayList<Integer>();
-				for (final String cyNodeID : nodeIdsAsStr) {
-					// THIS IS THE PART WHERE NODES ARE ADDED TO THE NETWORK!
-					// The "getCyNode" function (or getNode) actually CREATES NEW NODES if they do not exist already!
-					// (Specifically, this is the part where ORPHAN NODES are restored and added to the network.)
-					nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true).getRootGraphIndex()); // getNode -- adds nodes here
+			if (propFile == null) {
+				logger.warning("WARNING in restoring files: 'PROP FILE NOT FOUND': We were not able to find a properties file! We were hoping to find one with the name <" + propFileName + ">.");
+			} else {
+				// Alex Williams: The "Properties" object is a java.util class that is basically just an automatic way of reading in key/value pairs.
+				// We load our file here, but then actually PARSE it (using Java's built-in "getProperty" methods) below.
+				java.util.Properties props = new java.util.Properties();
+				props.load(new FileReader(propFile));
+				// ============================================================
+				final int numCyDatasets = new Integer(props.getProperty("numCyDatasets")).intValue(); // This is an integer that should have been found in the saved "<something>.props" file
+				logger.debug("Loading " + numCyDatasets + " CyDatasets (that's how many the input .props file said there would be, at least)");
+				for (int i = 0; i < numCyDatasets; i++) {
+					final String name = props.getProperty(PROP_DS + i + PROP_NAME);
+					final String keyType = props.getProperty(PROP_DS + i + KEY_TYPE);
+					final String nodeIdListString = props.getProperty(PROP_DS + i + NODE_ID_LIST);
+					final List<String> attrList = CyDataset.attrStringToAttrList(props.getProperty(PROP_DS + i + ATTR_LIST));
+					final String[] nodeIdsAsStr = nodeIdListString.split(DELIMITER_REGEXP);
+					List<Integer> nodeRootIdList = new ArrayList<Integer>();
+					for (final String cyNodeID : nodeIdsAsStr) {
+						// THIS IS THE PART WHERE NODES ARE ADDED TO THE NETWORK!
+						// The "getCyNode" function (or getNode) actually CREATES NEW NODES if they do not exist already!
+						// (Specifically, this is the part where ORPHAN NODES are restored and added to the network.)
+						nodeRootIdList.add(Cytoscape.getCyNode(cyNodeID, true).getRootGraphIndex()); // getNode -- adds nodes here
+					}
+					logger.debug(nodeRootIdList + "");
+					// Create a new CyDataset object, but with no automatic mapping since that has already been done and loaded directly as node attributes.
+					new CyDataset(name, keyType, nodeRootIdList, attrList, false, logger); // <-- the act of just CALLING this constructor also tells Cytoscape about this thing
+					// This code above ("new CyDataset(...)") appears to both create a CyDataset and also tell
+					// Cytoscape about it. So there is, for whatever reason, no need to add it to Cytoscape---one of the side effects of the "new" is to add it.
+					logger.info("CyDataset " + name + " restored from session file.");
 				}
-				logger.debug(nodeRootIdList + "");
-				// Create a new CyDataset object, but with no automatic mapping
-				// since that has already been done and loaded directly as node attributes.
-				new CyDataset(name, keyType, nodeRootIdList, attrList, false, logger); // <-- the act of just CALLING this constructor also tells Cytoscape about this thing
-				// This code above ("new CyDataset(...)") appears to both create a CyDataset and also tell
-				// Cytoscape about it. So there is, for whatever reason, no need to add it to Cytoscape---one of the side effects of the "new" is to add it.
-				logger.info("CyDataset " + name + " restored from session file.");
-			}
-
-			// ============================================================
-			logger.debug("loading CyCriteriasets");
-			final String setsString = CytoscapeInit.getProperties().getProperty(WorkspacesCommandHandler.PROPERTY_SETS);
-			if (null != setsString && setsString.length() > 2) {
-				// setsString is going to look something like this:
-				// If it is EMPTY, it will look like: "[]"
-				// If there are five elements, it would be "[something][else][also][this][guy]"
-				// Alex Williams: This PROBABLY BREAKS HORRIBLY if there are brackets in the setsString that are NOT being used as delimiters
-				// Below: removing the first & last characters with "substring" appears to be a hackish way to get the elements out of the "[" and "]" delimiting!
-				final String setsStringWithoutFirstAndLastElements = setsString.substring(1, setsString.length() - 1); // umm... no clue what's up here. Looks like we are getting rid of the first and last element for some reason. Oh, probably because the first element is '[' and the last element is
-																														// ']'. This is a horrible hack but it probably works!
-				final String[] splitUpStringArray = setsStringWithoutFirstAndLastElements.split("\\]\\["); // Alex Williams: note that this delimiter is apparently ][, and it also needs to be escaped since "split" takes a REGEX. This is a very dubious hack.
-				for (final String csetname : splitUpStringArray) {
-					// Now we will actually CREATE the CyCriteriasets whose names we just read.
-					final String propertyNameForThisSet = WorkspacesCommandHandler.PROPERTY_SET_PREFIX + csetname;
-					final String setParameters = CytoscapeInit.getProperties().getProperty(propertyNameForThisSet);
-					new CyCriteriaset(csetname, setParameters); // <-- again, the act of just CALLING this constructor also tells Cytoscape about this thing
-					logger.info("CyCriteriaset " + csetname + " restored from session file.");
+				// ============================================================
+				logger.debug("loading CyCriteriasets");
+				final String setsString = CytoscapeInit.getProperties().getProperty(WorkspacesCommandHandler.PROPERTY_SETS);
+				if (null != setsString && setsString.length() > 2) {
+					// setsString is going to look something like this:
+					// If it is EMPTY, it will look like: "[]"
+					// If there are five elements, it would be "[something][else][also][this][guy]"
+					// Alex Williams: This PROBABLY BREAKS HORRIBLY if there are brackets in the setsString that are NOT being used as delimiters
+					// Below: removing the first & last characters with "substring" appears to be a hackish way to get the elements out of the "[" and "]" delimiting!
+					final String setsStringWithoutFirstAndLastElements = setsString.substring(1, setsString.length() - 1); // umm... no clue what's up here. Looks like we are getting rid of the first and last element for some reason.
+					// Oh, probably because the first element is '[' and the last element is ']'. This is a horrible hack by some predecessor of mine, but it probably works!
+					final String[] splitUpStringArray = setsStringWithoutFirstAndLastElements.split("\\]\\["); // Alex Williams: note that this delimiter is apparently ][, and it also needs to be escaped since "split" takes a REGEX. This is a very dubious hack.
+					for (final String csetname : splitUpStringArray) {
+						// Now we will actually CREATE the CyCriteriasets whose names we just read.
+						final String propertyNameForThisSet = WorkspacesCommandHandler.PROPERTY_SET_PREFIX + csetname;
+						final String setParameters = CytoscapeInit.getProperties().getProperty(propertyNameForThisSet);
+						new CyCriteriaset(csetname, setParameters); // <-- again, the act of just CALLING this constructor also tells Cytoscape about this thing
+						logger.info("CyCriteriaset " + csetname + " restored from session file.");
+					}
+				}
+				// ============================================================
+				// Now restore the network-criteria map from the prop file
+				for (final CyNetwork net : Cytoscape.getNetworkSet()) {
+					final String csetname = props.getProperty(CSET_PREFIX + net.getTitle());
+					CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(csetname);
+					// track last applied cset per network.. whatever that means
+					CyCriteriaset.setNetworkCriteriaset(net, cset);
+					logger.debug("setting " + csetname + " for " + net.getTitle());
+					// apply them after SESSION_LOADED
 				}
 			}
-			// ============================================================
-			// Now restore the network-criteria map from the prop file
-			for (final CyNetwork net : Cytoscape.getNetworkSet()) {
-				final String csetname = props.getProperty(CSET_PREFIX + net.getTitle());
-				CyCriteriaset cset = CyCriteriaset.criteriaNameMap.get(csetname);
-				// track last applied cset per network.. whatever that means
-				CyCriteriaset.setNetworkCriteriaset(net, cset);
-				logger.debug("setting " + csetname + " for " + net.getTitle());
-				// apply them after SESSION_LOADED
-			}
+
 		} catch (Exception e) {
 			logger.warn("WARNING: Problem loading session files. Specifically: restoreSessionState Exception: " + e);
 			// Uh... looks like this swallows up all the exceptions? Hmm. Might make debugging hard!
@@ -303,7 +285,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			// The problem is that these nodes may belong to CyDatasets---so we must store them ourselves (Cytoscape won't do it, since they are not in any networks).
 			// To keep things simple (though with some redundancy), we simply store ALL the nodes in the rootgraph and allow mergers/collisions to happen.
 			logger.debug("writeNodeAttrFile: writing node attributes to the file " + nodeAttrFile + "");
-			DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
+			DatasetAttributesWriter.writeAttributesForOrphanNodesOnly(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
+			
+			//DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
+			
 			theParentFileList.add(nodeAttrFile); // Tell GenMAPP / Cytoscape about this new file!
 			logger.debug("writeNodeAttrFile: writing node attributes was APPARENTLY successful.");
 		} catch (IOException ex) {
@@ -349,7 +334,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	 * cytoscape.plugin.CytoscapePlugin#saveSessionStateFiles(java.util.List)
 	 */
 	public void saveSessionStateFiles(List<File> fileList) {
-		// Alex Williams: Note: it may initially seem WEIRD that these files are written to a TEMP directory and (seemingly) not to any real location---
+		// Alex Williams: Note: it may initially seem weird that these files are written to a TEMP directory and (seemingly) not to any real location---
 		// but actually, these are just TEMPORARILY saved in the temp dir, and then copied to the final save file by Cytoscape, where the files are zipped up.
 		// That's why the fileList is important---it tells Cytoscape which files need to be copied. I think the temp files MAY remain afterward... not sure about this!
 		logger.debug("saveSessionStateFiles: starting...");
@@ -364,15 +349,11 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			String nodeIdListString = "";
 			for (int i = 0; i < ds.getNodes().size(); i++) {
 				final Integer rootID = ds.getNodes().get(i);
-				// for (final Integer rootID : ds.getNodes()) {
-				// Write to the properties file!
-				String cyNodeID = ((CyNode) Cytoscape.getRootGraph().getNode(rootID)).getIdentifier();
-				if (i == (ds.getNodes().size() - 1)) {
-					nodeIdListString += cyNodeID; // It's the LAST ONE -- don't add a delimiter at the end!
-				} else {
-					nodeIdListString += cyNodeID + DELIMITER_REGEXP; // Add a delimiter--it's not the last one
+				final String cyNodeID = ((CyNode) Cytoscape.getRootGraph().getNode(rootID)).getIdentifier();
+				nodeIdListString += cyNodeID;
+				if (i < (ds.getNodes().size() - 1)) {
+					nodeIdListString += GenMAPPWorkspaces.DELIMITER_REGEXP; // Add a delimiter to all but the LAST element
 				}
-				// TODO: should this last comma NOT be included? Maybe it doesn't matter.
 			}
 			props.setProperty(PROP_DS + idx + ATTR_LIST, ds.getAttrString());
 			props.setProperty(PROP_DS + idx + NODE_ID_LIST, nodeIdListString);
@@ -388,19 +369,12 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		}
 
 		// Now actually write all the files! These functions are located directly above.
-
-		logger.error("Danger: removed GPML file saving here! Uncomment these lines soon!");
-
 		final String tmpDir = System.getProperty("java.io.tmpdir"); // Looks like files are WRITTEN to an intermediate temporary directory and are then COPIED to the actual save file.
-
 		logger.error("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
 		logger.error("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
-
 		writePropFile(props, new File(tmpDir, propFileName), fileList);
 		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
-		// writeGPMLFiles(tmpDir, fileList);
-		// Done writing all the files.
-
+		writeGPMLFiles(tmpDir, fileList);
 		logger.debug("saveSessionStateFiles: [DONE]");
 	}
 

@@ -2,8 +2,6 @@
 
 package org.genmapp.workspaces.utils;
 
-//import java.io.BufferedReader;
-
 import java.util.HashSet;
 import java.io.File;
 
@@ -148,18 +146,8 @@ public class DatasetAttributesWriter {
 
 	// Javadocs: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/CyMain.html
 	public static void writeAttributesForOrphanNodesOnly(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
-		// Added by Alex: the idea is that this will ONLY save orphan nodes
-		// CyAttribute types: simple_map and complex are NOT supported
-		
-		// Apparently we don't need to save REGULAR nodes, only the ORPHAN nodes that aren't in any network.
-		// If we save the regular nodes AND ALSO let Cytoscape save the node attributes, that maybe causes problems? Unclear.		
-		// Wow, attributes are complicated: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/data/CyAttributes.html
-		// CyAttribute types: simple_map and complex are NOT supported
-		logger.warn("OK, Alex Williams is trying to save all the attributes for ONLY THE ORPHAN NODES now!");
-		
-		// Previous comment: CyAttribute types: simple_map and complex are NOT supported.
-		// Alex Williams: I'm not sure why there's no handling for simple_map or complex here, besides the "they are not supported" comment.
-		//final HashSet<CyNode> orphanSet = GenMAPPWorkspaces.setOfOrphanNodesNotInAnyNetwork();
+		// Added by Alex Williams: the idea is that this will ONLY save orphan nodes (ORPHAN nodes are ones that aren't in any network)
+		// If we save the regular nodes AND ALSO let Cytoscape save the node attributes, that maybe causes problems? Unclear.
 		if (0 == nodeAttributes.getAttributeNames().length) {
 			// Skip writing attributes; there are none to write!
 		} else {
@@ -171,12 +159,15 @@ public class DatasetAttributesWriter {
 			}
 			writer.close();
 		}
-		logger.warn("OK, DONE attributes now apparently!");
 	}
 	
-	
 	public static void writeAttributes(final CyAttributes nodeAttributes, final File attribFile, final CyLogger logger) throws IOException {
-		CyLogger.getLogger().warn("OK, writing attributes now!");		// CyAttribute types: simple_map and complex are NOT supported
+		// Writes attributes for ALL nodes, even those that CYTOSCAPE also saves.
+		// This could be a problem, since our fancy node-writer doesn't support simple_map or complex! So it is liable to BREAK if Cytoscape has nodes with those properties.
+		// The solution to this would be to either:
+		// - fix it to support simple_map and complex
+		// - only save nodes we are sure aren't of those types. 
+		// CyAttribute types: simple_map and complex are NOT supported
 		if (nodeAttributes.getAttributeNames().length == 0) {
 			// Skip writing attributes; there are none to write!
 		} else {
@@ -188,7 +179,6 @@ public class DatasetAttributesWriter {
 			}
 			writer.close();
 		}
-		CyLogger.getLogger().warn("OK, DONE attributes now apparently!");
 	}
 
 }

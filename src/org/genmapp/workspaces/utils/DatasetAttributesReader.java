@@ -66,6 +66,9 @@ public class DatasetAttributesReader {
 
 	static final byte FAILURE_TO_INFER_TYPE = -1;
 
+	private static final int SPLIT_ALLOW_BLANK_CELLS_AT_END = -1; // This must be NEGATIVE ONE and it means "we need to allow blank cells at the end of the string being delimited." Look up String split for more info.
+
+					
 	public static void loadAttributes(CyAttributes cyAttrs, final FileReader fileIn, final CyLogger logger) throws IOException {
 		WorkspacesCommandHandler.showMessage("loadAttributes");
 		logger.info("DatasetAttributesReader: loadAttributes starting now...");
@@ -79,10 +82,11 @@ public class DatasetAttributesReader {
 			// So this thing gets populated in a super-non-normal way;
 			// each top-level element in the thing is a COLUMN and not a row!
 			// Note that this is BACKWARDS from how you almost certainly expect to read a line-by-line file!!!!!
-			BufferedReader inStream = new BufferedReader(fileIn);
+			final BufferedReader inStream = new BufferedReader(fileIn);
 			for (String line = inStream.readLine(); line != null; line = inStream.readLine()) {
 				lineNum++;
-				final String row[] = line.split(GenMAPPWorkspaces.DELIMITER_REGEXP); // Split the comma-separated values
+				final String row[] = line.split(GenMAPPWorkspaces.DELIMITER_REGEXP, SPLIT_ALLOW_BLANK_CELLS_AT_END); // Split the comma-or-whatever-separated values
+				//logger.debug("Line " + lineNum + " is length " + row.length + " when split up by delimiter [" + GenMAPPWorkspaces.DELIMITER_REGEXP + "]: [[[" + line + "]]]");
 				if (bufferCols == null) { // <-- Initialize this the FIRST TIME only!
 					totalNumHeaderColumns = row.length;
 					bufferCols = new Vector<Vector<String>>(totalNumHeaderColumns);
@@ -92,47 +96,41 @@ public class DatasetAttributesReader {
 						// Don't get confused---it seems like we REQUIRE the ability to get column slices
 						// easily later on, which is why the data is read into columns instead of rows.
 					}
-					logger.debug("Line " + lineNum + ": init bufferCols: colTotal =  " + totalNumHeaderColumns);
-					logger.debug("Line " + lineNum + ": bufferCols inited = " + bufferCols + " with length " + bufferCols.size());
+					logger.info("Line " + lineNum + ": init bufferCols: colTotal =  " + totalNumHeaderColumns);
+					logger.info("Line " + lineNum + ": bufferCols inited = " + bufferCols + " with length " + bufferCols.size());
 				}
 
 				if (row.length != totalNumHeaderColumns) {
-					logger.error("WARNING: Line " + lineNum + ": has a DIFFERENT number of elements from the header---uneven column total while loading attributes file: # of columns is SUPPOSED to be " + totalNumHeaderColumns + ", but we encountered line " + lineNum + " with " + row.length + " comma-separated columns. We are going to attempt to just deal with this, but it probably means there is somewhing weird about the way the file that you are loading was saved.");
+					logger.error("POSSIBLE ERROR IN SAVE FILE: Line " + lineNum + ": has a DIFFERENT number of elements from the header---uneven column total while loading attributes file. The number of columns is SUPPOSED to be " + totalNumHeaderColumns + ", but we encountered line " + lineNum + " with " + row.length + " delimiter-separated columns. We are going to attempt to just deal with this, but it probably means there is somewhing weird about the way the file that you are loading was saved.");
 				}
-
 				for (int col = 0; col < totalNumHeaderColumns; col++) {
 					// For each item in this row, we're going to append that item to the end of the appropriate column.
 					// Note that this is a SUPER UNUSUAL way to append things---we aren't just adding a row,
 					// we're actually lengthening a whole bunch of columns.
 					final String itemToAdd = (col < row.length) ? row[col] : null;
-					// About: if this row is NOT LONG ENOUGH, we will need to add a "dummy" value.
-					// Should we add a null value, or should it be something like a blank string instead?
-					// For now, it's a null value.
+					// About: if this row is NOT LONG ENOUGH, we will add a DUMMY null value!
 					bufferCols.get(col).add(itemToAdd); // <-- adds either a String or null
 				}
 			}
-			logger.info("Finished reading. Total # columns is: " + totalNumHeaderColumns + " columns");
+			logger.info("Finished reading attributes. Total number of columns reads is: " + totalNumHeaderColumns);
 			WorkspacesCommandHandler.showMessage("Read file with " + totalNumHeaderColumns + " columns ");
 		} catch (Exception e) {
 			Writer writer = new StringWriter();
 			e.printStackTrace(new PrintWriter(writer));
-			logger.error("ERROR HEDGEHOG 97: while processing line " + lineNum + ". Now, Alex found a problem at: " + writer.toString() + "\n. There was also the exception being reported as " + e);
+			logger.error("ERROR PRINTWRITER 97: while processing line " + lineNum + ". Now, Alex found a problem at: " + writer.toString() + "\n. There was also the exception being reported as " + e);
 		}
 		try {
 			// for each col, send to loadAttributesInternal
-			for (int i = 0; i < totalNumHeaderColumns; i++) {
-				// Apparently the FIRST column (bufferCols.get(0)) has the types
-				// not sure if this should really start counting at zero... seems kind of weird and wrong actually!
-				// probably this should start at (i = 1) intead of i = 0!!!!!!!!!!!!!!!!!!!!!!!!!!
-				// but apparently this is actually how it should work. Weird!
-				// TODO: fix this crazy stuff!!!
+			for (int i = 0; i < totalNumHeaderColumns; i++) { // <-- note that i is INTENTIONALLY starting from zero here.
+				// Note that this ALWAYS passed in "bufferCols.get(0)" , which is the NAMES column.
+				// It is INTENTIONAL that the first call to this is with i = 0. Do not change it to i = 1!
 				loadAttributesINTERNAL(cyAttrs, bufferCols.get(0), bufferCols.get(i));
 			}
 			WorkspacesCommandHandler.showMessage("DatasetAttributesReader: loadAttributes is [DONE]!");
 		} catch (Exception e) {
 			Writer writer = new StringWriter();
 			e.printStackTrace(new PrintWriter(writer));
-			logger.error("ERROR CAPYBARA 42: " + "Now, Alex found a problem at: " + writer.toString() + "\n. There was also the exception being reported as " + e);
+			logger.error("ERROR EXCEPTION 42: " + "Found a problem involving an un-caught-earlier exception at: " + writer.toString() + "\n. The exception is reported as: " + e);
 		}
 	}
 
@@ -164,7 +162,7 @@ public class DatasetAttributesReader {
 		}
 		ArrayList<Object> elmsBuff = new ArrayList<Object>(); // <-- note that this ArrayList may get MODIFIED in place to convert data types from Strings to (say) Integers or Doubles. Or they could remain Strings, depending on the desired final data type!
 		final String trimmedValNoParens = val.substring(1, (val.length() - 1)).trim(); // Chop away leading '(' and trailing ')'. -- Removes the FIRST AND LAST characters from "val" and then trim off whitespace.
-		for (final String vs : (String[]) trimmedValNoParens.split(DatasetAttributesWriter.LIST_SEPARATOR)) {
+		for (final String vs : (String[]) trimmedValNoParens.split(DatasetAttributesWriter.LIST_SEPARATOR, SPLIT_ALLOW_BLANK_CELLS_AT_END)) {
 			elmsBuff.add(decodeSlashEscapes(decodeString(vs))); // Note: might be NULL! Always a string at this point, but takes NON STRING objects later, which is kind of interesting and weird.
 		}
 		for (int i = 0; i < elmsBuff.size(); i++) {
@@ -207,6 +205,7 @@ public class DatasetAttributesReader {
 		CyLogger.getLogger().debug("loadAttributesInternal " + nodeData.get(0));
 		badDecode = false; // <-- class-wide variable. Really not sure why it gets set to false here... seems kind of weird!
 		int nnn = -1; // <-- line number
+		
 		try {
 			final String attrName = nodeData.get(ATTR_NAME_LINE_ROW_INDEX);
 			final String className = nodeData.get(ATTR_TYPE_LINE_ROW_INDEX);
@@ -217,15 +216,23 @@ public class DatasetAttributesReader {
 				// Note that the header is TWO LINES instead of just one.
 				final String key = nodeName.get(nnn);
 				final String val = nodeData.get(nnn);
-				if (val.startsWith("(")) {
+				//System.out.println("AGW: " + key + " : " + val);
+				if (null == val) {
+					//CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
+				} else if (val.startsWith("(")) {
 					// Specially handle a LIST data type, which we expect to start with a parenthesis.
 					// Is this ACTUALLY a reliable way of detecting lists? I very much doubt it!!!
 					loadAttrHandleListType(cyAttrs, key, val, attrName, type, nnn);
+					
+					// To do / todo:
+					// ALEX WILLIAMS: I suspect this area is probably wrong --- what if a value starts with a '(' ? Like a gene description in parentheses or something?
+					// That would NOT be a list data type, but it would be (incorrectly) parsed as one. I think this is probably a bug but I don't actually know 100%.
+					
 				} else {
 					// Not a list data type!
 					final String decodedVal = decodeSlashEscapes(decodeString(val));
 					if (decodedVal == null) {
-						CyLogger.getLogger().info("Couldn't successfully decode the value \'" + val + "\' to anything but NULL. On line " + nnn);
+						CyLogger.getLogger().info("loadAttributesINTERNAL: Couldn't successfully decode the value \'" + val + "\' to anything but NULL. On line " + nnn);
 						// I guess we don't bother setting an attribute if it's NULL? Not sure what that would even mean exactly.
 					} else {
 						setCyAttrBasedOnType(type, cyAttrs, key, attrName, decodedVal); // set the attribute for this non-null key/value pair
