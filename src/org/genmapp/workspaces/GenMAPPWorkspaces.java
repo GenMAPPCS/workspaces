@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 //import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -118,6 +119,38 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			}
 		}
 		new WorkspacesCommandHandler(logger); // CyCommands ... I think this adds a CyCommand or something? Unclear.
+	}
+
+	public static String createUniqueCytoscapeNetworkName(final String baseName) {
+		final int MAX_NUM_ATTEMPTS = 50000; // Give up and just make a duplicate network name if we try THIS many times and get nowhere.
+		// Alex Williams, Nov 2012:
+		// Given a "baseName" name as a hint:
+		// 1) If that network name is NOT in use, it just returns "baseName" (unmodified)
+		// 2) If that network name IS in use, then it makes MAX_NUM_ATTEMPTS to append digits to it and thus create a unique name.
+		// 3) If we use up more than MAX_NUM_ATTEMPTS, we just give up and create a duplicate-named network. This shouldn't happen too often.
+		// Example: "Network 2" would be the next network created after "Network" .
+		// This probably should be a Cytoscape utility function, but it APPEARS not to be as far as I can tell.
+		HashSet<String> networkNames = new HashSet<String>(Cytoscape.getNetworkSet().size());
+		for (final CyNetwork nnn : Cytoscape.getNetworkSet()) {
+			networkNames.add(nnn.getTitle());
+		}
+		if (!networkNames.contains(baseName)) {
+			return baseName; // Ok, baseName is ALREADY a unique name, so just return it.
+		} else {
+			// I guess "baseName" wasn't a unique network name, so let's try appending numbers to it.
+			for (int tryNumber = 2; tryNumber < MAX_NUM_ATTEMPTS; tryNumber++) {
+				final String tryThisNetworkName = baseName + " " + tryNumber;
+				//CyLogger.getLogger().error("AGW debugging createUniqueCytoscapeNetworkName: " + tryThisNetworkName + " was apparently a unique name.");
+				//for (final String sss : networkNames) {
+				//	CyLogger.getLogger().error("AGW debugging: [[" + sss + "]] equals [[" + tryThisNetworkName + "]]? Answer: " + sss.equalsIgnoreCase(tryThisNetworkName));
+				//}
+				if (!networkNames.contains(tryThisNetworkName)) {
+					return tryThisNetworkName; // Finally exit the loop when we have found an un-used network name!
+				}
+			}
+			CyLogger.getLogger().error("createUniqueCytoscapeNetworkName: Even after " + MAX_NUM_ATTEMPTS + " attempts to find a non-duplicate network name, we failed. Thus, this network name (" + baseName + ") is probably a duplicate of a previous one!");
+			return (baseName + "_IS_A_DUPLICATE_NAME_ERROR");
+		}
 	}
 
 	/*
@@ -285,8 +318,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			// The problem is that these nodes may belong to CyDatasets---so we must store them ourselves (Cytoscape won't do it, since they are not in any networks).
 			// To keep things simple (though with some redundancy), we simply store ALL the nodes in the rootgraph and allow mergers/collisions to happen.
 			logger.debug("writeNodeAttrFile: writing node attributes to the file " + nodeAttrFile + "");
-			DatasetAttributesWriter.writeAttributesForOrphanNodesOnly(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);			
-			//DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
+			DatasetAttributesWriter.writeAttributesForOrphanNodesOnly(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
+			// DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
 			theParentFileList.add(nodeAttrFile); // Tell GenMAPP / Cytoscape about this new file!
 			logger.debug("writeNodeAttrFile: writing node attributes was APPARENTLY successful.");
 		} catch (IOException ex) {
@@ -368,9 +401,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		// Now actually write all the files! These functions are located directly above.
 		final String tmpDir = System.getProperty("java.io.tmpdir"); // Looks like files are WRITTEN to an intermediate temporary directory and are then COPIED to the actual save file.
-		
-		//logger.debug("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
-		//logger.debug("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
+
+		// logger.debug("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
+		// logger.debug("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
 		writePropFile(props, new File(tmpDir, propFileName), fileList);
 		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
 		writeGPMLFiles(tmpDir, fileList);

@@ -501,7 +501,9 @@ public class DatasetPanel extends JPanel implements
 
 					progress.setString("Creating network from dataset");
 					progress.setValue(10);
-					CyNetwork newNetwork = Cytoscape.createNetwork(nodes, edges, ds.getName());
+					
+					final String newUniqueNetName = GenMAPPWorkspaces.createUniqueCytoscapeNetworkName(ds.getName()); // Alex Williams: added this to solve the duplicate-network-names-prevent-saving bug
+					CyNetwork newNetwork = Cytoscape.createNetwork(nodes, edges, newUniqueNetName); // Alex Williams, Nov 2012: previously the newUniqueNetName was just "ds.getName()" but that can be DUPLICATED and already present in the network!!!
 					progress.setValue(90);
 					// set Network attributes to notify NetworkMapping that job
 					// is already done

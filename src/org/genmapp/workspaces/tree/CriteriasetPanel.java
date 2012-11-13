@@ -77,11 +77,7 @@ import cytoscape.visual.VisualPropertyType;
 /**
  * GUI component for managing network list in current session.
  */
-public class CriteriasetPanel extends JPanel
-		implements
-			PropertyChangeListener,
-			TreeSelectionListener,
-			ChangeListener {
+public class CriteriasetPanel extends JPanel implements PropertyChangeListener, TreeSelectionListener, ChangeListener {
 
 	private static final long serialVersionUID = 3161161934074033023L;
 
@@ -173,8 +169,7 @@ public class CriteriasetPanel extends JPanel
 		treeTable.getTree().setRootVisible(false);
 		ToolTipManager.sharedInstance().registerComponent(treeTable);
 		TreeCellRenderer treeCellRenderer = new TreeCellRenderer();
-		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource(
-				"images/criteriaset.png"));
+		ImageIcon leafIcon = new ImageIcon(GenMAPPWorkspaces.class.getResource("images/criteriaset.png"));
 		if (leafIcon != null) {
 			treeCellRenderer.setLeafIcon(leafIcon);
 		}
@@ -193,17 +188,13 @@ public class CriteriasetPanel extends JPanel
 
 		// create and populate the popup window
 		popup = new JPopupMenu();
-		destroyCriteriaItem = new JMenuItem(
-				PopupActionListener.DESTROY_CRITERIA);
+		destroyCriteriaItem = new JMenuItem(PopupActionListener.DESTROY_CRITERIA);
 		editCriteriaItem = new JMenuItem(PopupActionListener.EDIT_CRITERIA);
-		applyCriteriaItem = new JMenuItem(
-				PopupActionListener.APPLY_CRITERIA_TO_ALL);
+		applyCriteriaItem = new JMenuItem(PopupActionListener.APPLY_CRITERIA_TO_ALL);
 		createNetworkItem = new JMenuItem(PopupActionListener.CREATE_NETWORK);
 		selectNodesItem = new JMenuItem(PopupActionListener.SELECT_NODES);
-		combineCriteriaItem = new JMenuItem(
-				PopupActionListener.COMBINE_CRITERIA);
-		clearCombinedCriteriaItem = new JMenuItem(
-				PopupActionListener.CLEAR_COMBINED_CRITERIA);
+		combineCriteriaItem = new JMenuItem(PopupActionListener.COMBINE_CRITERIA);
+		clearCombinedCriteriaItem = new JMenuItem(PopupActionListener.CLEAR_COMBINED_CRITERIA);
 		popupActionListener = new PopupActionListener();
 		destroyCriteriaItem.addActionListener(popupActionListener);
 		editCriteriaItem.addActionListener(popupActionListener);
@@ -224,12 +215,9 @@ public class CriteriasetPanel extends JPanel
 	}
 
 	public void resetTable() {
-		treeTable.getColumn(GenericColumnTypes.CRITERIA_SET.getDisplayName())
-				.setPreferredWidth(190);
-		treeTable.getColumn(GenericColumnTypes.CRITERIA.getDisplayName())
-				.setPreferredWidth(50);
-		treeTable.getColumn(GenericColumnTypes.NODES.getDisplayName())
-				.setPreferredWidth(40);
+		treeTable.getColumn(GenericColumnTypes.CRITERIA_SET.getDisplayName()).setPreferredWidth(190);
+		treeTable.getColumn(GenericColumnTypes.CRITERIA.getDisplayName()).setPreferredWidth(50);
+		treeTable.getColumn(GenericColumnTypes.NODES.getDisplayName()).setPreferredWidth(40);
 		treeTable.setRowHeight(DEF_ROW_HEIGHT);
 	}
 
@@ -276,8 +264,7 @@ public class CriteriasetPanel extends JPanel
 		// reset view
 		if (criteriaTreeTableModel.getChildCount(root) < 1) {
 			this.setVisible(false);
-			CyAction.actionNameMap.get(ActionPanel.RUN_GOELITE)
-					.setDoable(false);
+			CyAction.actionNameMap.get(ActionPanel.RUN_GOELITE).setDoable(false);
 		}
 
 	}
@@ -308,8 +295,7 @@ public class CriteriasetPanel extends JPanel
 			}
 
 			// apparently this doesn't fire valueChanged
-			treeTable.getTree()
-					.collapsePath(new TreePath(new TreeNode[]{root}));
+			treeTable.getTree().collapsePath(new TreePath(new TreeNode[] { root }));
 
 			treeTable.getTree().updateUI();
 			TreePath path = new TreePath(dmtn.getPath());
@@ -340,10 +326,8 @@ public class CriteriasetPanel extends JPanel
 
 		if (node != null) {
 			// fires valueChanged if the criteriaset isn't already selected
-			treeTable.getTree().getSelectionModel().setSelectionPath(
-					new TreePath(node.getPath()));
-			treeTable.getTree().scrollPathToVisible(
-					new TreePath(node.getPath()));
+			treeTable.getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+			treeTable.getTree().scrollPathToVisible(new TreePath(node.getPath()));
 		}
 	}
 
@@ -351,8 +335,7 @@ public class CriteriasetPanel extends JPanel
 	 * @return criteria set name
 	 */
 	public static String getSelectedCriteriaset() {
-		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
-				.getLastSelectedPathComponent();
+		GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 		if (null == node)
 			return null;
 		else
@@ -370,8 +353,7 @@ public class CriteriasetPanel extends JPanel
 		Enumeration tree_node_enum = root.breadthFirstEnumeration();
 
 		while (tree_node_enum.hasMoreElements()) {
-			GenericTreeNode node = (GenericTreeNode) tree_node_enum
-					.nextElement();
+			GenericTreeNode node = (GenericTreeNode) tree_node_enum.nextElement();
 
 			if (((String) node.getID()).equals(csetname)) {
 				return node;
@@ -417,8 +399,7 @@ public class CriteriasetPanel extends JPanel
 					 */
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
-							Set<CyNetwork> networks = new HashSet<CyNetwork>(
-									Cytoscape.getSelectedNetworks());
+							Set<CyNetwork> networks = new HashSet<CyNetwork>(Cytoscape.getSelectedNetworks());
 							applyCriteriasetToNetworks(networks);
 						}
 					});
@@ -439,33 +420,24 @@ public class CriteriasetPanel extends JPanel
 		// reset hold on valueChanged() events
 		greenlight = true;
 
-		GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
-				.getLastSelectedPathComponent();
+		GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 		if (node == null || node.getUserObject() == null)
 			return;
 
-		CyCriteriaset selectedCriteriaset = CyCriteriaset.criteriaNameMap
-				.get(node.getID());
+		CyCriteriaset selectedCriteriaset = CyCriteriaset.criteriaNameMap.get(node.getID());
 
 		for (CyNetwork network : networkList) {
 			if (Cytoscape.viewExists(network.getIdentifier())) {
-				WorkspacesCommandHandler.criteriaMapperApplySet(
-						selectedCriteriaset, network);
+				WorkspacesCommandHandler.criteriaMapperApplySet(selectedCriteriaset, network);
 
 				/*
 				 * Also apply to all sub and nested networks relative to
 				 * selected network.
 				 */
-				Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
-						.getNetworkTreePanel().getNetworkTreeNode(
-								network.getIdentifier()))
-						.breadthFirstEnumeration();
+				Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel.getNetworkTreePanel().getNetworkTreeNode(network.getIdentifier())).breadthFirstEnumeration();
 				while (subnets.hasMoreElements()) {
-					GenericTreeNode subnode = (GenericTreeNode) subnets
-							.nextElement();
-					WorkspacesCommandHandler.criteriaMapperApplySet(
-							selectedCriteriaset, Cytoscape.getNetwork(subnode
-									.getID()));
+					GenericTreeNode subnode = (GenericTreeNode) subnets.nextElement();
+					WorkspacesCommandHandler.criteriaMapperApplySet(selectedCriteriaset, Cytoscape.getNetwork(subnode.getID()));
 				}
 			}
 		}
@@ -475,8 +447,7 @@ public class CriteriasetPanel extends JPanel
 		 * handled as "current" even though it's not "selected". Not a good
 		 * state to be in...
 		 */
-		String netname = WorkspacesPanel.getNetworkTreePanel()
-				.getSelectedNetwork();
+		String netname = WorkspacesPanel.getNetworkTreePanel().getSelectedNetwork();
 		CyNetwork net = Cytoscape.getNetwork(netname);
 		CyNetworkView netview = Cytoscape.getNetworkView(net.getIdentifier());
 		Cytoscape.setCurrentNetwork(net.getIdentifier());
@@ -633,8 +604,7 @@ public class CriteriasetPanel extends JPanel
 		public void actionPerformed(ActionEvent ae) {
 			final String label = ((JMenuItem) ae.getSource()).getText();
 
-			GenericTreeNode node = (GenericTreeNode) treeTable.getTree()
-					.getLastSelectedPathComponent();
+			GenericTreeNode node = (GenericTreeNode) treeTable.getTree().getLastSelectedPathComponent();
 
 			if (node == null || node.getUserObject() == null)
 				return;
@@ -644,20 +614,16 @@ public class CriteriasetPanel extends JPanel
 			} else if (EDIT_CRITERIA.equals(label)) {
 				WorkspacesCommandHandler.openCriteriaMapper(node.getID());
 			} else if (DESTROY_CRITERIA.equals(label)) {
-				CyCriteriaset.criteriaNameMap.get(node.getID())
-						.deleteCriteriaset();
+				CyCriteriaset.criteriaNameMap.get(node.getID()).deleteCriteriaset();
 			} else if (CREATE_NETWORK.equals(label)) {
 				System.out.println("create network");
 				createNetworkFromCriteria(node.getID()); // TODO
 			} else if (SELECT_NODES.equals(label)) {
 				System.out.println("select ndoes");
-				CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(node
-						.getID());
-				List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape
-						.getRootGraph().getNodeIndicesArray());
+				CyCriteriaset set = CyCriteriaset.criteriaNameMap.get(node.getID());
+				List<CyNode> hitList = set.collectCriteriaNodes(Cytoscape.getRootGraph().getNodeIndicesArray());
 				Cytoscape.getCurrentNetwork().unselectAllNodes();
-				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList,
-						true);
+				Cytoscape.getCurrentNetwork().setSelectedNodeState(hitList, true);
 				Cytoscape.getCurrentNetworkView().updateView();
 			} else if (COMBINE_CRITERIA.equals(label)) {
 				// double check that there are more than one cset to work with
@@ -673,13 +639,9 @@ public class CriteriasetPanel extends JPanel
 					 * Also collect from all sub and nested networks relative to
 					 * selected network.
 					 */
-					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
-							.getNetworkTreePanel().getNetworkTreeNode(
-									network.getIdentifier()))
-							.breadthFirstEnumeration();
+					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel.getNetworkTreePanel().getNetworkTreeNode(network.getIdentifier())).breadthFirstEnumeration();
 					while (subnets.hasMoreElements()) {
-						GenericTreeNode subnode = (GenericTreeNode) subnets
-								.nextElement();
+						GenericTreeNode subnode = (GenericTreeNode) subnets.nextElement();
 
 						netlist.add(Cytoscape.getNetwork(subnode.getID()));
 					}
@@ -694,7 +656,7 @@ public class CriteriasetPanel extends JPanel
 					// String colorlist = generateColorlist(nodeid);
 					// if (null == colorlist)
 					// continue;
-					//						
+					//
 					// WorkspacesCommandHandler.pieCriteria(nodeid,colorlist,
 					// net);
 					// }
@@ -704,23 +666,16 @@ public class CriteriasetPanel extends JPanel
 
 					// pie for ellipses; stripes for all others
 					// NodeShape shape = NodeShape.ELLIPSE;
-					NodeShape shape = (NodeShape) Cytoscape
-							.getCurrentNetworkView().getVisualStyle()
-							.getNodeAppearanceCalculator()
-							.getDefaultAppearance().get(
-									VisualPropertyType.NODE_SHAPE);
+					NodeShape shape = (NodeShape) Cytoscape.getCurrentNetworkView().getVisualStyle().getNodeAppearanceCalculator().getDefaultAppearance().get(VisualPropertyType.NODE_SHAPE);
 
 					for (String cl : colorlistNodes.keySet()) {
 						if (shape.getShapeName().equals("Ellipse")) {
-							WorkspacesCommandHandler.pieCriteria(colorlistNodes
-									.get(cl).toString(), cl, net);
+							WorkspacesCommandHandler.pieCriteria(colorlistNodes.get(cl).toString(), cl, net);
 						} else {
-							WorkspacesCommandHandler.stripeCriteria(
-									colorlistNodes.get(cl).toString(), cl, net);
+							WorkspacesCommandHandler.stripeCriteria(colorlistNodes.get(cl).toString(), cl, net);
 						}
 					}
-					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(
-							true, true);
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
 				}
 			} else if (CLEAR_COMBINED_CRITERIA.equals(label)) {
 				List<CyNetwork> netlist = new ArrayList<CyNetwork>();
@@ -731,21 +686,16 @@ public class CriteriasetPanel extends JPanel
 					 * Also collect from all sub and nested networks relative to
 					 * selected network.
 					 */
-					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel
-							.getNetworkTreePanel().getNetworkTreeNode(
-									network.getIdentifier()))
-							.breadthFirstEnumeration();
+					Enumeration<GenericTreeNode> subnets = ((GenericTreeNode) WorkspacesPanel.getNetworkTreePanel().getNetworkTreeNode(network.getIdentifier())).breadthFirstEnumeration();
 					while (subnets.hasMoreElements()) {
-						GenericTreeNode subnode = (GenericTreeNode) subnets
-								.nextElement();
+						GenericTreeNode subnode = (GenericTreeNode) subnets.nextElement();
 
 						netlist.add(Cytoscape.getNetwork(subnode.getID()));
 					}
 				}
 				for (CyNetwork net : netlist) {
 					WorkspacesCommandHandler.clearCombinedCriteria(net);
-					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(
-							true, true);
+					Cytoscape.getNetworkView(net.getIdentifier()).redrawGraph(true, true);
 				}
 			} else {
 				CyLogger.getLogger().warn("Unexpected panel popup option");
@@ -765,8 +715,7 @@ public class CriteriasetPanel extends JPanel
 		List<String> nodelist;
 
 		for (int ni : net.getNodeIndicesArray()) {
-			String nodeid = Cytoscape.getRootGraph().getNode(ni)
-					.getIdentifier();
+			String nodeid = Cytoscape.getRootGraph().getNode(ni).getIdentifier();
 
 			String colorlist = generateColorlist(nodeid);
 			if (null == colorlist)
@@ -798,8 +747,7 @@ public class CriteriasetPanel extends JPanel
 
 		colorlist.clear();
 		for (CyCriteriaset cset : CyCriteriaset.criteriaNameMap.values()) {
-			String attr = Cytoscape.getNodeAttributes().getStringAttribute(
-					nodeid, cset.getNodeAttribute());
+			String attr = Cytoscape.getNodeAttributes().getStringAttribute(nodeid, cset.getNodeAttribute());
 			String color = "#C0C0C0"; // default for "false" and
 			// "null"
 			if (attr.equals("true")) {
@@ -827,13 +775,9 @@ public class CriteriasetPanel extends JPanel
 		System.out.println("HITS: " + hitList.size());
 		boolean goForIt = false;
 		if (null == hitList || hitList.size() < 1) {
-			System.out
-					.println("Sorry, no nodes associated with this criteriaset");
+			System.out.println("Sorry, no nodes associated with this criteriaset");
 		} else if (hitList.size() > 2000) {
-			int n = JOptionPane.showConfirmDialog(Cytoscape.getDesktop(),
-					"You are about to create a network of " + hitList.size()
-							+ " nodes.", "Warning",
-					JOptionPane.OK_CANCEL_OPTION);
+			int n = JOptionPane.showConfirmDialog(Cytoscape.getDesktop(), "You are about to create a network of " + hitList.size() + " nodes.", "Warning", JOptionPane.OK_CANCEL_OPTION);
 			if (n == JOptionPane.OK_OPTION)
 				goForIt = true;
 		} else {
@@ -841,13 +785,14 @@ public class CriteriasetPanel extends JPanel
 		}
 
 		if (goForIt) {
-			CyNetwork newNetwork = Cytoscape.createNetwork(hitList, edges,
-					criteriasetName);
+			// To Do: fix the criteriasetName to ALWAYS BE UNIQUE
+			
+			final String newUniqueNetworkName = GenMAPPWorkspaces.createUniqueCytoscapeNetworkName(criteriasetName); // Modified Nov 2012 by Alex Williams
+			CyNetwork newNetwork = Cytoscape.createNetwork(hitList, edges, newUniqueNetworkName) ; // previously was just: criteriasetName);
 			Object[] new_value = new Object[2];
 			new_value[0] = newNetwork;
 			new_value[1] = newNetwork.getIdentifier();
-			Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null,
-					new_value);
+			Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null, new_value);
 		}
 	}
 
@@ -867,11 +812,8 @@ public class CriteriasetPanel extends JPanel
 
 		private static final long serialVersionUID = -678559990857492912L;
 
-		public Component getTreeCellRendererComponent(JTree tree, Object value,
-				boolean sel, boolean expanded, boolean leaf, int row,
-				boolean hasFocus) {
-			super.getTreeCellRendererComponent(tree, value, sel, expanded,
-					leaf, row, hasFocus);
+		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+			super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
 			String nodeid = ((GenericTreeNode) value).getID();
 
@@ -882,20 +824,16 @@ public class CriteriasetPanel extends JPanel
 				CyNetwork currnet = Cytoscape.getCurrentNetwork();
 				Integer nodeCount = -1; // let null show green
 				if (currnet != null) {
-					Integer i = CyCriteriaset.criteriaNetworkNodesMap.get(
-							nodeid).get(
-							Cytoscape.getCurrentNetwork().getIdentifier());
+					Integer i = CyCriteriaset.criteriaNetworkNodesMap.get(nodeid).get(Cytoscape.getCurrentNetwork().getIdentifier());
 					if (i != null)
 						nodeCount = i;
 				}
 
 				if (nodeCount != 0) {
-					setBackgroundNonSelectionColor(java.awt.Color.green
-							.brighter());
+					setBackgroundNonSelectionColor(java.awt.Color.green.brighter());
 					setBackgroundSelectionColor(java.awt.Color.green.darker());
 				} else {
-					setBackgroundNonSelectionColor(java.awt.Color.red
-							.brighter());
+					setBackgroundNonSelectionColor(java.awt.Color.red.brighter());
 					setBackgroundSelectionColor(java.awt.Color.red.darker());
 				}
 			}
