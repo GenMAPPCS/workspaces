@@ -285,10 +285,8 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			// The problem is that these nodes may belong to CyDatasets---so we must store them ourselves (Cytoscape won't do it, since they are not in any networks).
 			// To keep things simple (though with some redundancy), we simply store ALL the nodes in the rootgraph and allow mergers/collisions to happen.
 			logger.debug("writeNodeAttrFile: writing node attributes to the file " + nodeAttrFile + "");
-			DatasetAttributesWriter.writeAttributesForOrphanNodesOnly(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
-			
+			DatasetAttributesWriter.writeAttributesForOrphanNodesOnly(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);			
 			//DatasetAttributesWriter.writeAttributes(Cytoscape.getNodeAttributes(), nodeAttrFile, logger);
-			
 			theParentFileList.add(nodeAttrFile); // Tell GenMAPP / Cytoscape about this new file!
 			logger.debug("writeNodeAttrFile: writing node attributes was APPARENTLY successful.");
 		} catch (IOException ex) {
@@ -370,8 +368,9 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		// Now actually write all the files! These functions are located directly above.
 		final String tmpDir = System.getProperty("java.io.tmpdir"); // Looks like files are WRITTEN to an intermediate temporary directory and are then COPIED to the actual save file.
-		logger.error("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
-		logger.error("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
+		
+		//logger.debug("Alex Williams: here are ALL the nodes that Cytoscape knows about: " + namesOfAllCyNodesInCollection(Cytoscape.getCyNodesList()) + ". That is the full set.");
+		//logger.debug("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
 		writePropFile(props, new File(tmpDir, propFileName), fileList);
 		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
 		writeGPMLFiles(tmpDir, fileList);

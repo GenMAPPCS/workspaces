@@ -31,7 +31,6 @@ package org.genmapp.workspaces.utils;
 
 // Javadocs for Cytoscape 2.8.3 can be found at: http://chianti.ucsd.edu/Cyto-2_8_3/javadoc/index.html?cytoscape/CyMain.html
 
-
 import java.io.BufferedReader;
 
 import java.io.File;
@@ -64,11 +63,9 @@ public class DatasetAttributesReader {
 	public static final String DECODE_PROPERTY = "cytoscape.decode.attributes";
 	static boolean badDecode = false;
 
-	static final byte FAILURE_TO_INFER_TYPE = -1;
-
+	private static final byte FAILURE_TO_INFER_TYPE = -1;
 	private static final int SPLIT_ALLOW_BLANK_CELLS_AT_END = -1; // This must be NEGATIVE ONE and it means "we need to allow blank cells at the end of the string being delimited." Look up String split for more info.
 
-					
 	public static void loadAttributes(CyAttributes cyAttrs, final FileReader fileIn, final CyLogger logger) throws IOException {
 		WorkspacesCommandHandler.showMessage("loadAttributes");
 		logger.info("DatasetAttributesReader: loadAttributes starting now...");
@@ -86,7 +83,7 @@ public class DatasetAttributesReader {
 			for (String line = inStream.readLine(); line != null; line = inStream.readLine()) {
 				lineNum++;
 				final String row[] = line.split(GenMAPPWorkspaces.DELIMITER_REGEXP, SPLIT_ALLOW_BLANK_CELLS_AT_END); // Split the comma-or-whatever-separated values
-				//logger.debug("Line " + lineNum + " is length " + row.length + " when split up by delimiter [" + GenMAPPWorkspaces.DELIMITER_REGEXP + "]: [[[" + line + "]]]");
+				// logger.debug("Line " + lineNum + " is length " + row.length + " when split up by delimiter [" + GenMAPPWorkspaces.DELIMITER_REGEXP + "]: [[[" + line + "]]]");
 				if (bufferCols == null) { // <-- Initialize this the FIRST TIME only!
 					totalNumHeaderColumns = row.length;
 					bufferCols = new Vector<Vector<String>>(totalNumHeaderColumns);
@@ -101,7 +98,8 @@ public class DatasetAttributesReader {
 				}
 
 				if (row.length != totalNumHeaderColumns) {
-					logger.error("POSSIBLE ERROR IN SAVE FILE: Line " + lineNum + ": has a DIFFERENT number of elements from the header---uneven column total while loading attributes file. The number of columns is SUPPOSED to be " + totalNumHeaderColumns + ", but we encountered line " + lineNum + " with " + row.length + " delimiter-separated columns. We are going to attempt to just deal with this, but it probably means there is somewhing weird about the way the file that you are loading was saved.");
+					logger.error("POSSIBLE ERROR IN SAVE FILE: Line " + lineNum + ": has a DIFFERENT number of elements from the header---uneven column total while loading attributes file. The number of columns is SUPPOSED to be " + totalNumHeaderColumns + ", but we encountered line " + lineNum + " with " + row.length
+							+ " delimiter-separated columns. We are going to attempt to just deal with this, but it probably means there is somewhing weird about the way the file that you are loading was saved.");
 				}
 				for (int col = 0; col < totalNumHeaderColumns; col++) {
 					// For each item in this row, we're going to append that item to the end of the appropriate column.
@@ -135,8 +133,7 @@ public class DatasetAttributesReader {
 	}
 
 	private static byte getTypeFromClassNameString(final String className) {
-		// Just a local convenient function for mapping from the weird type names to the single-byte type variable
-		// that we apparently like to use below.
+		// Just a local convenient function for mapping from the weird type names to the single-byte type variable.
 		byte type;
 		if (className.equalsIgnoreCase("java.lang.String") || className.equalsIgnoreCase("String")) {
 			type = MultiHashMapDefinition.TYPE_STRING;
@@ -153,34 +150,44 @@ public class DatasetAttributesReader {
 	}
 
 	private static void loadAttrHandleListType(final CyAttributes cyAttrs, String key, final String val, final String attributeName, byte type, int lineNum) throws IOException {
-		// if it starts with "(", then that means it's a LIST TYPE. APPARENTLY. Seems dubious.
-		if (val.length() < 2) {
-			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it wasn't actually a list type probably, as it was of length < 2. Here it is: " + val);
-		}
-		if (!val.startsWith("(") || !val.endsWith(")")) {
+		// if it starts with DatasetAttributesWriter.LIST_START_STRING, then that means it's a LIST TYPE. APPARENTLY. Seems dubious.
+		final int amtToTrimFromStart = DatasetAttributesWriter.LIST_START_STRING.length();
+		final int amtToTrimFromEnd = DatasetAttributesWriter.LIST_END_STRING.length();
+		if (val.length() < (amtToTrimFromStart + amtToTrimFromEnd)) {
+			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it wasn't actually a list type probably, as it was of length LESS THAN the length of the start and end list delimiters. Here it is: " + val);
+			// End EARLY if we got an invalid data item!
+		} else if (!val.startsWith(DatasetAttributesWriter.LIST_START_STRING) || !val.endsWith(DatasetAttributesWriter.LIST_START_STRING)) {
 			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it apparently either doesn't start with an open-paren, or doesn't end with a close-paren, like it's supposed to. Here it is: " + val);
-		}
-		ArrayList<Object> elmsBuff = new ArrayList<Object>(); // <-- note that this ArrayList may get MODIFIED in place to convert data types from Strings to (say) Integers or Doubles. Or they could remain Strings, depending on the desired final data type!
-		final String trimmedValNoParens = val.substring(1, (val.length() - 1)).trim(); // Chop away leading '(' and trailing ')'. -- Removes the FIRST AND LAST characters from "val" and then trim off whitespace.
-		for (final String vs : (String[]) trimmedValNoParens.split(DatasetAttributesWriter.LIST_SEPARATOR, SPLIT_ALLOW_BLANK_CELLS_AT_END)) {
-			elmsBuff.add(decodeSlashEscapes(decodeString(vs))); // Note: might be NULL! Always a string at this point, but takes NON STRING objects later, which is kind of interesting and weird.
-		}
-		for (int i = 0; i < elmsBuff.size(); i++) {
-			if (elmsBuff.get(i) == null) {
-				CyLogger.getLogger().error("Ran into a null element---couldn't properly decode element at index " + i + " on line " + lineNum + ". I guess we're just going to keep it as NULL instead of trying to do anything fancy.");
-			} else if (type == MultiHashMapDefinition.TYPE_INTEGER) {
-				elmsBuff.set(i, new Integer((String) elmsBuff.get(i))); // Note: adds an INTEGER to the data structure.
-			} else if (type == MultiHashMapDefinition.TYPE_BOOLEAN) {
-				elmsBuff.set(i, new Boolean((String) elmsBuff.get(i))); // Note: adds a BOOLEAN to the data structure.
-			} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
-				elmsBuff.set(i, new Double((String) elmsBuff.get(i))); // Note: adds a DOUBLE to the data structure. (Note: must NOT be a a "Float"!)
-			} else {
-				// Probably a string; do nothing---the thing in it is ALREADY a string, so don't change it!
-				// If it's not a string, then, uh, I don't know what will happen here!
+			// End EARLY if we got an invalid data item!
+		} else {
+			// If we got here, we SHOULD have a valid list!
+			ArrayList<Object> elmsBuff = new ArrayList<Object>(); // <-- note that this ArrayList may get MODIFIED in place to convert data types from Strings to (say) Integers or Doubles. Or they could remain Strings, depending on the desired final data type!
+			final String trimmedValWithNoSurroundingParens = val.substring(amtToTrimFromStart, (val.length() - amtToTrimFromEnd)).trim(); // Chop away leading '(' and trailing ')'. -- Removes the FIRST AND LAST characters from "val" and then trim off whitespace.
+			for (final String vs : (String[]) trimmedValWithNoSurroundingParens.split(DatasetAttributesWriter.LIST_SEPARATOR, SPLIT_ALLOW_BLANK_CELLS_AT_END)) {
+				elmsBuff.add(decodeSlashEscapes(decodeString(vs))); // Note: might be NULL! Always a string at this point, but takes NON STRING objects later, which is kind of interesting and weird.
 			}
+			for (int i = 0; i < elmsBuff.size(); i++) {
+				if (elmsBuff.get(i) == null) {
+					CyLogger.getLogger().error("Ran into a null element---couldn't properly decode element at index " + i + " on line " + lineNum + ". I guess we're just going to keep it as NULL instead of trying to do anything fancy.");
+				} else if (type == MultiHashMapDefinition.TYPE_INTEGER) {
+					elmsBuff.set(i, new Integer((String) elmsBuff.get(i))); // Note: adds an INTEGER to the data structure.
+				} else if (type == MultiHashMapDefinition.TYPE_BOOLEAN) {
+					elmsBuff.set(i, new Boolean((String) elmsBuff.get(i))); // Note: adds a BOOLEAN to the data structure.
+				} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
+					elmsBuff.set(i, new Double((String) elmsBuff.get(i))); // Note: adds a DOUBLE to the data structure. (Note: must NOT be a a "Float"!)
+				} else if (type == FAILURE_TO_INFER_TYPE) {
+					CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of element at index " + i + " on line " + lineNum + ". I guess we're just going to try to add it without processing it specially.");
+				} else {
+					// Probably a string; do nothing---the thing in it is ALREADY a string, so don't change it!
+					// If it's not a string, then, uh, I don't know what will happen here!
+					// Looks like we DO NOTHING TO IT! It's ALREADY in the correct format.
+				}
+			}
+			cyAttrs.setListAttribute(key, attributeName, elmsBuff);
+			// Requirement for setListAttribute, from the Oracle Javadocs:
+			// "All items within the list are ******of the same type******, and are chosen from one of the following: Boolean, Integer, Double or String."
+			// Maybe this creates the node??? Unclear.
 		}
-		cyAttrs.setListAttribute(key, attributeName, elmsBuff); // <-- From the Oracle Javadocs: Requirements for setListAttribute: "All items within the list are of the same type, and are chosen from one of the following: Boolean, Integer, Double or String."
-		// Maybe this creates the node???
 	}
 
 	private static void setCyAttrBasedOnType(final byte type, CyAttributes cyAttrsToSet, final String theKey, final String attributeName, final String setToThing) {
@@ -191,6 +198,9 @@ public class DatasetAttributesReader {
 			cyAttrsToSet.setAttribute(theKey, attributeName, new Boolean(setToThing));
 		} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
 			cyAttrsToSet.setAttribute(theKey, attributeName, new Double(setToThing));
+		} else if (type == FAILURE_TO_INFER_TYPE) {
+			CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of attribute [[" + attributeName + "]] with key//value as [[" + theKey + " // " + setToThing + "]]. We are going to treat it as a String.");
+			cyAttrsToSet.setAttribute(theKey, attributeName, (String) setToThing); // <-- If there was a decoding failure, try to pretend the type is a String anyway.
 		} else {
 			cyAttrsToSet.setAttribute(theKey, attributeName, (String) setToThing);
 		}
@@ -205,7 +215,7 @@ public class DatasetAttributesReader {
 		CyLogger.getLogger().debug("loadAttributesInternal " + nodeData.get(0));
 		badDecode = false; // <-- class-wide variable. Really not sure why it gets set to false here... seems kind of weird!
 		int nnn = -1; // <-- line number
-		
+
 		try {
 			final String attrName = nodeData.get(ATTR_NAME_LINE_ROW_INDEX);
 			final String className = nodeData.get(ATTR_TYPE_LINE_ROW_INDEX);
@@ -216,18 +226,18 @@ public class DatasetAttributesReader {
 				// Note that the header is TWO LINES instead of just one.
 				final String key = nodeName.get(nnn);
 				final String val = nodeData.get(nnn);
-				//System.out.println("AGW: " + key + " : " + val);
+				// System.out.println("AGW: " + key + " : " + val);
 				if (null == val) {
-					//CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
+					// CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
 				} else if (val.startsWith("(")) {
 					// Specially handle a LIST data type, which we expect to start with a parenthesis.
 					// Is this ACTUALLY a reliable way of detecting lists? I very much doubt it!!!
 					loadAttrHandleListType(cyAttrs, key, val, attrName, type, nnn);
-					
+
 					// To do / todo:
 					// ALEX WILLIAMS: I suspect this area is probably wrong --- what if a value starts with a '(' ? Like a gene description in parentheses or something?
 					// That would NOT be a list data type, but it would be (incorrectly) parsed as one. I think this is probably a bug but I don't actually know 100%.
-					
+
 				} else {
 					// Not a list data type!
 					final String decodedVal = decodeSlashEscapes(decodeString(val));

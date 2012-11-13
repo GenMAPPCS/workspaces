@@ -31,7 +31,9 @@ public class DatasetAttributesWriter {
 
 	private static final String CANONICAL_NAME = "canonicalName";
 	public static final String LIST_SEPARATOR = "::"; // <-- lists have "::" between elements.
-
+	public static final String LIST_START_STRING = "(";
+	public static final String LIST_END_STRING   = ")";
+	
 	// ELEMENTS (i.e., columns) are separated based on the string in org.genmapp.workspaces.GenMAPPWorkspaces
 
 	private static String encodedString(String raw) {
@@ -46,7 +48,7 @@ public class DatasetAttributesWriter {
 		for (Object o : list) {
 			s += ((s.length() == 0) ? "" : LIST_SEPARATOR) + encodedString(o.toString()); // <-- add the LIST_SEPARATOR for all elements EXCEPT the first one
 		}
-		return ("[" + s + "]"); // Brackets go around the string as well!
+		return (DatasetAttributesWriter.LIST_START_STRING + s + DatasetAttributesWriter.LIST_END_STRING); // Brackets go around the string as well!
 	}
 
 	private static String getEncodedAttribute(final String attr, final String nodeName, final CyAttributes attributes) {
