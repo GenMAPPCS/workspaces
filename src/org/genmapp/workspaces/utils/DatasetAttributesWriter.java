@@ -31,22 +31,34 @@ public class DatasetAttributesWriter {
 
 	private static final String CANONICAL_NAME = "canonicalName";
 	public static final String LIST_SEPARATOR = "::"; // <-- lists have "::" between elements.
+	public static final String MATCH_LIST_SEPARATOR_REGEXP = "[:][:]";
+	
 	public static final String LIST_START_STRING = "(";
+	public static final String MATCH_LIST_START_STRING_REGEXP = "^[(]"; // Has to START with the list-start-string
 	public static final String LIST_END_STRING   = ")";
 	
 	// ELEMENTS (i.e., columns) are separated based on the string in org.genmapp.workspaces.GenMAPPWorkspaces
 
-	private static String encodedString(String raw) {
-		// I assume this is Isaac's comment: need to add in proper encoding from CyAttributesWriter
-		// Note that right now, nothing happens here. I suspect this means we rely on the "toString" method.
-		return (raw); // This doesn't do ANYTHING AT ALL right now! No clue what it's supposed to do; maybe escape certain "dangerous" control characters?
+	private static String ourEncodedString(String raw) {
+		// Alex Williams: added this function. Previously it was just "return(raw);"
+		
+		final String FORBIDDEN_CHARS_TO_TURN_TO_SPACES_REGEX = "[\t\n\r]"; // No TABS or NEWLINES or RETURN characters
+		final String FORBIDDEN_CHARS_TO_TURN_TO_UNDERSCORES_REGEX = "[|]"; // No PIPE character
+		final String LIST_SEPARATOR_BECOMES_THIS = "\\\\:\\\\:"; // <-- requires FOUR backslashes to actually emit a backslash!
+		final String LIST_START_STRING_BECOMES_THIS = "\\\\("; // <-- requires FOUR backslashes to actually emit a backslash! This is a super janky way of preventing the list start string from being triggered
+		
+		String mod = raw.replaceAll(FORBIDDEN_CHARS_TO_TURN_TO_SPACES_REGEX, " ");
+		mod = mod.replaceAll(FORBIDDEN_CHARS_TO_TURN_TO_UNDERSCORES_REGEX, "_");
+		mod = mod.replaceAll(MATCH_LIST_SEPARATOR_REGEXP, LIST_SEPARATOR_BECOMES_THIS); // Replace any "::" with "\:\:"
+		mod = mod.replaceAll(MATCH_LIST_START_STRING_REGEXP, LIST_START_STRING_BECOMES_THIS); // Replace any "(" at the VERY START of the string with this!
+		return (mod);
 	}
 
 	private static String stringFromList(final List<?> list) {
 		// Alex Williams: note that this previously failed to work properly if the list is empty. It would return something like NULL] instead of [].
 		String s = ""; // <-- must initial to the empty string so that "length() == 0" works properly below!
-		for (Object o : list) {
-			s += ((s.length() == 0) ? "" : LIST_SEPARATOR) + encodedString(o.toString()); // <-- add the LIST_SEPARATOR for all elements EXCEPT the first one
+		for (final Object o : list) {
+			s += ((s.length() == 0) ? "" : LIST_SEPARATOR) + ourEncodedString(o.toString()); // <-- add the LIST_SEPARATOR for all elements EXCEPT the first one
 		}
 		return (DatasetAttributesWriter.LIST_START_STRING + s + DatasetAttributesWriter.LIST_END_STRING); // Brackets go around the string as well!
 	}
@@ -59,11 +71,11 @@ public class DatasetAttributesWriter {
 		}
 		switch (type) {
 			case CyAttributes.TYPE_STRING:
-				return encodedString((String) attributes.getAttribute(nodeName, attr)); // Encode the string
+				return ourEncodedString((String) attributes.getAttribute(nodeName, attr)); // Encode the string
 			case CyAttributes.TYPE_SIMPLE_LIST:
 				return stringFromList(attributes.getListAttribute(nodeName, attr)); // Encode the list with our CUSTOM code up above
 			default:
-				return attributes.getAttribute(nodeName, attr).toString(); // Hopefully "toString" can be relied on for all the other data types
+				return ourEncodedString(attributes.getAttribute(nodeName, attr).toString()); // Hopefully "toString" can be relied on for all the other data types
 		}
 	}
 

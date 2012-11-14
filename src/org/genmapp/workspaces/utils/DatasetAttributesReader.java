@@ -191,33 +191,37 @@ public class DatasetAttributesReader {
 		}
 	}
 
-	private static void setOurCyAttributes(CyAttributes cyAttrsToSet, final String theKey, final String theVal, final String attributeName, final byte type, final int lineNum) throws IOException {
+	private static void setOurCyAttributes(CyAttributes cyAttrsToSet, final String theKey, final String theValBeforeDecoding, final String attributeName, final byte type, final int lineNum) throws IOException {
 		// Alex Williams (Sept 2012): Handles the annoying type-based dispatching for adding to cyAttrsToSet. As far as I know, there's no "more elegant" way to do this.
 
-		if ((theVal == null) || (theVal.length() == 0)) {
+		if ((theValBeforeDecoding == null) || (theValBeforeDecoding.length() == 0)) {
 			return; // Don't do ANYTHING if there's a zero-length string or a null string!
 		}
 
-		final boolean isListType = (theVal != null) && theVal.startsWith(DatasetAttributesWriter.LIST_START_STRING) && theVal.endsWith(DatasetAttributesWriter.LIST_END_STRING);
+		final boolean isListType = (theValBeforeDecoding != null) && theValBeforeDecoding.startsWith(DatasetAttributesWriter.LIST_START_STRING) && theValBeforeDecoding.endsWith(DatasetAttributesWriter.LIST_END_STRING);
 		// Specially handle a LIST data type.
 		// Alex Williams: Is this ACTUALLY a reliable way of detecting lists? I very much doubt it!!!
 		// What if a value starts with a LIST_START_STRING but is NOT a list? Like a gene description in parentheses or something?
 		// That would NOT be a list data type, but it would be (incorrectly) parsed as one. I think this is probably a bug but I don't actually know 100%.
 		// To do / todo:
 
-		if (isListType) {
-			setCyAttrForListTypesOnly(cyAttrsToSet, theKey, theVal, attributeName, type, lineNum);
+		final String decodedVal = decodeSlashEscapes(decodeString(theValBeforeDecoding));
+		
+		if (decodedVal == null) {
+			// do nothing
+		} else if (isListType) {
+			setCyAttrForListTypesOnly(cyAttrsToSet, theKey, decodedVal, attributeName, type, lineNum);
 		} else if (type == MultiHashMapDefinition.TYPE_INTEGER) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Integer(theVal));
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Integer(decodedVal));
 		} else if (type == MultiHashMapDefinition.TYPE_BOOLEAN) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Boolean(theVal));
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Boolean(decodedVal));
 		} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Double(theVal));
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Double(decodedVal));
 		} else if (type == FAILURE_TO_INFER_TYPE) {
-			CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of attribute [[" + attributeName + "]] with key//value as [[" + theKey + " // " + theVal + "]]. We are going to treat it as a String.");
-			cyAttrsToSet.setAttribute(theKey, attributeName, (String) theVal); // <-- If there was a decoding failure, try to pretend the type is a String anyway.
+			CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of attribute [[" + attributeName + "]] with key//value as [[" + theKey + " // " + decodedVal + "]]. We are going to treat it as a String.");
+			cyAttrsToSet.setAttribute(theKey, attributeName, (String) decodedVal); // <-- If there was a decoding failure, try to pretend the type is a String anyway.
 		} else {
-			cyAttrsToSet.setAttribute(theKey, attributeName, (String) theVal);
+			cyAttrsToSet.setAttribute(theKey, attributeName, (String) decodedVal);
 		}
 	}
 
@@ -237,17 +241,8 @@ public class DatasetAttributesReader {
 			CyLogger.getLogger().debug("className: " + className);
 			// TODO: it's screwed up here on line 2!!!!!!!!!!!!!!!!!!!!!!!
 			for (nnn = FIRST_NON_HEADER_LINE_INDEX; nnn < nodeData.size(); nnn++) {
-				// Note that the header is TWO LINES instead of just one.
-				final String key = nodeName.get(nnn);
-				final String valBeforeDecoding = nodeData.get(nnn);
-				final String decodedVal = decodeSlashEscapes(decodeString(valBeforeDecoding));
-				if (null != decodedVal) {
-					// Alex Williams: For whatever reason, we don't set an attribute if the value is null. Not sure if this is a bug or not!
-					setOurCyAttributes(cyAttrs, key, decodedVal, attrName, type, nnn);
-				} else {
-					// CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
-					// CyLogger.getLogger().info("loadAttributesINTERNAL: Couldn't successfully decode the value \'" + v + "\' to anything but NULL. On line " + nnn);
-				}
+				// nodeName is the key, nodeData is the value!
+				setOurCyAttributes(cyAttrs, nodeName.get(nnn), nodeData.get(nnn), attrName, type, nnn);
 			}
 		} catch (final Exception e) {
 			final String message = "Failed to parse attributes file at line " + nnn + ", with exception: " + e.getMessage();
