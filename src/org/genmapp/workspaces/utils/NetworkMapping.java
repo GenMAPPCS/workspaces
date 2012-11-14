@@ -122,7 +122,7 @@ public abstract class NetworkMapping {
 				progress.setValue(prog);
 				progress.setString("using \"" + secKeyType + "\"");
 			}
-
+			
 			List<String> sk = (List<String>) Cytoscape.getNodeAttributes().getListAttribute(cn.getIdentifier(), "__" + secKeyType);
 			if (sk != null)
 				if (sk.size() > 0) {
@@ -151,12 +151,12 @@ public abstract class NetworkMapping {
 				Cytoscape.getNetworkAttributes().setAttribute(netid, CODE, MIXED);
 
 			} else {
-				idsThatDidNotMap = ((idsThatDidNotMap == null) ? "" : (idsThatDidNotMap + " &&& ")) + cn.getIdentifier();
+				idsThatDidNotMap = ((idsThatDidNotMap == null) ? "" : (idsThatDidNotMap + " , ")) + cn.toString();
 				numIdsThatDidNotMap++;
 			}
 		}
 		if (idsThatDidNotMap != null) {
-			logger.warn("Warning: we failed to identify the following " + numIdsThatDidNotMap + " nodes that did not map. Here are all their names in one long string, delimited by ' &&& ': \"" + idsThatDidNotMap + "\". No ID mapping was performed on these IDs!");
+			logger.warn("Warning: we failed to identify the following " + numIdsThatDidNotMap + " nodes that did not map. Here are all their names in one long string, delimited by ' , ': \"" + idsThatDidNotMap + "\". No ID mapping was performed on these IDs!");
 		}
 		
 		progress.setValue(90);

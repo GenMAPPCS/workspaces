@@ -61,7 +61,8 @@ import org.genmapp.workspaces.GenMAPPWorkspaces; // Required for loading the COL
 
 public class DatasetAttributesReader {
 	public static final String DECODE_PROPERTY = "cytoscape.decode.attributes";
-	static boolean badDecode = false;
+	private static int numBadDecodes;
+	private static final int MAX_NUM_BAD_DECODES_TO_REPORT = 10; // Only report this many (or fewer) bad-decoding errors.
 
 	private static final byte FAILURE_TO_INFER_TYPE = -1;
 	private static final int SPLIT_ALLOW_BLANK_CELLS_AT_END = -1; // This must be NEGATIVE ONE and it means "we need to allow blank cells at the end of the string being delimited." Look up String split for more info.
@@ -149,7 +150,7 @@ public class DatasetAttributesReader {
 		return type;
 	}
 
-	private static void loadAttrHandleListType(final CyAttributes cyAttrs, String key, final String val, final String attributeName, byte type, int lineNum) throws IOException {
+	private static void setCyAttrForListTypesOnly(final CyAttributes cyAttrs, String key, final String val, final String attributeName, byte type, int lineNum) throws IOException {
 		// if it starts with DatasetAttributesWriter.LIST_START_STRING, then that means it's a LIST TYPE. APPARENTLY. Seems dubious.
 		final int amtToTrimFromStart = DatasetAttributesWriter.LIST_START_STRING.length();
 		final int amtToTrimFromEnd = DatasetAttributesWriter.LIST_END_STRING.length();
@@ -157,7 +158,7 @@ public class DatasetAttributesReader {
 			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it wasn't actually a list type probably, as it was of length LESS THAN the length of the start and end list delimiters. Here it is: " + val);
 			// End EARLY if we got an invalid data item!
 		} else if (!val.startsWith(DatasetAttributesWriter.LIST_START_STRING) || !val.endsWith(DatasetAttributesWriter.LIST_START_STRING)) {
-			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it apparently either doesn't start with an open-paren, or doesn't end with a close-paren, like it's supposed to. Here it is: " + val);
+			CyLogger.getLogger().error("loadAttrHandleListType: Well, this is messed up, we got a supposed 'list' type, but it apparently either doesn't start with the list delimiter or it doesn't end with the list delimiter, like it's supposed to. Here it is: " + val);
 			// End EARLY if we got an invalid data item!
 		} else {
 			// If we got here, we SHOULD have a valid list!
@@ -190,19 +191,33 @@ public class DatasetAttributesReader {
 		}
 	}
 
-	private static void setCyAttrBasedOnType(final byte type, CyAttributes cyAttrsToSet, final String theKey, final String attributeName, final String setToThing) {
+	private static void setOurCyAttributes(CyAttributes cyAttrsToSet, final String theKey, final String theVal, final String attributeName, final byte type, final int lineNum) throws IOException {
 		// Alex Williams (Sept 2012): Handles the annoying type-based dispatching for adding to cyAttrsToSet. As far as I know, there's no "more elegant" way to do this.
-		if (type == MultiHashMapDefinition.TYPE_INTEGER) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Integer(setToThing));
+
+		if ((theVal == null) || (theVal.length() == 0)) {
+			return; // Don't do ANYTHING if there's a zero-length string or a null string!
+		}
+
+		final boolean isListType = (theVal != null) && theVal.startsWith(DatasetAttributesWriter.LIST_START_STRING) && theVal.endsWith(DatasetAttributesWriter.LIST_END_STRING);
+		// Specially handle a LIST data type.
+		// Alex Williams: Is this ACTUALLY a reliable way of detecting lists? I very much doubt it!!!
+		// What if a value starts with a LIST_START_STRING but is NOT a list? Like a gene description in parentheses or something?
+		// That would NOT be a list data type, but it would be (incorrectly) parsed as one. I think this is probably a bug but I don't actually know 100%.
+		// To do / todo:
+
+		if (isListType) {
+			setCyAttrForListTypesOnly(cyAttrsToSet, theKey, theVal, attributeName, type, lineNum);
+		} else if (type == MultiHashMapDefinition.TYPE_INTEGER) {
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Integer(theVal));
 		} else if (type == MultiHashMapDefinition.TYPE_BOOLEAN) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Boolean(setToThing));
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Boolean(theVal));
 		} else if (type == MultiHashMapDefinition.TYPE_FLOATING_POINT) {
-			cyAttrsToSet.setAttribute(theKey, attributeName, new Double(setToThing));
+			cyAttrsToSet.setAttribute(theKey, attributeName, new Double(theVal));
 		} else if (type == FAILURE_TO_INFER_TYPE) {
-			CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of attribute [[" + attributeName + "]] with key//value as [[" + theKey + " // " + setToThing + "]]. We are going to treat it as a String.");
-			cyAttrsToSet.setAttribute(theKey, attributeName, (String) setToThing); // <-- If there was a decoding failure, try to pretend the type is a String anyway.
+			CyLogger.getLogger().error("Ran into an element where we couldn't infer the type---couldn't properly decide the type of attribute [[" + attributeName + "]] with key//value as [[" + theKey + " // " + theVal + "]]. We are going to treat it as a String.");
+			cyAttrsToSet.setAttribute(theKey, attributeName, (String) theVal); // <-- If there was a decoding failure, try to pretend the type is a String anyway.
 		} else {
-			cyAttrsToSet.setAttribute(theKey, attributeName, (String) setToThing);
+			cyAttrsToSet.setAttribute(theKey, attributeName, (String) theVal);
 		}
 	}
 
@@ -213,9 +228,8 @@ public class DatasetAttributesReader {
 		final int FIRST_NON_HEADER_LINE_INDEX = 2; // '2' means the THIRD line (two header lines, '0' and '1')
 		WorkspacesCommandHandler.showMessage("loadAttributesInternal " + nodeData.get(0));
 		CyLogger.getLogger().debug("loadAttributesInternal " + nodeData.get(0));
-		badDecode = false; // <-- class-wide variable. Really not sure why it gets set to false here... seems kind of weird!
+		numBadDecodes = 0;
 		int nnn = -1; // <-- line number
-
 		try {
 			final String attrName = nodeData.get(ATTR_NAME_LINE_ROW_INDEX);
 			final String className = nodeData.get(ATTR_TYPE_LINE_ROW_INDEX);
@@ -225,49 +239,36 @@ public class DatasetAttributesReader {
 			for (nnn = FIRST_NON_HEADER_LINE_INDEX; nnn < nodeData.size(); nnn++) {
 				// Note that the header is TWO LINES instead of just one.
 				final String key = nodeName.get(nnn);
-				final String val = nodeData.get(nnn);
-				// System.out.println("AGW: " + key + " : " + val);
-				if (null == val) {
-					// CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
-				} else if (val.startsWith("(")) {
-					// Specially handle a LIST data type, which we expect to start with a parenthesis.
-					// Is this ACTUALLY a reliable way of detecting lists? I very much doubt it!!!
-					loadAttrHandleListType(cyAttrs, key, val, attrName, type, nnn);
-
-					// To do / todo:
-					// ALEX WILLIAMS: I suspect this area is probably wrong --- what if a value starts with a '(' ? Like a gene description in parentheses or something?
-					// That would NOT be a list data type, but it would be (incorrectly) parsed as one. I think this is probably a bug but I don't actually know 100%.
-
+				final String valBeforeDecoding = nodeData.get(nnn);
+				final String decodedVal = decodeSlashEscapes(decodeString(valBeforeDecoding));
+				if (null != decodedVal) {
+					// Alex Williams: For whatever reason, we don't set an attribute if the value is null. Not sure if this is a bug or not!
+					setOurCyAttributes(cyAttrs, key, decodedVal, attrName, type, nnn);
 				} else {
-					// Not a list data type!
-					final String decodedVal = decodeSlashEscapes(decodeString(val));
-					if (decodedVal == null) {
-						CyLogger.getLogger().info("loadAttributesINTERNAL: Couldn't successfully decode the value \'" + val + "\' to anything but NULL. On line " + nnn);
-						// I guess we don't bother setting an attribute if it's NULL? Not sure what that would even mean exactly.
-					} else {
-						setCyAttrBasedOnType(type, cyAttrs, key, attrName, decodedVal); // set the attribute for this non-null key/value pair
-					}
+					// CyLogger.getLogger().debug("loadAttributesINTERNAL: Found null on line " + nnn);
+					// CyLogger.getLogger().info("loadAttributesINTERNAL: Couldn't successfully decode the value \'" + v + "\' to anything but NULL. On line " + nnn);
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			final String message = "Failed to parse attributes file at line " + nnn + ", with exception: " + e.getMessage();
 			CyLogger.getLogger(CyAttributesReader.class).warn(message, e);
 			throw new IOException(message);
 		}
 	}
 
-	private static String decodeString(String in) throws IOException {
+	private static String decodeString(final String in) throws IOException {
 		if (in == null) {
-			return null; // Handle null specially
+			return null; // <-- detect a null input and also return null!
 		}
 		try {
 			return ((String) URLDecoder.decode(in, CyAttributesWriter.ENCODING_SCHEME));
-		} catch (IllegalArgumentException iae) {
-			if (!badDecode) {
-				// The first time we encounter a problem, set the "badDecode" class-wide flag.
-				// Weirdly, this "badDecode" flag still gets set back to "false" periodically. Not sure why!
-				CyLogger.getLogger().warn("DECODING PROBLEM: Couldn't decode the input string \'" + in + "\'! Additional message: " + iae);
-				badDecode = true; // set this CLASS-WIDE variable if the decoding was messed up somehow.
+		} catch (final IllegalArgumentException iae) {
+			if (numBadDecodes < MAX_NUM_BAD_DECODES_TO_REPORT) {
+				CyLogger.getLogger().warn("DECODING PROBLEM #" + numBadDecodes + ": Couldn't decode the input string \'" + in + "\'! Additional message: " + iae);
+				numBadDecodes++;
+				if (numBadDecodes == MAX_NUM_BAD_DECODES_TO_REPORT) {
+					CyLogger.getLogger().warn("We will not be reporting addtiaional decoding problems, as we have reached the maximum number to report (" + MAX_NUM_BAD_DECODES_TO_REPORT + ")");
+				}
 			}
 			return null;
 		}
@@ -313,9 +314,6 @@ public class DatasetAttributesReader {
 			}
 		}
 		return stringMaker.toString();
-		// TODO: (probably written by Isaac maybe?) we should detect when "null" string is used as Numeric attribute
-		// place holder and convert simply skip writing those lines
-		// Note from Alex Williams (Sept 2012): I don't know what this means, but it seems like it might be important?
 	}
 
 }

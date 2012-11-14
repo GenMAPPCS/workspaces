@@ -86,7 +86,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		logger = CyLogger.getLogger(GenMAPPWorkspaces.class);
 		logger.setDebug(true);
 
-		logger.error("ALEX WILLIAMS: testing genmapp load/save. Remove this line when done testing!");
+		// logger.error("ALEX WILLIAMS: testing genmapp load/save. Remove this line when done testing!");
 
 		CytoPanel cytoPanel1 = Cytoscape.getDesktop().getCytoPanel(SwingConstants.WEST); // Create workspaces panel
 		wsPanel = new WorkspacesPanel(logger);
@@ -99,7 +99,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		// set default node width/height lock to avoid dependency issues
 		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency().set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED, false);
-
+		
 		// Clear out all org.genmapp.criteriaset properties that may have been "saved as default." This happens right after the plugin is loaded,
 		// well before properties are added from session files. This way we can utilize props for storing criteriasets with sessions without allowing
 		// them to be recalled from .cytoscape/cytoscape.props
@@ -107,7 +107,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		if (props.containsKey(WorkspacesCommandHandler.PROPERTY_SETS)) {
 			CytoscapeInit.getProperties().remove(WorkspacesCommandHandler.PROPERTY_SETS);
 			List<String> keylist = new ArrayList<String>();
-			for (Object key : props.keySet()) {
+			for (final Object key : props.keySet()) {
 				if (((String) key).startsWith(WorkspacesCommandHandler.PROPERTY_SET_PREFIX)) {
 					keylist.add((String) key);
 				}
@@ -122,7 +122,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 	}
 
 	public static String createUniqueCytoscapeNetworkName(final String baseName) {
-		final int MAX_NUM_ATTEMPTS = 50000; // Give up and just make a duplicate network name if we try THIS many times and get nowhere.
+		final int MAX_NUM_ATTEMPTS = 50000; // Give up and just make a duplicate network name if we try THIS many times and still can't make a unique name.
 		// Alex Williams, Nov 2012:
 		// Given a "baseName" name as a hint:
 		// 1) If that network name is NOT in use, it just returns "baseName" (unmodified)
@@ -140,14 +140,16 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			// I guess "baseName" wasn't a unique network name, so let's try appending numbers to it.
 			for (int tryNumber = 2; tryNumber < MAX_NUM_ATTEMPTS; tryNumber++) {
 				final String tryThisNetworkName = baseName + " " + tryNumber;
-				//CyLogger.getLogger().error("AGW debugging createUniqueCytoscapeNetworkName: " + tryThisNetworkName + " was apparently a unique name.");
-				//for (final String sss : networkNames) {
-				//	CyLogger.getLogger().error("AGW debugging: [[" + sss + "]] equals [[" + tryThisNetworkName + "]]? Answer: " + sss.equalsIgnoreCase(tryThisNetworkName));
-				//}
+				// CyLogger.getLogger().error("AGW debugging createUniqueCytoscapeNetworkName: " + tryThisNetworkName + " was apparently a unique name.");
+				// for (final String sss : networkNames) {
+				// CyLogger.getLogger().error("AGW debugging: [[" + sss + "]] equals [[" + tryThisNetworkName + "]]? Answer: " + sss.equalsIgnoreCase(tryThisNetworkName));
+				// }
 				if (!networkNames.contains(tryThisNetworkName)) {
 					return tryThisNetworkName; // Finally exit the loop when we have found an un-used network name!
 				}
 			}
+
+			// If we weren't able to create a non-duplicate network name, then report an error. This really should never happen!
 			CyLogger.getLogger().error("createUniqueCytoscapeNetworkName: Even after " + MAX_NUM_ATTEMPTS + " attempts to find a non-duplicate network name, we failed. Thus, this network name (" + baseName + ") is probably a duplicate of a previous one!");
 			return (baseName + "_IS_A_DUPLICATE_NAME_ERROR");
 		}
