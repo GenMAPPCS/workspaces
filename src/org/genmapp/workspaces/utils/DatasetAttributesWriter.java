@@ -28,7 +28,6 @@ import org.genmapp.workspaces.GenMAPPWorkspaces; // Required for loading the COL
 
 // we wrap the core library of the same name to do the dirty work
 public class DatasetAttributesWriter {
-
 	private static final String CANONICAL_NAME = "canonicalName";
 	public static final String LIST_SEPARATOR = "::"; // <-- lists have "::" between elements.
 	public static final String MATCH_LIST_SEPARATOR_REGEXP = "[:][:]";

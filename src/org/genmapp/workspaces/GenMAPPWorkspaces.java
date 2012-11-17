@@ -99,7 +99,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 
 		// set default node width/height lock to avoid dependency issues
 		Cytoscape.getVisualMappingManager().getVisualStyle().getDependency().set(VisualPropertyDependency.Definition.NODE_SIZE_LOCKED, false);
-		
+
 		// Clear out all org.genmapp.criteriaset properties that may have been "saved as default." This happens right after the plugin is loaded,
 		// well before properties are added from session files. This way we can utilize props for storing criteriasets with sessions without allowing
 		// them to be recalled from .cytoscape/cytoscape.props
@@ -179,6 +179,10 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 				} else if (f.getName().endsWith(".gpml")) {
 					logger.debug("gpml file = " + f);
 					gpmlFileList.add(f);
+
+					// We found a GPML file. It seems like we should inhibit loading any XGMML files with this same name.
+					// Hmmmmmmmmmmmmmmmmm.
+
 				} else {
 					logger.warn("Ignored the file <" + f.getName() + ">. We couldn't determine if it was a GPML file, a property file, or an attribute file! So we skipped it.");
 				}
@@ -194,35 +198,45 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 			if (null == gp) {
 				logger.warn("WARNING OF TYPE 'GPML PLUGIN MISSING': The GPML plugin was not detected. As a result, the GPML networks were SKIPPED, and not successfully restored from the save file.");
 			} else {
-				for (final File gpmlFile : gpmlFileList) {
-					final String gpmlNetworkTitle = gpmlFile.getName().replaceFirst("GenMAPPWorkspaces_", "").replaceAll(".gpml", "");
-					// JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "GPML pathway graphics will not be saved/restored.\nThis feature will be support in future versions of GenMAPP-CS.", "Detected GPML: " + title, JOptionPane.WARNING_MESSAGE);
-					// if GPML plugin is loaded, then attempt to load the (previously saved, if any) pathway
-					try {
-						Cytoscape.destroyNetwork(gpmlNetworkTitle); // <-- First, destroy the OLD network, if one with the same name exists
-						// Now, we're clear to add a new network with the GPML name.
-						Pathway pathway = new Pathway();
-						pathway.readFromXml(gpmlFile, true);
-						CyNetwork gpmlNet = gp.load(pathway, true);
-						gpmlNet.setTitle(gpmlNetworkTitle); // Set the NEW network to have the name of the GPLM pathway
-						List<String> netlist = new ArrayList<String>();
-						netlist.add(gpmlNet.getIdentifier());
+				boolean OK_WE_GOT_GPML_READING_ACTUALLY_WORKING_AND_IT_ISNT_BUGGY_ANYMORE = false;
 
-						Cytoscape.setSelectedNetworks(netlist);
-						WorkspacesPanel.getNetworkTreePanel().updateTitle(gpmlNet);
+				if (!OK_WE_GOT_GPML_READING_ACTUALLY_WORKING_AND_IT_ISNT_BUGGY_ANYMORE && gpmlFileList.size() > 0) {
+					// FOR NOW, WE DO NOT LOAD ANY SAVED GPML FILES!!!
+					JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "GPML pathway graphics cannot currently be restored.\nThis feature will be supported in future versions of GenMAPP-CS.", "", JOptionPane.WARNING_MESSAGE);
+				}
 
-						Cytoscape.getNetworkAttributes().setAttribute(gpmlNet.getIdentifier(), ATTR_PATHWAY_URL, gpmlFile.getPath());
-						// And let the world know. The Object[2] is Cytoscape convention
-						// Object[] new_value = new Object[2];
-						// new_value[0] = net;
-						// new_value[1] = net.getIdentifier();
-						// Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null, new_value);
+				if (OK_WE_GOT_GPML_READING_ACTUALLY_WORKING_AND_IT_ISNT_BUGGY_ANYMORE) { // Alex Williams, Nov 2012: When GPML reading actually gets functional, this crazy variable can be removed. Note: there is one of these for the READER and one for the WRITER!
+					for (final File gpmlFile : gpmlFileList) {
+						final String gpmlNetworkTitle = gpmlFile.getName().replaceFirst("GenMAPPWorkspaces_", "").replaceAll(".gpml", "");
 
-						logger.info("No problems in restoring GPML file [" + gpmlFile.getName() + "] into a new network named [" + gpmlNetworkTitle + "].");
-					} catch (ConverterException e) {
-						logger.error("Error reading GPML file [" + gpmlFile.getName() + "]: " + e);
+						// if GPML plugin is loaded, then attempt to load the (previously saved, if any) pathway
+						try {
+							Cytoscape.destroyNetwork(gpmlNetworkTitle); // <-- First, destroy the OLD network, if one with the same name exists
+							// Now, we're clear to add a new network with the GPML name.
+							Pathway pathway = new Pathway();
+							pathway.readFromXml(gpmlFile, true);
+							CyNetwork gpmlNet = gp.load(pathway, true);
+							gpmlNet.setTitle(gpmlNetworkTitle); // Set the NEW network to have the name of the GPLM pathway
+							List<String> netlist = new ArrayList<String>();
+							netlist.add(gpmlNet.getIdentifier());
+
+							Cytoscape.setSelectedNetworks(netlist);
+							WorkspacesPanel.getNetworkTreePanel().updateTitle(gpmlNet);
+
+							Cytoscape.getNetworkAttributes().setAttribute(gpmlNet.getIdentifier(), ATTR_PATHWAY_URL, gpmlFile.getPath());
+							// And let the world know. The Object[2] is Cytoscape convention
+							// Object[] new_value = new Object[2];
+							// new_value[0] = net;
+							// new_value[1] = net.getIdentifier();
+							// Cytoscape.firePropertyChange(Cytoscape.NETWORK_LOADED, null, new_value);
+
+							logger.info("No problems in restoring GPML file [" + gpmlFile.getName() + "] into a new network named [" + gpmlNetworkTitle + "].");
+						} catch (ConverterException e) {
+							logger.error("Error reading GPML file [" + gpmlFile.getName() + "]: " + e);
+						}
 					}
 				}
+
 			}
 
 			if (nodeAttributeFile == null) {
@@ -343,6 +357,7 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 					try {
 						gp.writeToFile(Cytoscape.getNetworkView(net.getIdentifier()), gpmlFile);
 						theParentFileList.add(gpmlFile); // <-- Tell GenMAPP / Cytoscape about this new file!
+
 						logger.debug("writeGPMLFiles: Saved the GPML file \"" + gpmlFile.getName() + "\"");
 					} catch (ConverterException e) { // Requires import org.pathvisio.core.model.ConverterException
 						logger.error("writeGPMLFiles: FAILURE ENCOUNTERED when trying to save the GPML file named " + gpmlFile.getName() + ". The ConverterException was: " + e);
@@ -408,7 +423,14 @@ public class GenMAPPWorkspaces extends CytoscapePlugin {
 		// logger.debug("Alex Williams: here are all the 'orphan' CyNodes that aren't in any network: " + namesOfAllCyNodesInCollection(setOfOrphanNodesNotInAnyNetwork()) + ". That is the full set.");
 		writePropFile(props, new File(tmpDir, propFileName), fileList);
 		writeNodeAttrFile(new File(tmpDir, nodeAttributeFileName), fileList);
-		writeGPMLFiles(tmpDir, fileList);
+
+		boolean GOT_GPML_WRITING_WORKING_PROPERLY = false;
+		if (GOT_GPML_WRITING_WORKING_PROPERLY) {
+			writeGPMLFiles(tmpDir, fileList);
+		} else {
+			JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "GPML pathway graphics will not be saved or restored.\nThis feature will be supported in future versions of GenMAPP-CS.", "", JOptionPane.WARNING_MESSAGE);
+		}
+
 		logger.debug("saveSessionStateFiles: [DONE]");
 	}
 
